@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Acceso</title>
+</head>
+<body>
+  <h1>Iniciar sesión</h1>
+
+  <p><a href="/index.html">Volver</a></p>
+
+  <form id="loginForm">
+    <label>
+      Usuario:
+      <input id="username" type="text" autocomplete="off" />
+    </label>
+    <br /><br />
+    <label>
+      Contraseña:
+      <input id="password" type="password" />
+    </label>
+    <br /><br />
+    <button type="submit">Entrar</button>
+  </form>
+
+  <pre id="out"></pre>
+
+  <script type="module" src="/src/acceso.ts"></script>
+</body>
+</html>

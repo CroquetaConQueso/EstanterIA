@@ -1,31 +1,5 @@
 type PersonalRequest = { userName: string; userAge: number };
 
-const root = document.querySelector<HTMLDivElement>("#app")!;
-
-root.innerHTML = `
-  <h1>Demo: validar nombre y edad (TS → Spring)</h1>
-
-  <form id="personForm">
-    <label>
-      Nombre:
-      <input id="name" type="text" autocomplete="off" />
-    </label>
-
-    <br /><br />
-
-    <label>
-      Edad:
-      <input id="age" type="number" min="0" max="100" />
-    </label>
-
-    <br /><br />
-
-    <button type="submit">Enviar</button>
-  </form>
-
-  <pre id="out"></pre>
-`;
-
 const form = document.querySelector<HTMLFormElement>("#personForm")!;
 const nameInput = document.querySelector<HTMLInputElement>("#name")!;
 const ageInput = document.querySelector<HTMLInputElement>("#age")!;
@@ -51,7 +25,6 @@ form.addEventListener("submit", async (e) => {
     userAge: Number(ageInput.value),
   };
 
-  // Validación mínima en cliente (para UX). La validación real es en Spring.
   const clientErrors = validateClient(payload.userName, payload.userAge);
   if (Object.keys(clientErrors).length > 0) {
     show({ error: "CLIENT_VALIDATION_ERROR", fieldErrors: clientErrors });
@@ -65,14 +38,15 @@ form.addEventListener("submit", async (e) => {
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json();
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
 
     if (!res.ok) {
-      show(data); // aquí verás VALIDATION_ERROR con fieldErrors desde Spring
+      show(data ?? { error: "HTTP_ERROR", status: res.status });
       return;
     }
 
-    show(data); // OK
+    show(data);
   } catch (err) {
     show({ error: "NETWORK_ERROR", detail: String(err) });
   }

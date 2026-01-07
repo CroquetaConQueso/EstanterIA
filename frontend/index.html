@@ -1,13 +1,31 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EstanterIA - Demo</title>
+</head>
+<body>
+  <h1>Demo: validar nombre y edad</h1>
+
+  <p><a href="/acceso.html">Acceder</a></p>
+
+  <form id="personForm">
+    <label>
+      Nombre:
+      <input id="name" type="text" autocomplete="off" />
+    </label>
+    <br /><br />
+    <label>
+      Edad:
+      <input id="age" type="number" min="0" max="100" />
+    </label>
+    <br /><br />
+    <button type="submit">Enviar</button>
+  </form>
+
+  <pre id="out"></pre>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>

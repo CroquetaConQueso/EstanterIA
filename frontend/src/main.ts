@@ -1,4 +1,4 @@
-type PersonalRequest = { name: string; age: number };
+type PersonalRequest = { userName: string; userAge: number };
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
 
@@ -15,7 +15,7 @@ root.innerHTML = `
 
     <label>
       Edad:
-      <input id="age" type="number" min="0" max="130" />
+      <input id="age" type="number" min="0" max="100" />
     </label>
 
     <br /><br />
@@ -35,11 +35,11 @@ function show(obj: unknown) {
   out.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
 }
 
-function validateClient(name: string, age: number): Record<string, string> {
+function validateClient(userName: string, userAge: number): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (!name.trim()) errors.name = "El nombre es obligatorio";
-  if (!Number.isFinite(age)) errors.age = "La edad es obligatoria";
-  if (age < 0 || age > 130) errors.age = "La edad debe estar entre 0 y 130";
+  if (!userName.trim()) errors.userName = "El nombre es obligatorio";
+  if (!Number.isFinite(userAge)) errors.userAge = "La edad es obligatoria";
+  if (userAge < 0 || userAge > 100) errors.userAge = "La edad debe estar entre 0 y 100";
   return errors;
 }
 
@@ -47,12 +47,12 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const payload: PersonalRequest = {
-    name: nameInput.value,
-    age: Number(ageInput.value),
+    userName: nameInput.value,
+    userAge: Number(ageInput.value),
   };
 
   // Validación mínima en cliente (para UX). La validación real es en Spring.
-  const clientErrors = validateClient(payload.name, payload.age);
+  const clientErrors = validateClient(payload.userName, payload.userAge);
   if (Object.keys(clientErrors).length > 0) {
     show({ error: "CLIENT_VALIDATION_ERROR", fieldErrors: clientErrors });
     return;

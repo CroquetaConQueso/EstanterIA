@@ -1,4 +1,4 @@
-type PersonalRequest = { userName: string; userPassword: string };
+type LoginRequest = { userName: string; userPassword: string };
 
 const form = document.querySelector<HTMLFormElement>("#loginForm")!;
 const usernameInput = document.querySelector<HTMLInputElement>("#username")!;
@@ -19,7 +19,7 @@ function validateClient(userName: string, userPassword: string): Record<string, 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const payload: PersonalRequest = {
+  const payload: LoginRequest = {
     userName: usernameInput.value,
     userPassword: passwordInput.value,
   };

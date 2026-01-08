@@ -19,6 +19,9 @@ public class PersonalRequest {
     @NotBlank(message= "El nombre es obligatorio")
     private String userName;
 
+    @NotBlank
+    private String userPassword;
+    
     @NotNull(message = "La edad es obligatoria")
     @Min(value=0 , message = "La edad no puede ser negativa")
     @Max(value=100, message = "La edad parece invalida (max 100)")
@@ -30,6 +33,5 @@ public class PersonalRequest {
         this.userName = userName;
         this.userAge = userAge;
     }
-
     
 }

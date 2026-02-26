@@ -1,5 +1,8 @@
 package com.proyectofincurso.estanteria.persistence.entity;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,8 +33,10 @@ public class UserAccount {
     @Column(name = "password_hash", nullable = false, length = 200)
     private String passwordHash;
 
-    @Column(nullable = false, length = 30)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false, columnDefinition = "user_role")
+    private UserRole role;
 
     @Column(nullable = false)
     private boolean enabled = true;

@@ -1,6 +1,7 @@
 package com.proyectofincurso.estanteria.auth;
 
 import com.proyectofincurso.estanteria.persistence.entity.UserAccount;
+import com.proyectofincurso.estanteria.persistence.entity.UserRole;
 import com.proyectofincurso.estanteria.persistence.repository.UserAccountRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,12 +20,12 @@ public class AuthSeed implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        seedUserIfMissing("superadmin", "superadmin@example.com", "superadmin123", "SUPERADMIN");
-        seedUserIfMissing("admin", "admin@example.com", "admin123", "ADMIN");
-        seedUserIfMissing("worker", "worker@example.com", "worker123", "WORKER");
+        seedUserIfMissing("superadmin", "superadmin@example.com", "superadmin123", UserRole.SUPERADMIN);
+        seedUserIfMissing("admin", "admin@example.com", "admin123", UserRole.ADMIN);
+        seedUserIfMissing("worker", "worker@example.com", "worker123", UserRole.WORKER);
     }
 
-    private void seedUserIfMissing(String username, String email, String rawPassword, String role) {
+    private void seedUserIfMissing(String username, String email, String rawPassword, UserRole role) {
         boolean exists = repo.findByUsernameIgnoreCase(username).isPresent();
         if (!exists) {
             UserAccount user = new UserAccount();

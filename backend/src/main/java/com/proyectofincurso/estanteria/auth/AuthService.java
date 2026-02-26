@@ -29,6 +29,6 @@ public class AuthService {
             throw new UnauthorizedException("Credenciales inválidas");
         }
 
-        return new AuthUser(user.getUsername(), user.getRole());
+        return new AuthUser(user.getUsername(), user.getRole().name());
     }
 }

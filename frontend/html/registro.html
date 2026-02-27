@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Registro · Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/registro.css" rel="stylesheet" />
+</head>
+<body>
+<header class="home-topbar">
+  <div class="home-inner">
+    <div class="home-left">
+      <a class="home-brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">
+          Suite<span class="brand-accent">Tienda</span>
+        </span>
+      </a>
+      <nav class="home-nav" aria-label="Principal">
+        <a class="home-nav-link" href="home.html">Inicio</a>
+        <a class="home-nav-link" href="planos.html">Planos</a>
+        <a class="home-nav-link" href="about.html">Acerca de</a>
+      </nav>
+    </div>
+    <div class="home-right">
+      <a class="home-link" href="login.html">Acceder</a>
+      <a class="home-link is-active" aria-current="page" href="registro.html">Registrarse</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <section class="shell">
+    <div class="intro">
+      <h1>Crear cuenta demo</h1>
+      <p>
+        Este formulario es un boceto del proceso de registro. La lógica real
+        de alta de usuarios se implementaría en el backend (Spring Boot + BD).
+      </p>
+      <ol class="steps">
+        <li>Datos básicos de la persona (nombre, correo).</li>
+        <li>Información de tienda y rol.</li>
+        <li>Confirmación de alta y acceso al panel.</li>
+      </ol>
+    </div>
+
+    <form class="card registro-form" id="form-registro">
+      <h2>Datos básicos</h2>
+
+      <label>
+        Nombre completo
+        <input type="text" id="reg-nombre" name="nombre" required />
+      </label>
+
+      <label>
+        Correo electrónico
+        <input type="email" id="reg-email" name="email" required />
+      </label>
+
+      <label>
+        Rol previsto
+        <select id="reg-rol" name="rol">
+          <option>Jefe/a de tienda</option>
+          <option selected>Encargado/a de sección</option>
+          <option>Reposición</option>
+          <option>Dirección regional</option>
+        </select>
+      </label>
+
+      <label>
+        Tienda principal
+        <input type="text" id="reg-tienda" name="tienda" placeholder="Ej: Supermercado Centro" />
+      </label>
+
+      <label>
+        Contraseña
+        <input type="password" id="reg-pass" name="password" required />
+      </label>
+
+      <label>
+        Repetir contraseña
+        <input type="password" id="reg-pass2" name="password2" required />
+      </label>
+
+      <label class="terms">
+        <input type="checkbox" id="reg-terms" required />
+        <span>Acepto las condiciones de uso (simulado, sin efecto real).</span>
+      </label>
+
+      <button class="btn primary" type="submit">Crear cuenta demo</button>
+
+      <p class="small">
+        ¿Ya tienes cuenta? <a href="login.html">Iniciar sesión</a>
+      </p>
+    </form>
+  </section>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda · Registro simulado · Boceto</small>
+</footer>
+
+<script src="../js/registro.js"></script>
+</body>
+</html>

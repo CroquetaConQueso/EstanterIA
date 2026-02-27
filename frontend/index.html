@@ -2,30 +2,89 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
+  <title>Suite Tienda — Visión IA para estanterías</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EstanterIA - Demo</title>
+  <link rel="icon" type="image/png" href="img/iconoFAV.png" />
+  <link href="css/index.css" rel="stylesheet" />
 </head>
 <body>
-  <h1>Demo: validar nombre y edad</h1>
+<header class="topbar">
+  <div class="inner topbar-inner">
+    <a class="brand" href="index.html">
+      <img src="img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+      <span class="brand-text">
+        Suite<span class="brand-accent">Tienda</span>
+      </span>
+    </a>
 
-  <p><a href="/acceso.html">Acceder</a></p>
+    <nav class="nav">
+      <a class="nav-link" href="html/login.html">Acceso</a>
+      <a class="nav-link" href="html/descarga.html">Descargar app</a>
+      <a class="nav-link" href="html/about.html">Acerca de</a>
+    </nav>
+  </div>
+</header>
 
-  <form id="personForm">
-    <label>
-      Nombre:
-      <input id="name" type="text" autocomplete="off" />
-    </label>
-    <br /><br />
-    <label>
-      Edad:
-      <input id="age" type="number" min="0" max="100" />
-    </label>
-    <br /><br />
-    <button type="submit">Enviar</button>
-  </form>
+<main class="page">
+  <section class="hero">
+    <div class="hero-main">
+      <p class="eyebrow">Prototipo de flujo completo</p>
+      <h1>IA que ve tus estanterías y te dice qué falta.</h1>
 
-  <pre id="out"></pre>
+      <p class="lead">
+        Suite Tienda combina planos digitales, visión por computador y lógica de negocio
+        para que sepas qué producto falta, en qué estantería y quién debe reponerlo.
+      </p>
 
-  <script type="module" src="/src/main.ts"></script>
+      <div class="hero-actions">
+        <a class="btn primary" href="html/login.html">Entrar / Crear cuenta</a>
+        <a class="btn ghost" href="html/home.html">Ver demo del panel</a>
+      </div>
+
+      <p class="note">
+        Este prototipo muestra el flujo completo: planos, inspecciones IA e inventario,
+        listo para conectar con un backend en Spring Boot.
+      </p>
+    </div>
+
+    <aside class="hero-summary card">
+      <h2>Resumen rápido</h2>
+      <ul>
+        <li>Planos 2D de almacén y tienda.</li>
+        <li>Inspecciones con IA sobre estanterías reales.</li>
+        <li>Hotspots de venta y gestión de huecos.</li>
+      </ul>
+      <p class="summary-note">
+        Lo que ves aquí es el boceto de la interfaz final que usarían encargados y reponedores.
+      </p>
+    </aside>
+  </section>
+
+  <section class="how">
+    <h2>Cómo funcionaría en tu negocio</h2>
+    <ol class="steps">
+      <li>
+        <h3>1. Digitaliza tu plano</h3>
+        <p>Subes o dibujas tu plano. Cada estantería pasa a ser un elemento controlable por IA.</p>
+      </li>
+      <li>
+        <h3>2. Conecta cámaras</h3>
+        <p>La IA analiza las imágenes, detecta productos y huecos y los asocia a cada estantería.</p>
+      </li>
+      <li>
+        <h3>3. Actúa por secciones</h3>
+        <p>Cada encargado ve sus huecos pendientes y actualiza el inventario desde el panel o la app.</p>
+      </li>
+    </ol>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="inner foot-inner">
+    <small>Suite Tienda · Landing de acceso · Boceto</small>
+  </div>
+</footer>
+
+<script src="js/index.js"></script>
 </body>
 </html>

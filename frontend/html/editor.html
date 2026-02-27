@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Editor de plano · Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/editor.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <div class="left">
+      <a class="brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">
+          Suite<span class="brand-accent">Tienda</span>
+        </span>
+      </a>
+      <nav class="nav">
+        <a class="nav-link" href="home.html">Inicio</a>
+        <a class="nav-link is-active" aria-current="page" href="planos.html">Planos</a>
+        <a class="nav-link" href="inspecciones.html">Inspecciones IA</a>
+        <a class="nav-link" href="inventario.html">Inventario</a>
+        <a class="nav-link" href="about.html">Acerca de</a>
+      </nav>
+    </div>
+    <div class="right">
+      <a class="user" href="perfil.html">Mi perfil</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <header class="page-head">
+    <p class="eyebrow">Boceto de editor</p>
+    <h1>Editor rápido de estanterías</h1>
+    <p>
+      Esta pantalla simula cómo podrías dibujar y anotar estanterías sobre un plano
+      2D. Todo ocurre en el navegador: al hacer clic sobre el lienzo se crean
+      “estanterías” de ejemplo y se muestran en la lista de la derecha.
+    </p>
+  </header>
+
+  <section class="layout">
+    <section class="panel panel-canvas">
+      <div class="canvas-frame">
+        <canvas id="plan-canvas" width="800" height="460"></canvas>
+      </div>
+      <p id="coord-info" class="coord-info">
+        Haz clic en el lienzo para crear o seleccionar estanterías. Las
+        coordenadas seleccionadas se muestran aquí.
+      </p>
+      <div class="canvas-actions">
+        <button type="button" id="btn-clear" class="btn ghost">
+          Limpiar boceto
+        </button>
+        <button type="button" id="btn-export" class="btn primary">
+          Exportar JSON (mock)
+        </button>
+      </div>
+    </section>
+
+    <aside class="panel panel-side">
+      <section class="side-block">
+        <h2>Estanterías en el plano</h2>
+        <p id="no-shelf-msg" class="empty-msg">
+          Aún no hay estanterías en este boceto. Haz clic en el lienzo para crear
+          una zona rectangular y verás aquí su ficha.
+        </p>
+        <ul id="shelf-list" class="shelf-list">
+          <!-- Rellenado desde editor.js -->
+        </ul>
+      </section>
+
+      <section class="side-block">
+        <h2>Ficha de estantería seleccionada</h2>
+        <form id="shelf-form" class="form">
+          <div id="form-fields" class="fields">
+            <div class="field">
+              <label for="f-name">Nombre</label>
+              <input type="text" id="f-name" name="f-name" />
+            </div>
+
+            <div class="field">
+              <label for="f-zone">Zona / sección</label>
+              <input
+                type="text"
+                id="f-zone"
+                name="f-zone"
+                placeholder="Frío, Snacks, Limpieza..."
+              />
+            </div>
+
+            <div class="field">
+              <label for="f-owner">Responsable</label>
+              <input
+                type="text"
+                id="f-owner"
+                name="f-owner"
+                placeholder="Nombre o rol del responsable"
+              />
+            </div>
+
+            <div class="field">
+              <label for="f-notes">Notas internas</label>
+              <textarea id="f-notes" name="f-notes" rows="3"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" id="btn-delete" class="btn danger">
+                Eliminar estantería
+              </button>
+              <button type="submit" class="btn primary">
+                Guardar cambios (mock)
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+    </aside>
+  </section>
+
+  <section class="panel panel-notes">
+    <h2>Cómo encaja este editor en el flujo</h2>
+    <p>
+      La idea es que este editor genere un JSON con la definición de estanterías,
+      zonas y responsables. Ese JSON se enviaría al backend de Spring Boot para:
+    </p>
+    <ul>
+      <li>Relacionar cada estantería con su zona física del plano.</li>
+      <li>Asociar inspecciones de IA a las coordenadas correspondientes.</li>
+      <li>Vincular tareas e incidencias a responsables concretos.</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda · Editor de plano · Boceto</small>
+</footer>
+
+<script src="../js/editor.js"></script>
+</body>
+</html>

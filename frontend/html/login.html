@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Acceso · Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/login.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <div class="left">
+      <a class="brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">
+          Suite<span class="brand-accent">Tienda</span>
+        </span>
+      </a>
+      <nav class="nav">
+        <a class="nav-link" href="../index.html">Inicio</a>
+        <a class="nav-link" href="about.html">Acerca de</a>
+        <a class="nav-link" href="descarga.html">Descargar app</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <section class="shell">
+    <div class="intro">
+      <h1>Acceso al panel</h1>
+      <p>
+        Esta pantalla simula el acceso al panel de Suite Tienda. En una versión
+        real, aquí habría autenticación contra el backend (Spring Boot, base de datos).
+      </p>
+      <ul>
+        <li>Credenciales de ejemplo, sin validación real.</li>
+        <li>Acceso a panel, planos, inspecciones e inventario.</li>
+        <li>Flujo pensado para jefes de zona y encargados.</li>
+      </ul>
+    </div>
+
+    <form class="login-card" id="form-login">
+      <h2>Iniciar sesión</h2>
+      <label>
+        Correo electrónico
+        <input
+          type="email"
+          id="login-email"
+          name="email"
+          autocomplete="username"
+          required
+        />
+      </label>
+
+      <label>
+        Contraseña
+        <input
+          type="password"
+          id="login-password"
+          name="password"
+          autocomplete="current-password"
+          required
+        />
+      </label>
+
+      <div class="row-inline">
+        <label class="remember">
+          <input type="checkbox" id="login-remember" />
+          <span>Recordar en este dispositivo</span>
+        </label>
+        <a href="#" class="link-muted">¿Has olvidado tu contraseña?</a>
+      </div>
+
+      <button class="btn primary" type="submit">Entrar</button>
+
+      <p class="small">
+        ¿Todavía no tienes cuenta? <a href="registro.html">Crear cuenta</a>
+      </p>
+    </form>
+  </section>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda · Acceso simulado · Boceto</small>
+</footer>
+
+<script src="../js/login.js"></script>
+</body>
+</html>

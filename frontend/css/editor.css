@@ -1,0 +1,396 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Paleta Suite Tienda */
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+
+  --bg: #050816;
+  --bg-elevated: #111827;
+  --bg-alt: #1f2937;
+
+  --border-soft: rgba(148, 163, 184, 0.4);
+
+  --text: #f9fafb;
+  --text-soft: #e5e7eb;
+
+  --accent: #f97316;
+  --accent-soft: rgba(249, 115, 22, 0.18);
+
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.16);
+}
+
+/* Fondo general */
+body {
+  background-color: #020617;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+
+.topbar {
+  border-bottom: 1px solid var(--border-soft);
+  background: rgba(3, 7, 18, 0.96);
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Marca */
+
+.brand {
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.brand-accent {
+  color: var(--accent);
+}
+
+.brand-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  margin-right: 0.55rem;
+}
+
+/* Navegación */
+
+.nav {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.nav-link {
+  text-decoration: none;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-link:hover {
+  background: #020617;
+  color: var(--text);
+}
+
+.nav-link.is-active,
+.nav-link[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.right .user {
+  text-decoration: none;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+/* Layout principal */
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1.8rem 1.25rem 2.5rem;
+  flex: 1;
+}
+
+.page-head {
+  margin-bottom: 1.4rem;
+}
+
+.eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fde68a;
+  margin-bottom: 0.25rem;
+}
+
+.page-head h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.page-head p {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  max-width: 50rem;
+}
+
+/* Paneles */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+  gap: 1.2rem;
+  margin-bottom: 1.1rem;
+}
+
+.panel {
+  border-radius: 1rem;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-elevated);
+  padding: 1rem 1.15rem;
+  font-size: 0.9rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.7);
+}
+
+.panel h2 {
+  font-size: 1.05rem;
+  margin-bottom: 0.4rem;
+}
+
+/* Lienzo */
+
+.canvas-frame {
+  border-radius: 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: radial-gradient(circle at top left,
+      rgba(249, 115, 22, 0.15) 0,
+      #020617 65%);
+  padding: 0.5rem;
+}
+
+#plan-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #020617;
+  border-radius: 0.55rem;
+}
+
+.coord-info {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  margin-top: 0.45rem;
+}
+
+.canvas-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+/* Botones */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease,
+              border-color 0.18s ease, box-shadow 0.18s ease,
+              transform 0.08s ease;
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: #111827;
+  border-color: #ea580c;
+  box-shadow: 0 8px 22px rgba(249, 115, 22, 0.4);
+}
+
+.btn.primary:hover {
+  background: #ea580c;
+  border-color: #c2410c;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(249, 115, 22, 0.55);
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--accent);
+  border-color: rgba(249, 115, 22, 0.7);
+}
+
+.btn.ghost:hover {
+  background: var(--accent-soft);
+}
+
+.btn.danger {
+  background: var(--danger-soft);
+  color: #fecaca;
+  border-color: rgba(239, 68, 68, 0.8);
+}
+
+.btn.danger:hover {
+  background: var(--danger);
+  color: #111827;
+}
+
+/* Panel derecho */
+
+.panel-side {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.side-block + .side-block {
+  border-top: 1px solid rgba(148, 163, 184, 0.4);
+  padding-top: 0.7rem;
+  margin-top: 0.2rem;
+}
+
+.empty-msg {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  margin-bottom: 0.5rem;
+}
+
+.shelf-list {
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+  max-height: 180px;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.shelf-list li {
+  border-radius: 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.shelf-list li:hover {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.shelf-name {
+  font-weight: 600;
+}
+
+.shelf-meta {
+  color: var(--text-soft);
+}
+
+/* Formulario */
+
+.form {
+  margin-top: 0.4rem;
+}
+
+.fields {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.field label {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+
+.field input,
+.field textarea {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: #020617;
+  color: var(--text);
+  font-size: 0.85rem;
+  padding: 0.4rem 0.55rem;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 2.4rem;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Utilidades */
+
+.hidden {
+  display: none !important;
+}
+
+/* Panel notas */
+
+.panel-notes ul {
+  list-style: disc;
+  padding-left: 1.1rem;
+  font-size: 0.86rem;
+  color: var(--text-soft);
+  margin-top: 0.4rem;
+}
+
+/* Footer */
+
+.foot {
+  border-top: 1px solid var(--border-soft);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+/* Responsive */
+
+@media (max-width: 980px) {
+  .inner
+  .page {
+    padding-inline: 0.75rem;
+  }
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

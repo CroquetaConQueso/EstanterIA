@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Panel · Suite Tienda</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+    <link href="../css/home.css" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="inner">
+        <div class="left">
+          <a class="brand" href="../index.html">
+            <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+            <span class="brand-text">
+              Suite<span class="brand-accent">Tienda</span>
+            </span>
+          </a>
+          <nav class="nav">
+            <a class="nav-link is-active" aria-current="page" href="home.html"
+              >Inicio</a
+            >
+            <a class="nav-link" href="planos.html">Planos</a>
+            <a class="nav-link" href="inspecciones.html">Inspecciones IA</a>
+            <a class="nav-link" href="inventario.html">Inventario</a>
+            <a class="nav-link" href="about.html">Acerca de</a>
+          </nav>
+        </div>
+        <div class="right">
+          <a class="user" href="perfil.html">Mi perfil</a>
+        </div>
+      </div>
+    </header>
+    <main class="page">
+      <header class="page-head">
+        <h1>Panel general</h1>
+        <p>
+          Desde aquí accedes a los planos, las inspecciones IA y el inventario
+          con hotspots. Es la vista que verían encargados y jefes de sección al
+          iniciar sesión.
+        </p>
+      </header>
+
+      <!-- Slider de planos -->
+      <section class="slider-section">
+        <div class="slider-head">
+          <div>
+            <h2>Recorridos por planos y estanterías</h2>
+            <p>
+              Pequeña muestra de cómo se vería el flujo de trabajo cuando la
+              IA empieza a marcar huecos y productos directamente sobre plano.
+            </p>
+          </div>
+          <div class="slider-legend">
+            <span class="legend-dot ok"></span> Correcto
+            <span class="legend-dot gap"></span> Huecos detectados
+          </div>
+        </div>
+
+        <div class="slider-shell">
+          <button
+            class="slider-btn prev"
+            id="slider-prev"
+            type="button"
+            aria-label="Anterior"
+          >
+            ‹
+          </button>
+
+          <div class="slider-frame">
+            <div class="slider-track" id="slider-track">
+              <article class="slide is-active">
+                <img
+                  src="../img/almacenCentral.jpg"
+                  alt="Plano almacén central"
+                />
+                <div class="slide-caption">
+                  <div class="caption-title">Almacén central</div>
+                  <div class="caption-meta">
+                    Est. A-12 · OK: palés detergente · Huecos: suavizante
+                    formato 3L
+                  </div>
+                </div>
+              </article>
+
+              <article class="slide">
+                <img
+                  src="../img/planoTiendaBarrio.jpg"
+                  alt="Plano tienda de barrio"
+                />
+                <div class="slide-caption">
+                  <div class="caption-title">Tienda de barrio</div>
+                  <div class="caption-meta">
+                    Est. B-05 · OK: snacks · Huecos: refrescos sin azúcar
+                  </div>
+                </div>
+              </article>
+
+              <article class="slide">
+                <img
+                  src="../img/planosSupermercado.png"
+                  alt="Plano supermercado"
+                />
+                <div class="slide-caption">
+                  <div class="caption-title">Supermercado — zona seca</div>
+                  <div class="caption-meta">
+                    Est. C-18 · OK: pasta y arroz · Huecos: legumbres premium
+                  </div>
+                </div>
+              </article>
+
+              <article class="slide">
+                <img
+                  src="../img/planosFerreteria.jpg"
+                  alt="Plano ferretería"
+                />
+                <div class="slide-caption">
+                  <div class="caption-title">
+                    Ferretería — pasillo tornillería
+                  </div>
+                  <div class="caption-meta">
+                    Est. F-03 · OK: tacos, brocas · Huecos: tornillos M6
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <button
+            class="slider-btn next"
+            id="slider-next"
+            type="button"
+            aria-label="Siguiente"
+          >
+            ›
+          </button>
+          <div class="slider-dots" id="slider-dots" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <!-- Tarjetas principales -->
+      <section class="cards">
+        <article class="card">
+          <h2>Planos y estanterías</h2>
+          <p>
+            Gestiona la estructura física de tu tienda: planos, estanterías y
+            zonas. Cada estantería se convierte en un elemento que la IA puede
+            entender.
+          </p>
+          <ul>
+            <li>Definición de estanterías y posiciones.</li>
+            <li>Subzonas por departamento o responsable.</li>
+            <li>Acceso directo al editor de plano.</li>
+          </ul>
+          <button
+            class="btn primary"
+            onclick="window.location.href='planos.html'"
+          >
+            Ir a Planos
+          </button>
+        </article>
+
+        <article class="card">
+          <h2>Últimas inspecciones IA</h2>
+          <p>
+            Consulta qué vieron las cámaras en cada estantería: productos
+            presentes, huecos y posibles errores frente al stock teórico.
+          </p>
+          <ul>
+            <li>Listado de inspecciones ordenadas por fecha.</li>
+            <li>Relación entre estanterías y zonas de tienda.</li>
+            <li>Acceso directo al detalle de cada inspección.</li>
+          </ul>
+          <button
+            class="btn ghost"
+            onclick="window.location.href='inspecciones.html'"
+          >
+            Ir a Inspecciones
+          </button>
+        </article>
+
+        <article class="card">
+          <h2>Inventario & hotspots</h2>
+          <p>
+            Visualiza el inventario desde el punto de vista de los huecos:
+            dónde faltan productos y qué impacto tienen en ventas.
+          </p>
+          <ul>
+            <li>Listado de estanterías con huecos detectados.</li>
+            <li>Vista rápida de productos afectados.</li>
+            <li>Filtro por tienda, zona y estado.</li>
+          </ul>
+          <button
+            class="btn ghost"
+            onclick="window.location.href='inventario.html'"
+          >
+            Ir a Inventario
+          </button>
+        </article>
+      </section>
+
+      <!-- Resumen de estado -->
+      <section class="summary">
+        <div class="summary-head">
+          <h2>Resumen de estado por tienda</h2>
+          <p>
+            Este módulo sería el punto de entrada para responsables de zona,
+            mostrando el nivel de “salud” de cada tienda o almacén.
+          </p>
+        </div>
+
+        <div class="summary-table-shell">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Tienda / Almacén</th>
+                <th>Estanterías controladas</th>
+                <th>Última inspección</th>
+                <th>Huecos detectados</th>
+                <th>Responsable(s)</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-resumen">
+              <!-- Rellenado por JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <small>Suite Tienda · Panel principal · Boceto</small>
+    </footer>
+
+    <script src="../js/home.js"></script>
+  </body>
+</html>

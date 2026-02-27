@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Descargar app · Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/descarga.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <div class="left">
+      <a class="brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">
+          Suite<span class="brand-accent">Tienda</span>
+        </span>
+      </a>
+      <nav class="nav">
+        <a class="nav-link" href="../index.html">Landing</a>
+        <a class="nav-link" href="login.html">Acceso</a>
+        <a class="nav-link is-active" aria-current="page" href="descarga.html">Descargar app</a>
+        <a class="nav-link" href="about.html">Acerca de</a>
+      </nav>
+    </div>
+    <div class="right">
+      <span class="top-note">Prototipo — descargas simuladas</span>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <header class="page-head">
+    <p class="eyebrow">Instaladores de ejemplo</p>
+    <h1>Descarga la app de Suite Tienda</h1>
+    <p>
+      Aquí verás cómo se presentaría la descarga de la aplicación para los
+      encargados y reponedores. Las descargas son <strong>simuladas</strong>:
+      al pulsar los botones se muestra un aviso y se registran en consola.
+    </p>
+  </header>
+
+  <section class="download-grid">
+    <article class="card download-card">
+      <div class="card-header">
+        <span class="badge">Escritorio</span>
+        <h2>Panel para PC / portátil</h2>
+        <p>
+          Instalador pensado para ejecutarse en el ordenador de la oficina:
+          gestión de planos, inspecciones IA e inventario desde un único panel.
+        </p>
+      </div>
+      <ul class="features">
+        <li>Vista completa de todos los planos y estanterías.</li>
+        <li>Acceso a las inspecciones IA y al historial.</li>
+        <li>Gestión de huecos, tareas y responsables.</li>
+      </ul>
+      <button id="btn-descarga-escritorio" class="btn primary">
+        Descargar para escritorio (mock)
+      </button>
+    </article>
+
+    <article class="card download-card">
+      <div class="card-header">
+        <span class="badge badge-alt">Móvil</span>
+        <h2>App para móvil de reponedores</h2>
+        <p>
+          Aplicación ligera para que los encargados recorran la tienda, vean sus
+          huecos pendientes y confirmen reposiciones desde el propio pasillo.
+        </p>
+      </div>
+      <ul class="features">
+        <li>Lista de huecos por sección o estantería.</li>
+        <li>Confirmación rápida de reposición.</li>
+        <li>Uso de la cámara para inspecciones puntuales.</li>
+      </ul>
+      <button id="btn-descarga-movil" class="btn ghost">
+        Descargar app móvil (mock)
+      </button>
+    </article>
+  </section>
+
+  <section class="card requirements">
+    <h2>Requisitos previstos</h2>
+    <ul>
+      <li>Sistema de ejemplo: Windows / Linux para el panel de escritorio.</li>
+      <li>Para la app móvil: Android reciente con cámara funcional.</li>
+      <li>Conexión estable con el backend de Suite Tienda.</li>
+      <li>Cuenta de usuario creada desde el panel web.</li>
+    </ul>
+    <p class="note">
+      En la versión final, estos botones descargarían los instaladores reales
+      o redirigirían a la tienda de aplicaciones correspondiente.
+    </p>
+  </section>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda · Descarga de la app · Boceto</small>
+</footer>
+
+<script src="../js/descarga.js"></script>
+</body>
+</html>

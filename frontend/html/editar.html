@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Editar plano · Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/editar.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <div class="left">
+      <a class="brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">
+          Suite<span class="brand-accent">Tienda</span>
+        </span>
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <a class="nav-link" href="home.html">Inicio</a>
+        <a class="nav-link is-active" aria-current="page" href="planos.html">Planos</a>
+        <a class="nav-link" href="inspecciones.html">Inspecciones IA</a>
+        <a class="nav-link" href="inventario.html">Inventario</a>
+        <a class="nav-link" href="about.html">Acerca de</a>
+      </nav>
+    </div>
+    <div class="right">
+      <a class="user" href="perfil.html">Mi perfil</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <header class="page-head">
+    <p class="eyebrow">Edición de plano</p>
+    <h1 id="titulo-plano">Editar plano</h1>
+    <p id="descripcion-plano" class="page-desc">
+      Aquí aparecerá un resumen del plano seleccionado (tipo, estanterías, etc.).
+      El texto se rellena automáticamente según el plano que cargue el mock.
+    </p>
+  </header>
+
+  <section class="layout">
+    <section class="panel">
+      <h2>Datos del plano</h2>
+      <form id="form-plano" class="form">
+        <div class="field">
+          <label for="plano-nombre">Nombre del plano</label>
+          <input type="text" id="plano-nombre" name="plano-nombre" />
+        </div>
+
+        <div class="field">
+          <label for="plano-tipo">Tipo de plano</label>
+          <select id="plano-tipo" name="plano-tipo">
+            <option value="almacen">Almacén</option>
+            <option value="supermercado">Supermercado</option>
+            <option value="tienda-barrio">Tienda de barrio</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="plano-subzonas">Subzonas y secciones</label>
+          <textarea id="plano-subzonas" name="plano-subzonas" rows="3"
+            placeholder="Recepción, Seco, Frío, Pasillos A1-A5, etc."></textarea>
+        </div>
+
+        <div class="field">
+          <label for="plano-responsables">Responsables</label>
+          <input
+            type="text"
+            id="plano-responsables"
+            name="plano-responsables"
+            placeholder="Nombres o roles separados por punto y coma"
+          />
+        </div>
+
+        <div class="field">
+          <label for="plano-estado">Estado de la IA</label>
+          <select id="plano-estado" name="plano-estado">
+            <option value="ok">OK — Plano entrenado</option>
+            <option value="pendiente">Pendiente de entrenar</option>
+            <option value="revisar">En revisión</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn primary">Guardar cambios (mock)</button>
+      </form>
+    </section>
+
+    <section class="panel panel-preview">
+      <h2>Vista esquemática</h2>
+      <p class="hint">
+        La cuadrícula resume cuántas estanterías tiene el plano. El script crea
+        celdas de ejemplo para mostrar recepción, seco, frío y zonas generales.
+      </p>
+      <div id="preview-grid" class="preview-grid">
+        <!-- Las celdas se generan desde editar.js -->
+      </div>
+    </section>
+  </section>
+
+  <section class="panel panel-notes">
+    <h2>Cómo se conectará esto con la IA</h2>
+    <p>
+      En este boceto puedes ajustar la estructura de zonas y responsables. En la
+      versión real, cada estantería y subzona se sincronizará con:
+    </p>
+    <ul>
+      <li>Los resultados de Visión por Computador sobre cada estantería.</li>
+      <li>El inventario asociado a los productos que “viven” en esa estantería.</li>
+      <li>Las tareas que verá cada responsable en su app móvil.</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda · Editor de plano · Boceto</small>
+</footer>
+
+<script src="../js/editar.js"></script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Inventario & hotspots · Suite Tienda</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+    <link href="../css/inventario.css" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="inner">
+        <div class="left">
+          <a class="brand" href="../index.html">
+          <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+          <span class="brand-text">
+            Suite<span class="brand-accent">Tienda</span>
+          </span>
+        </a>
+          <nav class="nav">
+            <a class="nav-link" href="home.html">Inicio</a>
+            <a class="nav-link" href="planos.html">Planos</a>
+            <a class="nav-link" href="inspecciones.html">Inspecciones IA</a>
+            <a
+              class="nav-link is-active"
+              aria-current="page"
+              href="inventario.html"
+              >Inventario</a
+            >
+            <a class="nav-link" href="about.html">Acerca de</a>
+          </nav>
+        </div>
+        <div class="right">
+          <a class="user" href="perfil.html">Mi perfil</a>
+        </div>
+      </div>
+    </header>
+    <main class="page">
+      <header class="page-head">
+        <div>
+          <h1>Inventario desde el punto de vista de los huecos</h1>
+          <p>
+            Esta vista está pensada para responsables de tienda: no sólo se ven
+            los productos, sino dónde faltan y qué impacto tiene en ventas.
+          </p>
+        </div>
+        <div class="filters-inline">
+          <label>
+            Tienda / Plano
+            <select id="f-tienda">
+              <option value="">Todas</option>
+              <option value="Almacén Central">Almacén Central</option>
+              <option value="Supermercado — zona seca">
+                Supermercado — zona seca
+              </option>
+              <option value="Tienda de barrio">Tienda de barrio</option>
+              <option value="Ferretería Centro">Ferretería Centro</option>
+            </select>
+          </label>
+          <label>
+            Estado
+            <select id="f-estado">
+              <option value="">Todos</option>
+              <option value="ok">Sin huecos</option>
+              <option value="gaps">Con huecos</option>
+            </select>
+          </label>
+          <label>
+            Buscar
+            <input
+              type="text"
+              id="f-busqueda"
+              placeholder="Ej: arroz, F-03, TB-01..."
+            />
+          </label>
+          <button class="btn ghost" id="btn-limpiar-inv" type="button">
+            Limpiar
+          </button>
+        </div>
+      </header>
+
+      <section class="layout">
+        <section class="list-shell">
+          <h2>Estanterías e incidencias</h2>
+          <p class="help">
+            Cada fila representa una estantería o sección, junto con el número
+            de productos correctos y de huecos detectados.
+          </p>
+
+          <div class="table-shell">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Tienda / Plano</th>
+                  <th>Estantería</th>
+                  <th>Hotspot ventas</th>
+                  <th>Productos OK</th>
+                  <th>Huecos</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-inventario">
+                <!-- Rellenado por JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="detail-shell">
+          <h2>Detalle de estantería</h2>
+          <p class="help">
+            Aquí se mostraría el detalle de productos, huecos y recomendaciones
+            de reposición para la estantería seleccionada.
+          </p>
+
+          <div class="detail-block">
+            <h3>Resumen</h3>
+            <ul id="detalle-inv-resumen">
+              <!-- mock -->
+            </ul>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-block">
+              <h3>Productos OK</h3>
+              <ul id="detalle-inv-ok">
+                <!-- mock -->
+              </ul>
+            </div>
+            <div class="detail-block">
+              <h3>Huecos detectados</h3>
+              <ul id="detalle-inv-gaps">
+                <!-- mock -->
+              </ul>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <small>Suite Tienda · Inventario & hotspots · Boceto</small>
+    </footer>
+
+    <script src="../js/inventario.js"></script>
+  </body>
+</html>

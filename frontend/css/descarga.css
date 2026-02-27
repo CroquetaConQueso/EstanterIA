@@ -1,0 +1,303 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Paleta Suite Tienda */
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+
+  --bg: #050816;
+  --bg-elevated: #111827;
+  --bg-alt: #1f2937;
+
+  --border-soft: rgba(148, 163, 184, 0.4);
+
+  --text: #f9fafb;
+  --text-soft: #e5e7eb;
+
+  --accent: #f97316;
+  --accent-soft: rgba(249, 115, 22, 0.18);
+}
+
+/* Fondo general */
+body {
+  background-color: #020617;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+
+.topbar {
+  border-bottom: 1px solid var(--border-soft);
+  background: rgba(3, 7, 18, 0.96);
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Marca */
+
+.brand {
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.brand-accent {
+  color: var(--accent);
+}
+
+.brand-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  margin-right: 0.55rem;
+}
+
+/* Navegación */
+
+.nav {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.nav-link {
+  text-decoration: none;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-link:hover {
+  background: #020617;
+  color: var(--text);
+}
+
+.nav-link.is-active,
+.nav-link[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.right .top-note {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+}
+
+/* Layout principal */
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1.8rem 1.25rem 2.5rem;
+  flex: 1;
+}
+
+.page-head {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fde68a;
+  margin-bottom: 0.25rem;
+}
+
+.page-head h1 {
+  font-size: 1.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.page-head p {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  max-width: 48rem;
+}
+
+/* Tarjetas de descarga */
+
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 1.3rem;
+}
+
+.card {
+  border-radius: 1rem;
+  border: 1px solid var(--border-soft);
+  background: radial-gradient(circle at top left,
+      rgba(249, 115, 22, 0.12) 0,
+      var(--bg-elevated) 55%,
+      #020617 100%);
+  padding: 1rem 1.15rem 1.15rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.7);
+  font-size: 0.9rem;
+}
+
+.card-header h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+}
+
+.card-header p {
+  font-size: 0.86rem;
+  color: var(--text-soft);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+
+.badge-alt {
+  background: rgba(250, 204, 21, 0.2);
+  color: #facc15;
+}
+
+.features {
+  list-style: disc;
+  padding-left: 1.1rem;
+  margin: 0.5rem 0 0.8rem;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+/* Botones */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease,
+              border-color 0.18s ease, box-shadow 0.18s ease,
+              transform 0.08s ease;
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: #111827;
+  border-color: #ea580c;
+  box-shadow: 0 8px 22px rgba(249, 115, 22, 0.4);
+}
+
+.btn.primary:hover {
+  background: #ea580c;
+  border-color: #c2410c;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(249, 115, 22, 0.55);
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--accent);
+  border-color: rgba(249, 115, 22, 0.7);
+}
+
+.btn.ghost:hover {
+  background: var(--accent-soft);
+}
+
+/* Requisitos */
+
+.requirements h2 {
+  font-size: 1rem;
+  margin-bottom: 0.3rem;
+}
+
+.requirements ul {
+  list-style: disc;
+  padding-left: 1.1rem;
+  font-size: 0.86rem;
+  color: var(--text-soft);
+  margin-bottom: 0.4rem;
+}
+
+.requirements .note {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  border-left: 2px solid var(--accent);
+  padding-left: 0.5rem;
+}
+
+/* Footer */
+
+.foot {
+  border-top: 1px solid var(--border-soft);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+/* Responsive */
+
+@media (max-width: 860px) {
+  .inner,
+  .page {
+    padding-inline: 0.75rem;
+  }
+
+  .inner {
+    gap: 0.75rem;
+  }
+
+  .nav {
+    gap: 0.5rem;
+  }
+}

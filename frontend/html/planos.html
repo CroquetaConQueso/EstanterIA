@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Planos y estanterías · Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/planos.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <div class="left">
+      <a class="brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">
+          Suite<span class="brand-accent">Tienda</span>
+        </span>
+      </a>
+      <nav class="nav">
+        <a class="nav-link" href="home.html">Inicio</a>
+        <a class="nav-link is-active" aria-current="page" href="planos.html">Planos</a>
+        <a class="nav-link" href="inspecciones.html">Inspecciones IA</a>
+        <a class="nav-link" href="inventario.html">Inventario</a>
+        <a class="nav-link" href="about.html">Acerca de</a>
+      </nav>
+    </div>
+    <div class="right">
+      <a class="user" href="perfil.html">Mi perfil</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <header class="page-head">
+    <div>
+      <h1>Planos y estructura de estanterías</h1>
+      <p>
+        Esta pantalla muestra cómo podría gestionarse la lista de planos, con
+        una vista previa básica y acceso al editor.
+      </p>
+    </div>
+    <div class="toolbar">
+      <button class="btn ghost" type="button" onclick="window.location.href='editor.html'">
+        Abrir editor de plano
+      </button>
+    </div>
+  </header>
+
+  <section class="layout">
+    <section class="col-list">
+      <h2>Planos disponibles</h2>
+      <p class="help">
+        Los elementos son mock. En una versión real, se cargarían desde el backend
+        a partir de ficheros JSON con la estructura del plano.
+      </p>
+
+      <ul class="plan-list" id="lista-planos">
+        <li class="plan-item is-active" data-id="almacen-central">
+          <div class="plan-title">Almacén Central</div>
+          <div class="plan-meta">12 estanterías · 3 zonas</div>
+        </li>
+        <li class="plan-item" data-id="supermercado-seco">
+          <div class="plan-title">Supermercado — zona seca</div>
+          <div class="plan-meta">18 estanterías · 5 zonas</div>
+        </li>
+        <li class="plan-item" data-id="tienda-barrio">
+          <div class="plan-title">Tienda de barrio</div>
+          <div class="plan-meta">8 estanterías · 2 zonas</div>
+        </li>
+        <li class="plan-item" data-id="ferreteria-centro">
+          <div class="plan-title">Ferretería Centro</div>
+          <div class="plan-meta">10 estanterías · 4 pasillos</div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="col-main">
+      <div class="card preview-card">
+        <h2>Vista previa del plano</h2>
+        <div class="preview-shell" id="preview-plano">
+          <span>Render 2D (mock) del plano seleccionado.</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Detalle del plano y estanterías</h2>
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h3>Resumen</h3>
+            <ul id="detalle-plano">
+              <li>Plano: Almacén Central (mock)</li>
+              <li>Estanterías: 12</li>
+              <li>Zonas: 3 (Recepción, Pasillo A, Pasillo B)</li>
+            </ul>
+          </div>
+          <div class="detail-block">
+            <h3>Estanterías principales</h3>
+            <ul id="detalle-estanterias">
+              <li>Est. A-01 — detergentes</li>
+              <li>Est. A-05 — suavizantes</li>
+              <li>Est. B-02 — papel / celulosa</li>
+            </ul>
+          </div>
+          <div class="detail-block">
+            <h3>Conexión con IA</h3>
+            <p class="help">
+              En la versión conectada, cada estantería de este plano se
+              mapearía a las cámaras/zonas que la IA utiliza para inspeccionar
+              productos y huecos.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda · Planos & estanterías · Boceto</small>
+</footer>
+
+<script src="../js/planos.js"></script>
+</body>
+</html>

@@ -16,8 +16,8 @@ public class AuthService {
         this.encoder = encoder;
     }
 
-    public AuthUser authenticate(String userName, String rawPassword) {
-        UserAccount user = repo.findByUsernameIgnoreCase(userName)
+    public AuthUser authenticate(String email, String rawPassword) {
+        UserAccount user = repo.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new UnauthorizedException("Credenciales inválidas"));
 
         if (!user.isEnabled()) {

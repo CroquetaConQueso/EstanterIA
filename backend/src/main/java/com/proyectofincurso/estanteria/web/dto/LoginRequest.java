@@ -8,8 +8,9 @@ import lombok.Data;
 public class LoginRequest {
 
     @NotBlank(message = "El usuario es obligatorio")
-    private String userName;
+    @Email(message = "El email no tiene un formato válido")
+    private String email;
 
     @NotBlank(message = "La contraseña es obligatoria")
-    private String userPassword;
+    private String password;
 }

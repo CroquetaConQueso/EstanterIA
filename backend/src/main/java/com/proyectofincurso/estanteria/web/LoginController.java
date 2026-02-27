@@ -23,7 +23,7 @@ public class LoginController {
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public LoginResponse login(@Valid @RequestBody LoginRequest req) {
-        AuthUser user = authService.authenticate(req.getUserName(), req.getUserPassword());
+        AuthUser user = authService.authenticate(req.getEmail(), req.getPassword());
         String token = sessionService.createSession(user);
         return new LoginResponse("LOGIN_OK", user.userName(), user.role(), token);
     }

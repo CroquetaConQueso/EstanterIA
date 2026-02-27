@@ -51,8 +51,8 @@ if (form && useremailInput && userpasswordInput) {
         setError(null);
         //Construimos el json con los datos tomados
         const payload: LoginRequest = {
-            email : useremailInput.value,
-            password : userpasswordInput.value
+            email : useremailInput.value.trim(),
+            password : userpasswordInput.value,
         };
 
         //En el caso que tengamos un error devolvemos este
@@ -99,7 +99,7 @@ if (form && useremailInput && userpasswordInput) {
 
             show(login);
             //Aquí es donde se redirige tras haber conseguido realizar los pasos que deseamos
-            window.location.href = "/home.html";
+            window.location.href = "/html/home.html";
         }catch{
             setError("No se pudo conectar con el servidor.");
             show({error:"NETWORK_ERROR"});

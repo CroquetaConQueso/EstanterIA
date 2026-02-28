@@ -27,4 +27,10 @@ public class LoginController {
         String token = sessionService.createSession(user);
         return new LoginResponse("LOGIN_OK", user.userName(), user.role(), token);
     }
+
+    @PostMapping(value = "/registro", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public RegistroResponse registro(@Valid @RequestBody RegistroRequest req) {
+        Auth user = authService.verificar(req.getUsername(),req.getEmail(), req.getPassword());
+        return new RegistroResponse("REGISTRO_OK");
+    }
 }

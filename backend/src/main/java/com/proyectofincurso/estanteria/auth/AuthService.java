@@ -31,4 +31,21 @@ public class AuthService {
 
         return new AuthUser(user.getUsername(), user.getRole().name());
     }
+
+    public void verificar(String username, String email, String role, String tienda, String password){
+        if(repo.existsByUsernameIgnoreCase(username)){    
+            new UnauthorizedException("Ya existe un usuario con ese nombre");
+        }else if(repo.existsByEmailIgnoreCase(email)){
+            new UnauthorizedException("Ya existe un usuario con ese email");
+        }
+
+        UserAccount user = new UserAccount();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPasswordHash(encoder.encode(password));
+        user.setRole(UserRole.WORKER);
+        user.setEnabled(true);
+
+        repo.save(user);
+    }
 }

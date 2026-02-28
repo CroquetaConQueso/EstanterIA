@@ -5,6 +5,8 @@ import com.proyectofincurso.estanteria.auth.AuthUser;
 import com.proyectofincurso.estanteria.auth.SessionService;
 import com.proyectofincurso.estanteria.web.dto.LoginRequest;
 import com.proyectofincurso.estanteria.web.dto.LoginResponse;
+import com.proyectofincurso.estanteria.web.dto.RegistroResponse;
+import com.proyectofincurso.estanteria.web.dto.RegistroRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +32,7 @@ public class LoginController {
 
     @PostMapping(value = "/registro", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public RegistroResponse registro(@Valid @RequestBody RegistroRequest req) {
-        Auth user = authService.verificar(req.getUsername(),req.getEmail(), req.getPassword());
+        authService.verificar(req.getUsername(),req.getEmail(), req.getPassword());
         return new RegistroResponse("REGISTRO_OK");
     }
 }

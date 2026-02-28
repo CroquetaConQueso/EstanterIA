@@ -3,6 +3,7 @@ package com.proyectofincurso.estanteria.auth;
 import com.proyectofincurso.estanteria.persistence.entity.UserAccount;
 import com.proyectofincurso.estanteria.persistence.repository.UserAccountRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.proyectofincurso.estanteria.persistence.entity.UserRole;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,11 +33,11 @@ public class AuthService {
         return new AuthUser(user.getUsername(), user.getRole().name());
     }
 
-    public void verificar(String username, String email, String role, String tienda, String password){
+    public void verificar(String username, String email, String password){
         if(repo.existsByUsernameIgnoreCase(username)){    
-            new UnauthorizedException("Ya existe un usuario con ese nombre");
+            throw new UnauthorizedException("Ya existe un usuario con ese nombre");
         }else if(repo.existsByEmailIgnoreCase(email)){
-            new UnauthorizedException("Ya existe un usuario con ese email");
+            throw new UnauthorizedException("Ya existe un usuario con ese email");
         }
 
         UserAccount user = new UserAccount();

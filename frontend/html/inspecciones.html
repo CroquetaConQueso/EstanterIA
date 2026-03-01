@@ -17,13 +17,17 @@
           Suite<span class="brand-accent">Tienda</span>
         </span>
       </a>
+
+      <!-- Navegación consistente con home/editor/editar -->
       <nav class="nav" aria-label="Principal">
         <a class="nav-link" href="home.html">Inicio</a>
         <a class="nav-link" href="planos.html">Planos</a>
         <a class="nav-link is-active" aria-current="page" href="inspecciones.html">Inspecciones IA</a>
+        <a class="nav-link" href="inventario.html">Inventario</a>
         <a class="nav-link" href="about.html">Acerca de</a>
       </nav>
     </div>
+
     <div class="right">
       <a class="user" href="perfil.html">Mi perfil</a>
     </div>
@@ -35,35 +39,46 @@
     <div>
       <h1>Inspecciones con Visión por Computador</h1>
       <p>
-        Esta pantalla simula cómo se verían las inspecciones realizadas sobre
-        las estanterías: fotos, hora, huecos detectados y responsables.
+        Listado y detalle de inspecciones. En el MVP, se crea y se lista desde backend;
+        el análisis IA vendrá después.
       </p>
     </div>
+
     <div class="filters-inline">
       <label>
         Buscar por plano
         <input type="text" id="filtro-plano" placeholder="Almacén, Supermercado, Tienda..." />
       </label>
+
       <label>
         Estado
         <select id="filtro-estado">
           <option value="">Todos</option>
-          <option value="ok">Sin huecos</option>
-          <option value="gaps">Con huecos</option>
+          <option value="CREADA">CREADA</option>
+          <option value="ACTUALIZADA">ACTUALIZADA</option>
+          <option value="LISTA">LISTA</option>
         </select>
       </label>
+
       <button class="btn ghost" id="btn-limpiar-filtros" type="button">
         Limpiar filtros
       </button>
+
+      <a class="btn primary" href="inspeccion_nueva.html" id="btn-nueva-inspeccion">
+        Nueva inspección
+      </a>
     </div>
   </header>
+
+  <!-- Feedback (lo pinta TS/JS) -->
+  <p class="form-error" id="inspecciones-error" role="alert" aria-live="polite" hidden></p>
+  <p class="help" id="inspecciones-success" hidden></p>
 
   <section class="layout">
     <section class="list-shell">
       <h2>Listado de inspecciones</h2>
       <p class="help">
-        Los datos aquí mostrados son de ejemplo (mock). En una versión real,
-        se cargarían desde el backend con información de IA.
+        Selecciona una inspección para ver el detalle. En el MVP, esto sale de la BD.
       </p>
 
       <div class="table-shell">
@@ -78,11 +93,12 @@
               <th>Productos OK</th>
               <th>Huecos</th>
               <th>Estado</th>
-              <th></th>
+              <th>Acciones</th>
             </tr>
           </thead>
+
           <tbody id="tbody-inspecciones">
-            <!-- Rellenado por JS (mock) -->
+            <!-- Rellenado por /src/pages/inspecciones.ts -->
           </tbody>
         </table>
       </div>
@@ -91,42 +107,38 @@
     <aside class="detail-shell">
       <h2>Detalle de la inspección</h2>
       <p class="help">
-        Al seleccionar una inspección en la tabla, se mostraría aquí la foto,
-        el detalle de productos y los huecos detectados sobre la estantería.
+        Al seleccionar una inspección se mostrará aquí el resumen, productos y huecos.
       </p>
 
       <div class="photo-placeholder" id="photo-placeholder">
-        <span>Vista de estantería (mock)</span>
+        <span>Vista de estantería</span>
       </div>
 
       <div class="detail-grid">
         <div class="detail-block">
           <h3>Resumen</h3>
-          <ul id="detalle-resumen">
-            <!-- llenado por JS -->
-          </ul>
+          <ul id="detalle-resumen"></ul>
         </div>
         <div class="detail-block">
           <h3>Productos OK</h3>
-          <ul id="detalle-ok">
-            <!-- llenado por JS -->
-          </ul>
+          <ul id="detalle-ok"></ul>
         </div>
         <div class="detail-block">
           <h3>Huecos detectados</h3>
-          <ul id="detalle-gaps">
-            <!-- llenado por JS -->
-          </ul>
+          <ul id="detalle-gaps"></ul>
         </div>
       </div>
+
+      <p class="form-error" id="detalle-error" role="alert" aria-live="polite" hidden></p>
     </aside>
   </section>
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda · Inspecciones IA · Boceto</small>
+  <small>Suite Tienda · Inspecciones IA · MVP</small>
 </footer>
 
-<script src="../js/inspecciones.js"></script>
+<!-- Vite + TS -->
+<script type="module" src="/src/pages/inspecciones.ts"></script>
 </body>
 </html>

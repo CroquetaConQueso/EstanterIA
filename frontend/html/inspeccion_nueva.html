@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Nueva inspección · Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <!-- CSS exclusivo para esta página -->
+  <link href="../css/inspeccion_nueva.css" rel="stylesheet" />
+</head>
+
+<body>
+<header class="topbar">
+  <div class="inner">
+    <div class="left">
+      <a class="brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">
+          Suite<span class="brand-accent">Tienda</span>
+        </span>
+      </a>
+
+      <!-- Navegación consistente con home/editor/editar -->
+      <nav class="nav" aria-label="Principal">
+        <a class="nav-link" href="home.html">Inicio</a>
+        <a class="nav-link" href="planos.html">Planos</a>
+        <a class="nav-link is-active" aria-current="page" href="inspecciones.html">Inspecciones IA</a>
+        <a class="nav-link" href="inventario.html">Inventario</a>
+        <a class="nav-link" href="about.html">Acerca de</a>
+      </nav>
+    </div>
+
+    <div class="right">
+      <a class="user" href="perfil.html">Mi perfil</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <header class="page-head">
+    <p class="eyebrow">Flujo de trabajo</p>
+    <h1>Nueva inspección</h1>
+    <p class="page-desc">
+      Crea una inspección base (sin IA). La imagen y el análisis se enganchan después sin romper el flujo.
+    </p>
+  </header>
+
+  <section class="layout">
+    <section class="panel form-panel">
+      <div class="panel-head">
+        <h2>Datos de la inspección</h2>
+        <p class="hint">
+          MVP: plano + código de estantería + notas. El estado inicial se marca como CREADA.
+        </p>
+      </div>
+
+      <form id="form-inspeccion-nueva" class="form">
+        <div class="fields">
+          <div class="field">
+            <label for="insp-plano">Plano</label>
+            <input type="text" id="insp-plano" name="plano" placeholder="Ej: Almacén - Zona seca" required />
+          </div>
+
+          <div class="field">
+            <label for="insp-estanteria">Código de estantería</label>
+            <input type="text" id="insp-estanteria" name="estanteriaCodigo" placeholder="Ej: S-01" required />
+          </div>
+
+          <div class="field">
+            <label for="insp-estado">Estado</label>
+            <select id="insp-estado" name="estado">
+              <option value="CREADA" selected>CREADA</option>
+              <option value="ACTUALIZADA">ACTUALIZADA</option>
+              <option value="LISTA">LISTA</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="insp-notas">Notas (opcional)</label>
+            <textarea id="insp-notas" name="notas" rows="4" placeholder="Observaciones rápidas..."></textarea>
+          </div>
+        </div>
+
+        <p class="form-error" id="insp-error" role="alert" aria-live="polite" hidden></p>
+        <p class="form-success" id="insp-success" hidden></p>
+
+        <div class="actions">
+          <button class="btn primary" type="submit">Crear inspección</button>
+          <a class="btn ghost" href="inspecciones.html">Volver</a>
+        </div>
+
+        <p class="micro">
+          Tras crear, se vuelve al listado y se selecciona la inspección nueva.
+        </p>
+      </form>
+    </section>
+
+    <aside class="panel side-panel">
+      <h2>Qué se crea exactamente</h2>
+      <ul class="bullets">
+        <li><strong>Inspección</strong> con fecha, plano y estantería.</li>
+        <li><strong>Estado</strong> inicial (CREADA) para el flujo.</li>
+        <li><strong>Notas</strong> para contexto humano.</li>
+      </ul>
+
+      <div class="divider"></div>
+
+      <h3>Encaje con IA</h3>
+      <p class="hint">
+        Cuando metas YOLO, esta inspección será el “contenedor”:
+      </p>
+      <ol class="steps">
+        <li>Subir imagen asociada</li>
+        <li>Lanzar análisis</li>
+        <li>Guardar resultado</li>
+        <li>Actualizar estado</li>
+      </ol>
+    </aside>
+  </section>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda · Nueva inspección · MVP</small>
+</footer>
+
+<script type="module" src="/src/pages/inspeccion_nueva.ts"></script>
+</body>
+</html>

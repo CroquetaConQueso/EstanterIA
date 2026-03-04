@@ -34,6 +34,8 @@ public class Inspeccion {
     @Column(name = "estado", nullable = false, length = 20)
     private EstanteriaEstado estado;
 
+    //Se ejecuta antes den insert, nos permite no tener que setear a mano cada vez que 
+    // se haga createdAt = Instant.now() o se establezca un ENUM
     @PrePersist
     void prePersist() {
         if (createdAt == null) createdAt = Instant.now();

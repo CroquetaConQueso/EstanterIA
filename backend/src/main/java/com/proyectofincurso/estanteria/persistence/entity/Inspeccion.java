@@ -5,16 +5,24 @@ import lombok.*;
 
 import java.time.Instant;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 @Entity
-@Table(name = "inspeccion", uniqueConstraints={
-    @UniqueConstraint(name="uk_inspeccion_estanteria_codigo", columnNames="estanteria_codigo")
-},indexes={
-    @Index(name="")
-})
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
+@Table(
+    name = "inspeccion",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_inspeccion_estanteria_codigo",
+            columnNames = "estanteria_codigo"
+        )
+    },
+    indexes = {
+        @Index(name = "idx_inspeccion_created_at", columnList = "created_at"),
+        @Index(name = "idx_inspeccion_estanteria_codigo", columnList = "estanteria_codigo")
+    }
+)
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 public class Inspeccion {
 
     @Id
@@ -22,7 +30,8 @@ public class Inspeccion {
     @Column(name = "inspeccion_id")
     private Long id;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "estanteria_codigo", nullable = false, length = 50)
@@ -42,7 +51,7 @@ public class Inspeccion {
     // se haga createdAt = Instant.now() o se establezca un ENUM
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = Instant.now();
         if (estado == null) estado = EstanteriaEstado.CREADA;
+        // createdAt lo rellena @CreationTimestamp; 
     }
 }

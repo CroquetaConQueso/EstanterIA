@@ -6,7 +6,11 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "inspeccion")
+@Table(name = "inspeccion", uniqueConstraints={
+    @UniqueConstraint(name="uk_inspeccion_estanteria_codigo", columnNames="estanteria_codigo")
+},indexes={
+    @Index(name="")
+})
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

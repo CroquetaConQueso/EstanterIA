@@ -1,9 +1,8 @@
 import cv2
 
-# Cambia esta URL por la IP real que te da la app del móvil
-CAMERA_SOURCE = "http://192.168.1.12:8080/video"
-# Si quisieras webcam local del PC, sería:
-# CAMERA_SOURCE = 0
+from app.config import CAMERA_SOURCE, RAW_DIR
+from app.file_naming import get_next_capture_path
+
 
 def main():
     cap = cv2.VideoCapture(CAMERA_SOURCE)
@@ -26,8 +25,9 @@ def main():
         key = cv2.waitKey(1) & 0xFF
 
         if key == ord("c"):
-            cv2.imwrite("data/raw/capture.png", frame)
-            print("Imagen guardada en data/raw/capture.png")
+            capture_path = get_next_capture_path(RAW_DIR)
+            cv2.imwrite(str(capture_path), frame)
+            print(f"Imagen guardada en: {capture_path}")
 
         if key == ord("q"):
             break

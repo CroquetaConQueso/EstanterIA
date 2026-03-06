@@ -134,6 +134,9 @@ vision/.ipynb_checkpoints/
 vision/.env
 vision/.env.*
 !vision/.env.example
+.env
+.env.*
+!.env.example
 
 # Training / inference outputs
 vision/runs/

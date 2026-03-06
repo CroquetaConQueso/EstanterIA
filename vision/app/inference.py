@@ -1,8 +1,19 @@
 from collections import Counter
 from pathlib import Path
+
+import cv2
 from ultralytics import YOLO
 
-from app.config import MODEL_PATH, CONFIDENCE_THRESHOLD, TARGET_CLASSES
+from app.config import (
+    MODEL_PATH,
+    CONFIDENCE_THRESHOLD,
+    TARGET_CLASSES,
+    ROI_X,
+    ROI_Y,
+    ROI_WIDTH,
+    ROI_HEIGHT
+)
+
 from app.schemas import DetectionItem, PredictionResponse
 
 
@@ -16,11 +27,38 @@ def get_model() -> YOLO:
     return _model
 
 
+def crop_with_roi(image, x: int, y: int, width: int, height: int):
+    img_height, img_width = image.shape[:2]
+
+    # Evitar salirnos de la imagen
+    x = max(0, x)
+    y = max(0, y)
+
+    x2 = min(img_width, x + width)
+    y2 = min(img_height, y + height)
+
+    return image[y:y2, x:x2]
+
+
 def predict_image(image_path: str, save_annotated: bool = False) -> PredictionResponse:
     model = get_model()
 
+    image = cv2.imread(image_path)
+
+    if image is None:
+        raise ValueError(f"No se pudo leer la imagen: {image_path}")
+
+    # 🔹 Recorte de la región de interés
+    roi_image = crop_with_roi(
+        image,
+        ROI_X,
+        ROI_Y,
+        ROI_WIDTH,
+        ROI_HEIGHT
+    )
+
     results = model.predict(
-        source=image_path,
+        source=roi_image,
         conf=CONFIDENCE_THRESHOLD,
         save=save_annotated
     )
@@ -45,19 +83,15 @@ def predict_image(image_path: str, save_annotated: bool = False) -> PredictionRe
             )
             counter[class_name] += 1
 
-    # Para mantener consistencia, garantizamos siempre las clases del MVP
     summary = {class_name: counter.get(class_name, 0) for class_name in TARGET_CLASSES}
 
-    # Si el modelo preentrenado devuelve clases que no son las tuyas, también las añadimos.
     for detected_class, count in counter.items():
         if detected_class not in summary:
             summary[detected_class] = count
-
-    annotated_image_path = None
 
     return PredictionResponse(
         image_path=image_path,
         detections=detections,
         summary=summary,
-        annotated_image_path=annotated_image_path
+        annotated_image_path=None
     )

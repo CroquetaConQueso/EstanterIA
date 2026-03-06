@@ -108,3 +108,43 @@ coverage/
 # Misc
 # =========================
 HELP.md
+
+
+# =========================
+# IA / Vision (Python / YOLO)
+# =========================
+
+# Virtualenv
+vision/.venv/
+vision/venv/
+vision/env/
+
+# Python cache
+vision/**/__pycache__/
+vision/**/*.pyc
+vision/**/*.pyo
+
+# Python tooling
+vision/.pytest_cache/
+vision/.mypy_cache/
+vision/.ruff_cache/
+vision/.ipynb_checkpoints/
+
+# Local env files
+vision/.env
+vision/.env.*
+!vision/.env.example
+
+# Training / inference outputs
+vision/runs/
+vision/outputs/
+
+# Trained models / exported artifacts
+vision/models/trained/
+vision/**/*.onnx
+vision/**/*.engine
+
+# Local datasets
+vision/data/raw/
+vision/data/dataset/images/
+vision/data/dataset/labels/

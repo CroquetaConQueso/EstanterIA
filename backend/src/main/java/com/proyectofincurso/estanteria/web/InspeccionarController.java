@@ -1,6 +1,10 @@
 package com.proyectofincurso.estanteria.web;
 
-import com.proyectofincurso.estanteria.auth.SessionService;
+import com.proyectofincurso.estanteria.auth.AuthInspeccionar;
+import com.proyectofincurso.estanteria.auth.InspeccionarService;
+import com.proyectofincurso.estanteria.web.dto.InspeccionarRequest;
+import com.proyectofincurso.estanteria.web.dto.InspeccionarResponse;
+
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class InspeccionarController {
     private final InspeccionarService inspeccionarService;
-
+    
 
     public InspeccionarController(InspeccionarService iser){
         this.inspeccionarService = iser;
@@ -17,6 +21,7 @@ public class InspeccionarController {
 
     @PostMapping(value="/inspeccion_nueva", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public InspeccionarResponse inspeccionar(@Valid @RequestBody InspeccionarRequest req){
-        inspeccionarService.verificar();
+        return inspeccionarService.crearInspeccion(req.getEstanteriaCodigo(), req.getNotas(), req.getImagenPath());
+        
     }
 }

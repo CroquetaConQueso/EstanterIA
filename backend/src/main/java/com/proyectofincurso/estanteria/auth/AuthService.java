@@ -2,6 +2,8 @@ package com.proyectofincurso.estanteria.auth;
 
 import com.proyectofincurso.estanteria.persistence.entity.UserAccount;
 import com.proyectofincurso.estanteria.persistence.repository.UserAccountRepository;
+import com.proyectofincurso.estanteria.web.error.UnauthorizedException;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.proyectofincurso.estanteria.persistence.entity.UserRole;
 import org.springframework.stereotype.Service;

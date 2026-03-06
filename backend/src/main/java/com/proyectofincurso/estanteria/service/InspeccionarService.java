@@ -1,4 +1,4 @@
-package com.proyectofincurso.estanteria.auth;
+package com.proyectofincurso.estanteria.service;
 
 import java.time.Instant;
 

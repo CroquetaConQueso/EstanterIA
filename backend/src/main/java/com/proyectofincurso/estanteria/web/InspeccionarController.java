@@ -1,7 +1,6 @@
 package com.proyectofincurso.estanteria.web;
 
-import com.proyectofincurso.estanteria.auth.AuthInspeccionar;
-import com.proyectofincurso.estanteria.auth.InspeccionarService;
+import com.proyectofincurso.estanteria.service.InspeccionarService;
 import com.proyectofincurso.estanteria.web.dto.InspeccionarRequest;
 import com.proyectofincurso.estanteria.web.dto.InspeccionarResponse;
 

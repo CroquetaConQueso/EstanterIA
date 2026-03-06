@@ -1,6 +1,5 @@
-package com.proyectofincurso.estanteria.web;
+package com.proyectofincurso.estanteria.web.error;
 
-import com.proyectofincurso.estanteria.auth.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;

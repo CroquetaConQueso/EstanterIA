@@ -1,4 +1,4 @@
-package com.proyectofincurso.estanteria.web;
+package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.service.InspeccionService;
 import com.proyectofincurso.estanteria.web.dto.InspeccionItemResponse;
@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api")
-public class InspeccionarController {
+public class InspeccionController {
     private final InspeccionService inspeccionService;
     
 
-    public InspeccionarController(InspeccionService iser){
+    public InspeccionController(InspeccionService iser){
         this.inspeccionService = iser;
     }
 

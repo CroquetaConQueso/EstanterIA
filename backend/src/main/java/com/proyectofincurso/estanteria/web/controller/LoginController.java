@@ -1,4 +1,4 @@
-package com.proyectofincurso.estanteria.web;
+package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.auth.AuthService;
 import com.proyectofincurso.estanteria.auth.AuthUser;

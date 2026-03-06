@@ -1,0 +1,10 @@
+path: data/dataset
+
+train: imagenes/entrenamiento
+val: imagenes/valores
+test: imagenes/test
+
+names:
+  0: lentejas
+  1: arroz
+  2: comida_gato

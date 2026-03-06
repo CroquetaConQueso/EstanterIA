@@ -1,6 +1,7 @@
 package com.proyectofincurso.estanteria.service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -8,7 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaEstado;
 import com.proyectofincurso.estanteria.persistence.entity.Inspeccion;
-import com.proyectofincurso.estanteria.persistence.repository.InspeccionarRepository;
+import com.proyectofincurso.estanteria.persistence.repository.InspeccionRepository;
+import com.proyectofincurso.estanteria.web.dto.InspeccionItemResponse;
 import com.proyectofincurso.estanteria.web.dto.InspeccionarResponse;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 
@@ -22,8 +24,24 @@ public class InspeccionService {
     private static final Pattern SAFE_RELATIVE_PATH = Pattern.compile("^[a-zA-Z0-9/_\\-.]+$");
     private static final Set<String> ALLOWED_EXT = Set.of("jpg", "jpeg", "png", "webp");
 
-    private final InspeccionarRepository insRepo;
+    private final InspeccionRepository insRepo;
 
+
+    public List<InspeccionItemResponse> obtenerInspecciones(){
+        return insRepo.findAll().stream().map(this::toResponse).toList();
+    }
+
+    private InspeccionItemResponse toResponse(Inspeccion ins) {
+        return new InspeccionItemResponse(
+                ins.getId(),
+                ins.getEstanteriaCodigo(),
+                ins.getNotas(),
+                ins.getImagenPath(),
+                ins.getEstado(),
+                ins.getCreatedAt()
+        );
+    }
+    
     public String verificarImagenPath(String imagenPath) {
         if (imagenPath == null) {
             return null;

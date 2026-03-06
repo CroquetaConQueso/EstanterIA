@@ -6,7 +6,7 @@ import com.proyectofincurso.estanteria.persistence.entity.Inspeccion;
 
 import java.util.Optional;
 
-public interface InspeccionarRepository extends JpaRepository<Inspeccion,Long>{
+public interface InspeccionRepository extends JpaRepository<Inspeccion,Long>{
     //No es necesario establecer Optional<Inspeccion>findById(Long id); porque ya existe por defecto 
     Optional<Inspeccion>findByEstanteriaCodigo(String estanteriaCodigo);
     

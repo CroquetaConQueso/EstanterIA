@@ -17,14 +17,8 @@ class DetectionItem(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    image_path: str
-    detections: List[DetectionItem]
-    summary: Dict[str, int]
-    annotated_image_path: Optional[str] = None
-
-
-class CapturePredictionResponse(BaseModel):
     image_name: str
     image_path: str
     detections: List[DetectionItem]
     summary: Dict[str, int]
+    critical: bool

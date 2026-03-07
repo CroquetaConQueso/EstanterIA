@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Inventario & hotspots · Suite Tienda</title>
+    <title>Inventario & hotspots Â· Suite Tienda</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
     <link href="../css/inventario.css" rel="stylesheet" />
@@ -17,18 +17,16 @@
             Suite<span class="brand-accent">Tienda</span>
           </span>
         </a>
-          <nav class="nav">
-            <a class="nav-link" href="home.html">Inicio</a>
-            <a class="nav-link" href="planos.html">Planos</a>
-            <a class="nav-link" href="inspecciones.html">Inspecciones IA</a>
-            <a
-              class="nav-link is-active"
-              aria-current="page"
-              href="inventario.html"
-              >Inventario</a
-            >
-            <a class="nav-link" href="about.html">Acerca de</a>
-          </nav>
+                <nav class="nav" aria-label="Principal">
+        <a class="nav-link" href="home.html">Inicio</a>
+        <a class="nav-link" href="planos.html">Planos</a>
+        <a class="nav-link" href="inspecciones.html">Inspecciones</a>
+        <a class="nav-link is-active" aria-current="page" href="inventario.html">Inventario</a>
+        <a class="nav-link" href="alertas_centro.html">Alertas</a>
+        <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
+        <a class="nav-link" href="vision.html">Visión</a>
+        <a class="nav-link" href="about.html">Acerca de</a>
+      </nav>
         </div>
         <div class="right">
           <a class="user" href="perfil.html">Mi perfil</a>
@@ -40,8 +38,8 @@
         <div>
           <h1>Inventario desde el punto de vista de los huecos</h1>
           <p>
-            Esta vista está pensada para responsables de tienda: no sólo se ven
-            los productos, sino dónde faltan y qué impacto tiene en ventas.
+            Esta vista estÃ¡ pensada para responsables de tienda: no sÃ³lo se ven
+            los productos, sino dÃ³nde faltan y quÃ© impacto tiene en ventas.
           </p>
         </div>
         <div class="filters-inline">
@@ -49,12 +47,12 @@
             Tienda / Plano
             <select id="f-tienda">
               <option value="">Todas</option>
-              <option value="Almacén Central">Almacén Central</option>
-              <option value="Supermercado — zona seca">
-                Supermercado — zona seca
+              <option value="AlmacÃ©n Central">AlmacÃ©n Central</option>
+              <option value="Supermercado â€” zona seca">
+                Supermercado â€” zona seca
               </option>
               <option value="Tienda de barrio">Tienda de barrio</option>
-              <option value="Ferretería Centro">Ferretería Centro</option>
+              <option value="FerreterÃ­a Centro">FerreterÃ­a Centro</option>
             </select>
           </label>
           <label>
@@ -81,9 +79,9 @@
 
       <section class="layout">
         <section class="list-shell">
-          <h2>Estanterías e incidencias</h2>
+          <h2>EstanterÃ­as e incidencias</h2>
           <p class="help">
-            Cada fila representa una estantería o sección, junto con el número
+            Cada fila representa una estanterÃ­a o secciÃ³n, junto con el nÃºmero
             de productos correctos y de huecos detectados.
           </p>
 
@@ -92,7 +90,7 @@
               <thead>
                 <tr>
                   <th>Tienda / Plano</th>
-                  <th>Estantería</th>
+                  <th>EstanterÃ­a</th>
                   <th>Hotspot ventas</th>
                   <th>Productos OK</th>
                   <th>Huecos</th>
@@ -108,10 +106,10 @@
         </section>
 
         <aside class="detail-shell">
-          <h2>Detalle de estantería</h2>
+          <h2>Detalle de estanterÃ­a</h2>
           <p class="help">
-            Aquí se mostraría el detalle de productos, huecos y recomendaciones
-            de reposición para la estantería seleccionada.
+            AquÃ­ se mostrarÃ­a el detalle de productos, huecos y recomendaciones
+            de reposiciÃ³n para la estanterÃ­a seleccionada.
           </p>
 
           <div class="detail-block">
@@ -140,9 +138,10 @@
     </main>
 
     <footer class="foot">
-      <small>Suite Tienda · Inventario & hotspots · Boceto</small>
+      <small>Suite Tienda Â· Inventario & hotspots Â· Boceto</small>
     </footer>
 
     <script src="../js/inventario.js"></script>
   </body>
 </html>
+

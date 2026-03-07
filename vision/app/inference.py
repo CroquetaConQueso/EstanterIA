@@ -13,7 +13,6 @@ from app.config import (
     ROI_WIDTH,
     ROI_HEIGHT
 )
-
 from app.schemas import DetectionItem, PredictionResponse
 
 
@@ -30,7 +29,6 @@ def get_model() -> YOLO:
 def crop_with_roi(image, x: int, y: int, width: int, height: int):
     img_height, img_width = image.shape[:2]
 
-    # Evitar salirnos de la imagen
     x = max(0, x)
     y = max(0, y)
 
@@ -38,6 +36,13 @@ def crop_with_roi(image, x: int, y: int, width: int, height: int):
     y2 = min(img_height, y + height)
 
     return image[y:y2, x:x2]
+
+
+def calculate_critical(summary: dict[str, int]) -> bool:
+    for class_name in TARGET_CLASSES:
+        if summary.get(class_name, 0) == 0:
+            return True
+    return False
 
 
 def predict_image(image_path: str, save_annotated: bool = False) -> PredictionResponse:
@@ -48,7 +53,6 @@ def predict_image(image_path: str, save_annotated: bool = False) -> PredictionRe
     if image is None:
         raise ValueError(f"No se pudo leer la imagen: {image_path}")
 
-    # 🔹 Recorte de la región de interés
     roi_image = crop_with_roi(
         image,
         ROI_X,
@@ -89,9 +93,13 @@ def predict_image(image_path: str, save_annotated: bool = False) -> PredictionRe
         if detected_class not in summary:
             summary[detected_class] = count
 
+    image_name = Path(image_path).name
+    critical = calculate_critical(summary)
+
     return PredictionResponse(
+        image_name=image_name,
         image_path=image_path,
         detections=detections,
         summary=summary,
-        annotated_image_path=None
+        critical=critical
     )

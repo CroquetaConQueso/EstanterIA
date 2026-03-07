@@ -1,4 +1,4 @@
-*,
+﻿*,
 *::before,
 *::after {
   box-sizing: border-box;
@@ -69,12 +69,14 @@ body {
   color: var(--accent);
 }
 
-.home-nav {
+.home-nav,
+.nav {
   display: flex;
   gap: 0.75rem;
 }
 
-.home-nav-link {
+.home-nav-link,
+.nav-link {
   text-decoration: none;
   font-size: 0.85rem;
   color: var(--text-soft);
@@ -83,7 +85,8 @@ body {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.home-nav-link:hover {
+.home-nav-link:hover,
+.nav-link:hover {
   background: #020617;
   color: var(--text);
 }
@@ -194,7 +197,7 @@ body {
   font-size: 0.78rem;
 }
 
-/* Botón */
+/* BotÃ³n */
 
 .btn {
   margin-top: 0.5rem;
@@ -270,3 +273,4 @@ body {
   flex-shrink: 0;
   margin-right: 0.55rem;
 }
+

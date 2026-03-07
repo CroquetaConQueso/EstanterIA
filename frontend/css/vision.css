@@ -509,3 +509,18 @@ textarea::placeholder {
 #vision-out {
   text-transform: none;
 }
+
+.preview-image {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  border: var(--border-light);
+  box-shadow: var(--shadow-block);
+  display: block;
+}
+
+.preview-box.has-image {
+  padding: 0;
+  background: var(--black);
+  border-style: solid;
+}

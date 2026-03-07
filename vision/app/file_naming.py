@@ -21,5 +21,4 @@ def get_next_capture_path(raw_dir: Path) -> Path:
                 max_number = number
 
     next_number = max_number + 1
-    filename = f"capture_{next_number:06d}.png"
-    return raw_dir / filename
+    return raw_dir / f"capture_{next_number:06d}.png"

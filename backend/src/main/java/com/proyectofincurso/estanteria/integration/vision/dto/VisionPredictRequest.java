@@ -1,7 +1,5 @@
 package com.proyectofincurso.estanteria.integration.vision.dto;
 
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,8 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class VisionDetectionItemResponse {
-    private String className;
-    private double confidence;
-    private List<Double> bbox;
+public class VisionPredictRequest {
+    private String imagePath;
 }

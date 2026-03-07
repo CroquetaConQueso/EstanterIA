@@ -1,8 +1,8 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Acerca de · Suite Tienda</title>
+  <title>Acerca de Â· Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/about.css" rel="stylesheet" />
@@ -17,11 +17,14 @@
           Suite<span class="brand-accent">Tienda</span>
         </span>
       </a>
-      <nav class="nav">
+            <nav class="nav" aria-label="Principal">
         <a class="nav-link" href="home.html">Inicio</a>
         <a class="nav-link" href="planos.html">Planos</a>
-        <a class="nav-link" href="inspecciones.html">Inspecciones IA</a>
+        <a class="nav-link" href="inspecciones.html">Inspecciones</a>
         <a class="nav-link" href="inventario.html">Inventario</a>
+        <a class="nav-link" href="alertas_centro.html">Alertas</a>
+        <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
+        <a class="nav-link" href="vision.html">Visión</a>
         <a class="nav-link is-active" aria-current="page" href="about.html">Acerca de</a>
       </nav>
     </div>
@@ -35,9 +38,9 @@
   <header class="page-head">
     <h1>Acerca de Suite Tienda</h1>
     <p>
-      Suite Tienda es un prototipo de aplicación web que combina planos 2D,
-      visión por computador e inventario para ayudar a empresas a controlar
-      sus estanterías y detectar huecos de producto de forma automática.
+      Suite Tienda es un prototipo de aplicaciÃ³n web que combina planos 2D,
+      visiÃ³n por computador e inventario para ayudar a empresas a controlar
+      sus estanterÃ­as y detectar huecos de producto de forma automÃ¡tica.
     </p>
   </header>
 
@@ -45,16 +48,16 @@
     <article class="card">
       <h2>Objetivo del proyecto</h2>
       <p>
-        El objetivo principal es <strong>estructurar la lógica de un negocio</strong> a partir
-        de sus planos y estanterías, y que la IA se encargue de:
+        El objetivo principal es <strong>estructurar la lÃ³gica de un negocio</strong> a partir
+        de sus planos y estanterÃ­as, y que la IA se encargue de:
       </p>
       <ul>
-        <li>Detectar qué productos están colocados en cada estantería.</li>
+        <li>Detectar quÃ© productos estÃ¡n colocados en cada estanterÃ­a.</li>
         <li>Identificar huecos y desajustes entre stock real y stock de sistema.</li>
-        <li>Asignar tareas a los responsables de cada zona o sección.</li>
+        <li>Asignar tareas a los responsables de cada zona o secciÃ³n.</li>
       </ul>
       <p class="note">
-        La interfaz que ves es un boceto funcional pensado para enseñar el flujo de
+        La interfaz que ves es un boceto funcional pensado para enseÃ±ar el flujo de
         trabajo completo antes de implementar el backend en Spring Boot.
       </p>
     </article>
@@ -62,58 +65,59 @@
     <article class="card">
       <h2>Flujo funcional y alcance</h2>
       <p>
-        El prototipo cubre el ciclo típico de trabajo de un encargado o reponedor:
+        El prototipo cubre el ciclo tÃ­pico de trabajo de un encargado o reponedor:
       </p>
       <ul>
-        <li>Visualizar el plano y las estanterías de la tienda.</li>
+        <li>Visualizar el plano y las estanterÃ­as de la tienda.</li>
         <li>Revisar inspecciones IA con fotos, secciones y huecos detectados.</li>
-        <li>Actualizar el inventario según las acciones realizadas.</li>
+        <li>Actualizar el inventario segÃºn las acciones realizadas.</li>
       </ul>
       <p>
-        Cada pantalla está pensada para conectarse más adelante con endpoints REST:
-        carga de planos, resultados de inspección, estado del stock y tareas asignadas.
+        Cada pantalla estÃ¡ pensada para conectarse mÃ¡s adelante con endpoints REST:
+        carga de planos, resultados de inspecciÃ³n, estado del stock y tareas asignadas.
       </p>
     </article>
 
     <article class="card">
-      <h2>Diseño técnico</h2>
+      <h2>DiseÃ±o tÃ©cnico</h2>
       <p>
-        El diseño del prototipo sigue una estructura similar a la que se usaría
-        en producción:
+        El diseÃ±o del prototipo sigue una estructura similar a la que se usarÃ­a
+        en producciÃ³n:
       </p>
       <ul>
-        <li>División por vistas: acceso, panel principal, planos, inspecciones, inventario.</li>
+        <li>DivisiÃ³n por vistas: acceso, panel principal, planos, inspecciones, inventario.</li>
         <li>Uso de <strong>JSON de planos</strong> como fuente de verdad para el render 2D.</li>
-        <li>Separación entre layout visual y datos, para poder conectar un backend.</li>
+        <li>SeparaciÃ³n entre layout visual y datos, para poder conectar un backend.</li>
       </ul>
       <p>
-        El diseño actual ya separa las secciones principales, de forma que sea sencillo
-        conectar cada vista con su correspondiente endpoint del backend más adelante.
+        El diseÃ±o actual ya separa las secciones principales, de forma que sea sencillo
+        conectar cada vista con su correspondiente endpoint del backend mÃ¡s adelante.
       </p>
     </article>
 
     <article class="card">
-      <h2>Qué NO es este prototipo</h2>
+      <h2>QuÃ© NO es este prototipo</h2>
       <p>
-        Este boceto <strong>no es todavía</strong> una aplicación completa en producción:
+        Este boceto <strong>no es todavÃ­a</strong> una aplicaciÃ³n completa en producciÃ³n:
       </p>
       <ul>
-        <li>No hay autenticación real ni gestión de usuarios.</li>
+        <li>No hay autenticaciÃ³n real ni gestiÃ³n de usuarios.</li>
         <li>No se persisten datos en base de datos; los contenidos son de ejemplo.</li>
-        <li>La IA no está integrada: las inspecciones se simulan con datos mock.</li>
+        <li>La IA no estÃ¡ integrada: las inspecciones se simulan con datos mock.</li>
       </ul>
       <p class="note">
-        El objetivo es tener un esqueleto claro para luego conectar la lógica de negocio,
-        la IA y la base de datos sin tener que rediseñar toda la interfaz.
+        El objetivo es tener un esqueleto claro para luego conectar la lÃ³gica de negocio,
+        la IA y la base de datos sin tener que rediseÃ±ar toda la interfaz.
       </p>
     </article>
   </section>
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda · Página “Acerca de” · Boceto</small>
+  <small>Suite Tienda Â· PÃ¡gina â€œAcerca deâ€ Â· Boceto</small>
 </footer>
 
 <script src="../js/about.js"></script>
 </body>
 </html>
+

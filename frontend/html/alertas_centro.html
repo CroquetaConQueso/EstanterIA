@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Centro de alertas · Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/alertas_centro.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <div class="left">
+      <a class="brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">Suite<span class="brand-accent">Tienda</span></span>
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <a class="nav-link" href="home.html">Inicio</a>
+        <a class="nav-link" href="planos.html">Planos</a>
+        <a class="nav-link" href="inspecciones.html">Inspecciones IA</a>
+        <a class="nav-link" href="inventario.html">Inventario</a>
+        <a class="nav-link is-active" aria-current="page" href="alertas_centro.html">Alertas</a>
+        <a class="nav-link" href="about.html">Acerca de</a>
+      </nav>
+    </div>
+    <div class="right">
+      <a class="user" href="perfil.html">Mi perfil</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">Operación</p>
+      <h1>Centro de alertas</h1>
+      <p>
+        Bandeja de entrada de incidencias críticas y avisos operativos. En el MVP, esta vista
+        prioriza qué estanterías requieren atención inmediata y permite despachar o asignar cada alerta.
+      </p>
+    </div>
+
+    <div class="summary-inline" id="summary-inline">
+      <article class="metric danger">
+        <span class="metric-label">Críticas</span>
+        <strong id="metric-critical">0</strong>
+      </article>
+      <article class="metric warn">
+        <span class="metric-label">Pendientes</span>
+        <strong id="metric-pending">0</strong>
+      </article>
+      <article class="metric info">
+        <span class="metric-label">Asignadas</span>
+        <strong id="metric-assigned">0</strong>
+      </article>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <label>
+      Gravedad
+      <select id="filtro-gravedad">
+        <option value="">Todas</option>
+        <option value="CRITICA">CRÍTICA</option>
+        <option value="ALTA">ALTA</option>
+        <option value="MEDIA">MEDIA</option>
+      </select>
+    </label>
+
+    <label>
+      Estado
+      <select id="filtro-estado">
+        <option value="">Todos</option>
+        <option value="PENDIENTE">PENDIENTE</option>
+        <option value="ASIGNADA">ASIGNADA</option>
+        <option value="DESCARTADA">DESCARTADA</option>
+      </select>
+    </label>
+
+    <label class="grow">
+      Buscar
+      <input type="text" id="filtro-texto" placeholder="Producto, estantería, zona, responsable..." />
+    </label>
+
+    <button class="btn ghost" id="btn-limpiar" type="button">Limpiar filtros</button>
+  </section>
+
+  <section class="layout">
+    <section class="table-shell">
+      <div class="section-head">
+        <h2>Alertas activas</h2>
+        <p>
+          Esta vista puede nacer del estado CRÍTICO de las inspecciones y evolucionar a una bandeja de incidencias completa.
+        </p>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Gravedad</th>
+              <th>Estantería</th>
+              <th>Producto</th>
+              <th>Zona</th>
+              <th>Detectado / esperado</th>
+              <th>Responsable</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-alertas"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="detail-shell">
+      <h2>Detalle de alerta</h2>
+      <p class="help">Selecciona una alerta para ver el contexto operativo y las acciones rápidas.</p>
+      <div class="photo-placeholder" id="alerta-preview">
+        <span>Previsualización de la incidencia</span>
+      </div>
+      <ul class="detail-list" id="detalle-alerta"></ul>
+      <div class="actions-vertical">
+        <button class="btn primary" id="btn-asignar" type="button" disabled>Asignar alerta</button>
+        <button class="btn ghost" id="btn-descartar" type="button" disabled>Descartar alerta</button>
+        <button class="btn ghost" id="btn-plano" type="button" disabled>Ir al plano</button>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda · Centro de alertas · MVP operativo</small>
+</footer>
+
+<script src="../js/alertas_centro.js"></script>
+</body>
+</html>

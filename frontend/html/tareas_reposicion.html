@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Tareas de reposición · Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/tareas_reposicion.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <div class="left">
+      <a class="brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">Suite<span class="brand-accent">Tienda</span></span>
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <a class="nav-link" href="home.html">Inicio</a>
+        <a class="nav-link" href="planos.html">Planos</a>
+        <a class="nav-link" href="inspecciones.html">Inspecciones IA</a>
+        <a class="nav-link" href="inventario.html">Inventario</a>
+        <a class="nav-link is-active" aria-current="page" href="tareas_reposicion.html">Reposición</a>
+        <a class="nav-link" href="about.html">Acerca de</a>
+      </nav>
+    </div>
+    <div class="right">
+      <a class="user" href="perfil.html">Mi perfil</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <header class="page-head propaganda-banner">
+    <div>
+      <p class="eyebrow">Brigada de reposición</p>
+      <h1>Frente de tareas materiales</h1>
+      <p>
+        Aquí la incidencia deja de ser informe y se convierte en trabajo. Cada tarjeta ordena una acción física concreta:
+        reponer, justificar falta de almacén o corregir una detección errónea.
+      </p>
+    </div>
+
+    <div class="metrics">
+      <article class="metric pending">
+        <span>Pendientes</span>
+        <strong id="metric-pendientes">0</strong>
+      </article>
+      <article class="metric progress">
+        <span>En curso</span>
+        <strong id="metric-curso">0</strong>
+      </article>
+      <article class="metric done">
+        <span>Completadas</span>
+        <strong id="metric-completadas">0</strong>
+      </article>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <label>
+      Estado
+      <select id="filtro-estado">
+        <option value="">Todos</option>
+        <option value="PENDIENTE">PENDIENTE</option>
+        <option value="EN_CURSO">EN CURSO</option>
+        <option value="COMPLETADA">COMPLETADA</option>
+        <option value="SIN_STOCK">SIN STOCK</option>
+        <option value="FALSO_POSITIVO">FALSO POSITIVO</option>
+      </select>
+    </label>
+
+    <label>
+      Zona
+      <select id="filtro-zona">
+        <option value="">Todas</option>
+        <option value="Zona seca">Zona seca</option>
+        <option value="Mascotas">Mascotas</option>
+        <option value="Pasillo 2">Pasillo 2</option>
+        <option value="Conservas">Conservas</option>
+      </select>
+    </label>
+
+    <label class="grow">
+      Buscar
+      <input type="text" id="filtro-texto" placeholder="Producto, estantería, responsable..." />
+    </label>
+
+    <button class="btn ghost" id="btn-limpiar" type="button">Reiniciar filtros</button>
+  </section>
+
+  <section class="tasks-grid" id="tasks-grid"></section>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda · Brigada de reposición · Acción física coordinada</small>
+</footer>
+
+<script src="../js/tareas_reposicion.js"></script>
+</body>
+</html>

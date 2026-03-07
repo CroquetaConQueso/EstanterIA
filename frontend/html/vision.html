@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EstanterIA · Vision</title>
+    <link rel="stylesheet" href="../css/vision.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="inner">
+        <div class="left">
+          <a class="brand" href="index.html">
+            <img
+              src="../img/iconoFAV.png"
+              alt="Suite Tienda"
+              class="brand-icon"
+            />
+            <span class="brand-text"
+              >Estanter<span class="brand-accent">IA</span></span
+            >
+          </a>
+
+          <nav class="nav" aria-label="Principal">
+            <a class="nav-link" href="home.html">Inicio</a>
+            <a class="nav-link" href="planos.html">Planos</a>
+            <a class="nav-link" href="inspecciones.html">Inspecciones</a>
+            <a class="nav-link" href="inventario.html">Inventario</a>
+            <a class="nav-link" href="alertas_centro.html">Alertas</a>
+            <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
+            <a class="nav-link is-active" aria-current="page" href="vision.html"
+              >Visión</a
+            >
+            <a class="nav-link" href="about.html">Acerca de</a>
+          </nav>
+        </div>
+
+        <div class="right">
+          <a class="user" href="perfil.html">PERFIL</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <header class="page-head">
+        <p class="page-desc">Módulo de visión</p>
+        <h1>Inspección visual asistida</h1>
+        <p class="page-desc" style="color: var(--black); margin-top: 10px">
+          Lanza una inspección desde cámara o desde una imagen ya existente y
+          revisa el resultado al instante.
+        </p>
+      </header>
+
+      <section class="panel status-panel">
+        <div class="panel-head">
+          <div>
+            <p class="section-kicker">Estado operativo</p>
+            <h2>Estado del flujo de visión</h2>
+          </div>
+          <span id="vision-status-chip" class="status-chip pendiente"
+            >EN ESPERA</span
+          >
+        </div>
+
+        <p
+          id="vision-status-text"
+          class="page-desc"
+          style="color: var(--black); margin: 0"
+        >
+          El módulo está listo para ejecutar una inspección.
+        </p>
+      </section>
+
+      <div class="vision-layout">
+        <div class="col-left">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="section-kicker">Operación</p>
+                <h2>Nueva inspección</h2>
+              </div>
+              <span class="status-chip asignada">VISIÓN</span>
+            </div>
+
+            <form id="vision-form" class="vision-form">
+              <label class="field">
+                <span>Estantería</span>
+                <select id="vision-estanteria" name="estanteriaCodigo" required>
+                  <option value="">Selecciona una estantería</option>
+                  <option value="EST-001">EST-001 · Básicos despensa</option>
+                  <option value="EST-002">EST-002 · Mascotas</option>
+                  <option value="EST-003">EST-003 · Legumbres</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Modo</span>
+                <select id="vision-modo" name="modo">
+                  <option value="capture-and-predict">
+                    Capturar e inspeccionar
+                  </option>
+                  <option value="predict-existing">
+                    Usar imagen existente
+                  </option>
+                </select>
+              </label>
+
+              <label class="field" id="vision-image-path-field">
+                <span>Ruta de imagen</span>
+                <input
+                  id="vision-image-path"
+                  name="imagePath"
+                  type="text"
+                  placeholder="data/raw/capture_000012.png"
+                  autocomplete="off"
+                />
+              </label>
+
+              <label class="field">
+                <span>Notas operativas</span>
+                <textarea
+                  id="vision-notas"
+                  name="notas"
+                  rows="4"
+                  placeholder="Comentario breve si aplica"
+                ></textarea>
+              </label>
+
+              <div class="form-actions">
+                <button type="submit" class="btn primary grow">
+                  Lanzar inspección
+                </button>
+                <button type="button" id="btn-reset" class="btn ghost">
+                  Limpiar
+                </button>
+              </div>
+
+              <p id="vision-error" class="feedback error" hidden></p>
+              <p id="vision-success" class="feedback success" hidden></p>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="section-kicker">Preview</p>
+                <h2>Entrada visual</h2>
+              </div>
+              <span class="status-chip pendiente">SOURCE</span>
+            </div>
+
+            <div id="preview-box" class="preview-box photo-placeholder">
+              <div class="preview-placeholder">
+                <p>Sin captura reciente</p>
+                <small>
+                  La imagen asociada aparecerá aquí tras ejecutar una inspección.
+                </small>
+              </div>
+            </div>
+
+            <ul class="detail-list">
+              <li class="meta-item">
+                <span class="meta-label">Estantería actual</span>
+                <strong class="meta-value" id="preview-shelf">—</strong>
+              </li>
+              <li class="meta-item">
+                <span class="meta-label">Imagen asociada</span>
+                <strong class="meta-value" id="preview-image">—</strong>
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <div class="col-right">
+          <section class="panel result-panel">
+            <div class="panel-head">
+              <div>
+                <p class="section-kicker">Resultado inmediato</p>
+                <h2>Resumen de detección</h2>
+              </div>
+              <span id="result-chip" class="status-chip descartada"
+                >SIN RESULTADO</span
+              >
+            </div>
+
+            <div class="summary-grid">
+              <article class="metric">
+                <span>Lentejas</span>
+                <strong id="sum-lentejas">0</strong>
+              </article>
+              <article class="metric">
+                <span>Arroz</span>
+                <strong id="sum-arroz">0</strong>
+              </article>
+              <article class="metric">
+                <span>Comida gato</span>
+                <strong id="sum-comida">0</strong>
+              </article>
+            </div>
+
+            <ul class="detail-list">
+              <li class="meta-item">
+                <span class="meta-label">Inspección creada</span>
+                <strong class="meta-value" id="result-id">—</strong>
+              </li>
+              <li class="meta-item">
+                <span class="meta-label">Fecha</span>
+                <strong class="meta-value" id="result-date">—</strong>
+              </li>
+            </ul>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="section-kicker">Siguiente paso</p>
+                <h2>Acciones posteriores</h2>
+              </div>
+              <span class="status-chip media">FLOW</span>
+            </div>
+
+            <div class="actions-vertical">
+              <a
+                id="go-inspecciones"
+                class="btn primary text-center disabled"
+                href="inspecciones.html"
+                >Ver inspecciones</a
+              >
+              <a
+                id="go-alertas"
+                class="btn ghost text-center disabled"
+                href="alertas_centro.html"
+                >Ir a alertas</a
+              >
+              <a
+                id="go-tareas"
+                class="btn ghost text-center disabled"
+                href="tareas_reposicion.html"
+                >Ir a tareas</a
+              >
+            </div>
+          </section>
+
+          <section class="panel debug-shell">
+            <div class="panel-head border-red">
+              <div>
+                <p class="section-kicker text-gold">Trazabilidad</p>
+                <h2 class="text-red">Respuesta técnica</h2>
+              </div>
+              <span class="status-chip critica">DEBUG</span>
+            </div>
+            <pre id="vision-out" class="debug-box">Sin actividad todavía.</pre>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <small>EstanterIA · Módulo de Visión Computacional</small>
+    </footer>
+
+    <script src="../js/vision.js"></script>
+  </body>
+</html>

@@ -11,8 +11,6 @@ import java.util.List;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
@@ -31,8 +29,8 @@ public class InspeccionController {
         
     }
     
-    @GetMapping(value="/inspecciones")
-    public List<InspeccionItemResponse> getMethodName(@RequestParam String param) {
+    @GetMapping(value = "/inspecciones")
+    public List<InspeccionItemResponse> obtenerInspecciones() {
         return inspeccionService.obtenerInspecciones();
     }
     

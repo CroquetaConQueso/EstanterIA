@@ -61,16 +61,18 @@ public class VisionService {
 
         VisionPredictResponse visionResponse = ejecutarVision(modo, codigoNormalizado, request.getImagePath());
 
+        String imageName = normalizarImageName(visionResponse.getImageName(), visionResponse.getImagePath());
+
         Inspeccion inspeccion = new Inspeccion();
         inspeccion.setEstanteriaCodigo(codigoNormalizado);
         inspeccion.setNotas(request.getNotas());
-        inspeccion.setImagenPath(visionResponse.getImagePath());
+        inspeccion.setImagenPath(imageName);
         inspeccion.setEstado(EstanteriaEstado.CREADA);
         inspeccion.setCreatedAt(Instant.now());
 
         inspeccionRepository.save(inspeccion);
 
-        String imageUrl = buildImageUrl(visionResponse.getImageName());
+        String imageUrl = buildImageUrl(imageName);
 
         return new VisionInspeccionarResponse(
                 "VISION_INSPECCION_OK",
@@ -97,5 +99,20 @@ public class VisionService {
             return null;
         }
         return "/captures/" + imageName.trim();
+    }
+
+    private String normalizarImageName(String imageName, String imagePath) {
+        if (imageName != null && !imageName.trim().isEmpty()) {
+            return imageName.trim();
+        }
+
+        if (imagePath == null || imagePath.trim().isEmpty()) {
+            return null;
+        }
+
+        String normalizado = imagePath.replace("\\", "/");
+        int ultimoSlash = normalizado.lastIndexOf('/');
+
+        return ultimoSlash >= 0 ? normalizado.substring(ultimoSlash + 1) : normalizado;
     }
 }

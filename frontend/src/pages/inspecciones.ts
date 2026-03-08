@@ -1,379 +1,351 @@
-// ===============================
-// Tipos de datos esperados desde backend
-// ===============================
-type EstadoInspeccion = "CREADA" | "ACTUALIZADA" | "LISTA" | string;
+type EstadoInspeccion = 'CREADA' | 'ACTUALIZADA' | 'LISTA' | string;
 
-type InspeccionResponse = {
-    id: number;
-    estanteriaCodigo: string;
-    notas: string | null;
-    imagenPath: string | null;
-    estado: EstadoInspeccion;
-    createdAt: string;
-    message?: string; // opcional por si tu backend todavía lo devuelve en algún caso
+type InspeccionItem = {
+  id: number;
+  estanteriaCodigo: string;
+  notas: string | null;
+  imagenPath?: string | null;
+  imagePath?: string | null;
+  imageUrl?: string | null;
+  estado: EstadoInspeccion;
+  createdAt: string;
 };
 
-type ApiErrorResponse = {
-    timestamp?: string;
-    status?: number;
-    error?: string;
-    message?: string;
-    path?: string;
-    fieldErrors?: Record<string, string>;
-};
+const API_BASE_URL =
+  (document.body?.getAttribute('data-api-base-url')?.trim() || 'http://localhost:8080').replace(/\/$/, '');
 
-// ===============================
-// Selectores del DOM
-// ===============================
-const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-inspecciones");
-const filtroPlano = document.querySelector<HTMLInputElement>("#filtro-plano");
-const filtroEstado = document.querySelector<HTMLSelectElement>("#filtro-estado");
-const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar-filtros");
+const tbody = document.getElementById('tbody-inspecciones') as HTMLTableSectionElement | null;
+const filtroPlano = document.getElementById('filtro-plano') as HTMLInputElement | null;
+const filtroEstado = document.getElementById('filtro-estado') as HTMLSelectElement | null;
+const btnLimpiarFiltros = document.getElementById('btn-limpiar-filtros') as HTMLButtonElement | null;
 
-const errorEl = document.querySelector<HTMLElement>("#inspecciones-error");
-const successEl = document.querySelector<HTMLElement>("#inspecciones-success");
-const out = document.querySelector<HTMLPreElement>("#out");
+const inspeccionesError = document.getElementById('inspecciones-error') as HTMLElement | null;
+const inspeccionesSuccess = document.getElementById('inspecciones-success') as HTMLElement | null;
 
-const photoPlaceholder = document.querySelector<HTMLElement>("#photo-placeholder");
-const detalleResumen = document.querySelector<HTMLUListElement>("#detalle-resumen");
-const detalleOk = document.querySelector<HTMLUListElement>("#detalle-ok");
-const detalleGaps = document.querySelector<HTMLUListElement>("#detalle-gaps");
-const detalleError = document.querySelector<HTMLElement>("#detalle-error");
+const photoPlaceholder = document.getElementById('photo-placeholder') as HTMLElement | null;
+const detalleResumen = document.getElementById('detalle-resumen') as HTMLUListElement | null;
+const detalleOk = document.getElementById('detalle-ok') as HTMLUListElement | null;
+const detalleGaps = document.getElementById('detalle-gaps') as HTMLUListElement | null;
+const detalleError = document.getElementById('detalle-error') as HTMLElement | null;
 
-// ===============================
-// Estado en memoria de la página
-// ===============================
-let inspecciones: InspeccionResponse[] = [];
+let inspeccionesCache: InspeccionItem[] = [];
 
-// Si tu backend expone /inspecciones en vez de /api/inspecciones, cambia SOLO esta línea.
-const API_URL = "/api/inspecciones";
+function setError(msg: string | null): void {
+  if (!inspeccionesError) return;
 
-// ===============================
-// Helpers visuales
-// ===============================
-function show(obj: unknown) {
-    if (!out) return;
-    out.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+  if (!msg) {
+    inspeccionesError.textContent = '';
+    inspeccionesError.setAttribute('hidden', '');
+    return;
+  }
+
+  inspeccionesError.textContent = msg;
+  inspeccionesError.removeAttribute('hidden');
 }
 
-function setError(msg: string | null) {
-    if (!errorEl) return;
+function setSuccess(msg: string | null): void {
+  if (!inspeccionesSuccess) return;
 
-    if (!msg) {
-        errorEl.textContent = "";
-        errorEl.setAttribute("hidden", "");
-        return;
+  if (!msg) {
+    inspeccionesSuccess.textContent = '';
+    inspeccionesSuccess.setAttribute('hidden', '');
+    return;
+  }
+
+  inspeccionesSuccess.textContent = msg;
+  inspeccionesSuccess.removeAttribute('hidden');
+}
+
+function setDetalleError(msg: string | null): void {
+  if (!detalleError) return;
+
+  if (!msg) {
+    detalleError.textContent = '';
+    detalleError.setAttribute('hidden', '');
+    return;
+  }
+
+  detalleError.textContent = msg;
+  detalleError.removeAttribute('hidden');
+}
+
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return '—';
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  }).format(date);
+}
+
+function getImagenPath(ins: InspeccionItem): string | null {
+  const value = ins.imagenPath ?? ins.imagePath ?? null;
+  return value?.trim() ? value.trim() : null;
+}
+
+function buildImageUrl(ins: InspeccionItem): string | null {
+  const rawImageUrl = ins.imageUrl?.trim();
+
+  if (rawImageUrl) {
+    if (/^https?:\/\//i.test(rawImageUrl)) {
+      return rawImageUrl;
     }
 
-    errorEl.textContent = msg;
-    errorEl.removeAttribute("hidden");
+    return `${API_BASE_URL}${rawImageUrl.startsWith('/') ? '' : '/'}${rawImageUrl}`;
+  }
+
+  const imagenPath = getImagenPath(ins);
+  if (!imagenPath) {
+    return null;
+  }
+
+  return `${API_BASE_URL}/captures/${encodeURIComponent(imagenPath)}`;
 }
 
-function setSuccess(msg: string | null) {
-    if (!successEl) return;
+function buildEstadoBadge(estado: EstadoInspeccion): string {
+  const normalized = (estado ?? '').toUpperCase();
 
-    if (!msg) {
-        successEl.textContent = "";
-        successEl.setAttribute("hidden", "");
-        return;
+  if (normalized === 'CREADA') {
+    return `<span class="badge-gap">CREADA</span>`;
+  }
+
+  if (normalized === 'ACTUALIZADA') {
+    return `<span class="badge-ok">ACTUALIZADA</span>`;
+  }
+
+  if (normalized === 'LISTA') {
+    return `<span class="badge-ok">LISTA</span>`;
+  }
+
+  return `<span class="badge-gap">${normalized || 'DESCONOCIDO'}</span>`;
+}
+
+function clearList(el: HTMLUListElement | null): void {
+  if (!el) return;
+  el.innerHTML = '';
+}
+
+function appendListItem(el: HTMLUListElement | null, text: string): void {
+  if (!el) return;
+  const li = document.createElement('li');
+  li.textContent = text;
+  el.appendChild(li);
+}
+
+function renderInspectionImage(ins: InspeccionItem): void {
+  if (!photoPlaceholder) return;
+
+  const imageUrl = buildImageUrl(ins);
+
+  if (!imageUrl) {
+    photoPlaceholder.innerHTML = '<span>Sin imagen disponible</span>';
+    return;
+  }
+
+  photoPlaceholder.innerHTML = '';
+
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.alt = `Captura de la inspección ${ins.id}`;
+  img.className = 'inspection-image';
+
+  img.onerror = () => {
+    photoPlaceholder.innerHTML = '<span>No se pudo cargar la imagen de la inspección</span>';
+    setDetalleError(`No se pudo cargar la imagen desde: ${imageUrl}`);
+    console.error('Error cargando imagen:', imageUrl);
+  };
+
+  photoPlaceholder.appendChild(img);
+}
+
+function renderDetalle(ins: InspeccionItem): void {
+  setDetalleError(null);
+  renderInspectionImage(ins);
+
+  clearList(detalleResumen);
+  clearList(detalleOk);
+  clearList(detalleGaps);
+
+  appendListItem(detalleResumen, `ID: ${ins.id}`);
+  appendListItem(detalleResumen, `Estantería: ${ins.estanteriaCodigo}`);
+  appendListItem(detalleResumen, `Estado: ${ins.estado}`);
+  appendListItem(detalleResumen, `Fecha: ${formatDate(ins.createdAt)}`);
+  appendListItem(detalleResumen, `Notas: ${ins.notas?.trim() || '—'}`);
+
+  const imagenPath = getImagenPath(ins);
+  appendListItem(detalleResumen, `Archivo: ${imagenPath || '—'}`);
+
+  appendListItem(detalleOk, 'Pendiente de conectar detalle real de productos OK');
+  appendListItem(detalleGaps, 'Pendiente de conectar detalle real de huecos');
+}
+
+function createActionButton(ins: InspeccionItem): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'btn-small';
+  button.textContent = 'Ver detalle';
+  button.addEventListener('click', () => renderDetalle(ins));
+  return button;
+}
+
+function renderTable(lista: InspeccionItem[]): void {
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  const planoQuery = filtroPlano?.value.trim().toLowerCase() ?? '';
+  const estadoQuery = filtroEstado?.value.trim().toUpperCase() ?? '';
+
+  const filtered = lista.filter((ins) => {
+    const matchesPlano =
+      !planoQuery || ins.estanteriaCodigo.toLowerCase().includes(planoQuery);
+
+    const matchesEstado =
+      !estadoQuery || ins.estado.toUpperCase() === estadoQuery;
+
+    return matchesPlano && matchesEstado;
+  });
+
+  if (filtered.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 9;
+    td.textContent = 'No hay inspecciones que coincidan con los filtros.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  filtered.forEach((ins) => {
+    const tr = document.createElement('tr');
+
+    const tdFecha = document.createElement('td');
+    tdFecha.textContent = formatDate(ins.createdAt);
+
+    const tdPlano = document.createElement('td');
+    tdPlano.textContent = '—';
+
+    const tdEstanteria = document.createElement('td');
+    tdEstanteria.textContent = ins.estanteriaCodigo;
+
+    const tdResponsables = document.createElement('td');
+    tdResponsables.textContent = '—';
+
+    const tdLayout = document.createElement('td');
+    tdLayout.textContent = '—';
+
+    const tdOk = document.createElement('td');
+    tdOk.textContent = '—';
+
+    const tdGaps = document.createElement('td');
+    tdGaps.textContent = '—';
+
+    const tdEstado = document.createElement('td');
+    tdEstado.innerHTML = buildEstadoBadge(ins.estado);
+
+    const tdAccion = document.createElement('td');
+    tdAccion.appendChild(createActionButton(ins));
+
+    tr.append(
+      tdFecha,
+      tdPlano,
+      tdEstanteria,
+      tdResponsables,
+      tdLayout,
+      tdOk,
+      tdGaps,
+      tdEstado,
+      tdAccion
+    );
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function parseJsonSafely(response: Response): Promise<any> {
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+async function loadInspecciones(): Promise<void> {
+  setError(null);
+  setSuccess(null);
+  setDetalleError(null);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/inspecciones`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await parseJsonSafely(response);
+
+    if (!response.ok) {
+      throw new Error(data?.message ?? 'No se pudo cargar el listado de inspecciones');
     }
 
-    successEl.textContent = msg;
-    successEl.removeAttribute("hidden");
-}
+    inspeccionesCache = Array.isArray(data) ? data : [];
 
-function setDetalleError(msg: string | null) {
-    if (!detalleError) return;
+    renderTable(inspeccionesCache);
 
-    if (!msg) {
-        detalleError.textContent = "";
-        detalleError.setAttribute("hidden", "");
-        return;
+    if (inspeccionesCache.length > 0) {
+      renderDetalle(inspeccionesCache[0]);
+    } else {
+      if (photoPlaceholder) {
+        photoPlaceholder.innerHTML = '<span>Sin inspecciones todavía</span>';
+      }
+
+      clearList(detalleResumen);
+      clearList(detalleOk);
+      clearList(detalleGaps);
     }
 
-    detalleError.textContent = msg;
-    detalleError.removeAttribute("hidden");
-}
+    setSuccess(`Inspecciones cargadas: ${inspeccionesCache.length}`);
+  } catch (error) {
+    setError(error instanceof Error ? error.message : 'Error al cargar inspecciones');
 
-function clearElement(el: Element | null) {
-    if (!el) return;
-    el.innerHTML = "";
-}
-
-function addListItem(list: HTMLUListElement | null, label: string, value: string) {
-    if (!list) return;
-
-    const li = document.createElement("li");
-    li.innerHTML = `<strong>${label}:</strong> ${value}`;
-    list.appendChild(li);
-}
-
-function escapeHtml(value: string): string {
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-function formatFecha(value: string): string {
-    const fecha = new Date(value);
-
-    if (Number.isNaN(fecha.getTime())) {
-        return value;
+    if (tbody) {
+      tbody.innerHTML = '';
     }
-
-    return new Intl.DateTimeFormat("es-ES", {
-        dateStyle: "short",
-        timeStyle: "short"
-    }).format(fecha);
-}
-
-// ===============================
-// Parseo de errores backend
-// ===============================
-async function parseErrorResponse(res: Response): Promise<ApiErrorResponse | null> {
-    try {
-        const text = await res.text();
-        return text ? JSON.parse(text) as ApiErrorResponse : null;
-    } catch {
-        return null;
-    }
-}
-
-function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): string {
-    if (data?.message) return data.message;
-
-    if (status === 400) return "La petición no es válida";
-    if (status === 401) return "No autorizado";
-    if (status === 403) return "No tienes permisos para realizar esta acción";
-    if (status === 404) return "No se encontró el recurso solicitado";
-    if (status === 409) return "Conflicto al recuperar los datos";
-    if (status >= 500) return "Error interno del servidor";
-
-    return `Error HTTP ${status}`;
-}
-
-// ===============================
-// Render del detalle lateral
-// ===============================
-function renderDetalle(ins: InspeccionResponse) {
-    setDetalleError(null);
-
-    clearElement(detalleResumen);
-    clearElement(detalleOk);
-    clearElement(detalleGaps);
-
-    addListItem(detalleResumen, "ID", String(ins.id));
-    addListItem(detalleResumen, "Código de estantería", ins.estanteriaCodigo);
-    addListItem(detalleResumen, "Estado", ins.estado);
-    addListItem(detalleResumen, "Fecha de creación", formatFecha(ins.createdAt));
-    addListItem(detalleResumen, "Notas", ins.notas?.trim() ? ins.notas : "—");
-    addListItem(detalleResumen, "Imagen", ins.imagenPath?.trim() ? ins.imagenPath : "—");
-
-    // Tu backend actual todavía no devuelve estos datos.
-    addListItem(detalleOk, "Productos detectados", "Pendiente de IA / YOLO");
-    addListItem(detalleGaps, "Huecos detectados", "Pendiente de IA / YOLO");
 
     if (photoPlaceholder) {
-        photoPlaceholder.innerHTML = "";
-
-        const texto = document.createElement("span");
-        texto.textContent = ins.imagenPath?.trim()
-            ? `Imagen asociada: ${ins.imagenPath}`
-            : "Esta inspección no tiene imagen asociada";
-
-        photoPlaceholder.appendChild(texto);
-    }
-}
-
-// ===============================
-// Filtros
-// ===============================
-function getInspeccionesFiltradas(): InspeccionResponse[] {
-    const texto = filtroPlano?.value.trim().toLowerCase() ?? "";
-    const estado = filtroEstado?.value ?? "";
-
-    return inspecciones.filter((ins) => {
-        const coincideTexto =
-            !texto ||
-            ins.estanteriaCodigo.toLowerCase().includes(texto) ||
-            (ins.notas?.toLowerCase().includes(texto) ?? false);
-
-        const coincideEstado =
-            !estado ||
-            ins.estado === estado;
-
-        return coincideTexto && coincideEstado;
-    });
-}
-
-// ===============================
-// Render de tabla
-// ===============================
-function renderTabla() {
-    if (!tbody) return;
-
-    tbody.innerHTML = "";
-
-    const lista = getInspeccionesFiltradas();
-
-    if (lista.length === 0) {
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
-
-        td.colSpan = 9;
-        td.textContent = "No hay inspecciones para mostrar";
-        tr.appendChild(td);
-        tbody.appendChild(tr);
-        return;
+      photoPlaceholder.innerHTML = '<span>No se pudo cargar la vista de estantería</span>';
     }
 
-    lista.forEach((ins) => {
-        const tr = document.createElement("tr");
+    clearList(detalleResumen);
+    clearList(detalleOk);
+    clearList(detalleGaps);
 
-        const tdFecha = document.createElement("td");
-        tdFecha.textContent = formatFecha(ins.createdAt);
-
-        const tdPlano = document.createElement("td");
-        tdPlano.textContent = "—"; // todavía no viene del backend
-
-        const tdEstanteria = document.createElement("td");
-        tdEstanteria.textContent = ins.estanteriaCodigo;
-
-        const tdEncargados = document.createElement("td");
-        tdEncargados.textContent = "—"; // todavía no viene del backend
-
-        const tdVersionPlano = document.createElement("td");
-        tdVersionPlano.textContent = "—"; // todavía no viene del backend
-
-        const tdProductosOk = document.createElement("td");
-        tdProductosOk.textContent = "—"; // todavía no viene del backend
-
-        const tdHuecos = document.createElement("td");
-        tdHuecos.textContent = "—"; // todavía no viene del backend
-
-        const tdEstado = document.createElement("td");
-        tdEstado.textContent = ins.estado;
-
-        const tdAcciones = document.createElement("td");
-        const btnDetalle = document.createElement("button");
-
-        btnDetalle.type = "button";
-        btnDetalle.className = "btn ghost";
-        btnDetalle.textContent = "Ver detalle";
-        btnDetalle.addEventListener("click", () => renderDetalle(ins));
-
-        tdAcciones.appendChild(btnDetalle);
-
-        tr.append(
-            tdFecha,
-            tdPlano,
-            tdEstanteria,
-            tdEncargados,
-            tdVersionPlano,
-            tdProductosOk,
-            tdHuecos,
-            tdEstado,
-            tdAcciones
-        );
-
-        tbody.appendChild(tr);
-    });
+    setDetalleError('No se pudo cargar el detalle de inspecciones.');
+  }
 }
 
-// ===============================
-// Carga real desde backend
-// ===============================
-async function cargarInspecciones() {
-    setError(null);
+function bindFilters(): void {
+  filtroPlano?.addEventListener('input', () => renderTable(inspeccionesCache));
+  filtroEstado?.addEventListener('change', () => renderTable(inspeccionesCache));
 
-    try {
-        const res = await fetch(API_URL, {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        });
-
-        if (!res.ok) {
-            const errorData = await parseErrorResponse(res);
-            show(errorData ?? { error: "HTTP_ERROR", status: res.status });
-
-            const msg = getBackendErrorMessage(errorData, res.status);
-            setError(msg);
-            return;
-        }
-
-        const data = await res.json() as InspeccionResponse[];
-        inspecciones = data;
-
-        // Ordenamos por fecha descendente: más reciente primero
-        inspecciones.sort((a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-
-        show(inspecciones);
-        renderTabla();
-
-        // Si vienes de crear una inspección nueva, mostramos esa en detalle
-        const nuevaInspeccionId = sessionStorage.getItem("nuevaInspeccionId");
-
-        if (nuevaInspeccionId) {
-            const creada = inspecciones.find(i => i.id === Number(nuevaInspeccionId));
-            if (creada) {
-                renderDetalle(creada);
-                setSuccess(`Inspección ${creada.estanteriaCodigo} creada correctamente`);
-            }
-            sessionStorage.removeItem("nuevaInspeccionId");
-            return;
-        }
-
-        // Si no venimos de crear nada, mostramos la primera por defecto
-        if (inspecciones.length > 0) {
-            renderDetalle(inspecciones[0]);
-        } else {
-            setDetalleError("No hay detalle disponible porque no existen inspecciones");
-        }
-
-    } catch {
-        setError("No se pudo conectar con el servidor.");
-        show({ error: "NETWORK_ERROR" });
-    }
+  btnLimpiarFiltros?.addEventListener('click', () => {
+    if (filtroPlano) filtroPlano.value = '';
+    if (filtroEstado) filtroEstado.value = '';
+    renderTable(inspeccionesCache);
+  });
 }
 
-// ===============================
-// Eventos
-// ===============================
-if (filtroPlano) {
-    filtroPlano.addEventListener("input", () => {
-        setSuccess(null);
-        renderTabla();
-    });
-}
-
-if (filtroEstado) {
-    filtroEstado.addEventListener("change", () => {
-        setSuccess(null);
-        renderTabla();
-    });
-}
-
-if (btnLimpiar) {
-    btnLimpiar.addEventListener("click", () => {
-        if (filtroPlano) filtroPlano.value = "";
-        if (filtroEstado) filtroEstado.value = "";
-
-        setError(null);
-        setSuccess(null);
-        renderTabla();
-    });
-}
-
-// ===============================
-// Inicio
-// ===============================
-document.addEventListener("DOMContentLoaded", () => {
-    void cargarInspecciones();
+document.addEventListener('DOMContentLoaded', () => {
+  bindFilters();
+  loadInspecciones();
 });

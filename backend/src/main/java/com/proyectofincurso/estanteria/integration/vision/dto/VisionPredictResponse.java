@@ -1,19 +1,21 @@
 package com.proyectofincurso.estanteria.integration.vision.dto;
 
-import java.util.List;
 import java.util.Map;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class VisionPredictResponse {
+
+    @JsonProperty("image_name")
     private String imageName;
+
+    @JsonProperty("image_path")
     private String imagePath;
-    private List<VisionDetectionItemResponse> detections;
+
     private Map<String, Integer> summary;
+
     private Boolean critical;
 }

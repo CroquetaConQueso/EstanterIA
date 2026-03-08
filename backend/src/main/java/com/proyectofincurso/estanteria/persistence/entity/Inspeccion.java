@@ -1,5 +1,7 @@
 package com.proyectofincurso.estanteria.persistence.entity;
 
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.type.descriptor.jdbc.VarcharJdbcType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -44,7 +46,7 @@ public class Inspeccion {
     private String imagenPath;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado", nullable = false, length = 20)
+    @Column(name = "estado", nullable = false, columnDefinition = "estado_estanteria")
     private EstanteriaEstado estado;
 
     //Se ejecuta antes den insert, nos permite no tener que setear a mano cada vez que 

@@ -101,8 +101,9 @@ function setPreview(data) {
   if (!previewBox) return;
 
   previewBox.innerHTML = '';
+  previewBox.classList.remove('has-image');
 
-  if (!data.imagePath) {
+  if (!data.imageUrl) {
     previewBox.innerHTML = `
       <div class="preview-placeholder">
         <p>Sin captura reciente</p>
@@ -112,13 +113,13 @@ function setPreview(data) {
     return;
   }
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'preview-placeholder';
-  wrapper.innerHTML = `
-    <p>Imagen asociada</p>
-    <small>${data.imagePath}</small>
-  `;
-  previewBox.appendChild(wrapper);
+  const img = document.createElement('img');
+  img.className = 'preview-image';
+  img.src = data.imageUrl;
+  img.alt = 'Imagen capturada de la inspección';
+
+  previewBox.classList.add('has-image');
+  previewBox.appendChild(img);
 }
 
 function setSummary(summary = {}) {
@@ -210,48 +211,39 @@ function buildPayload() {
   };
 }
 
-function createMockResult(payload) {
-  const isCritical = payload.estanteriaCodigo === 'EST-002';
-
-  return {
-    message: 'VISION_INSPECCION_OK',
-    id: Math.floor(Math.random() * 9000) + 1000,
-    estanteriaCodigo: payload.estanteriaCodigo,
-    imagePath:
-      payload.imagePath ||
-      `data/raw/capture_${String(Math.floor(Math.random() * 90) + 10).padStart(6, '0')}.png`,
-    summary: {
-      lentejas: isCritical ? 0 : 2,
-      arroz: isCritical ? 1 : 2,
-      comida_gato: isCritical ? 0 : 1
-    },
-    createdAt: new Date().toISOString(),
-    critical: isCritical
-  };
-}
-
-/*
- * Punto de integración real con Spring Boot.
- * Cuando quieras dejar el mock, esta función debería hacer algo como:
- *
- * return fetch(`/api/vision/inspeccionar/${payload.estanteriaCodigo}`, {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify(payload)
- * }).then(...)
- */
 async function runVision(payload) {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  return createMockResult(payload);
+  const response = await fetch(
+    `/api/vision/inspeccionar/${encodeURIComponent(payload.estanteriaCodigo)}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        modo: payload.modo,
+        imagePath: payload.imagePath,
+        notas: payload.notas
+      })
+    }
+  );
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    throw new Error(data?.message ?? 'No se pudo completar la inspección visual');
+  }
+
+  return data;
 }
 
 function resetView() {
   setError(null);
   setSuccess(null);
   show('Sin actividad todavía.');
-  setPreview({ estanteriaCodigo: '', imagePath: '' });
-  setSummary({ lentejas: 0, arroz: 0, comida_gato: 0 });
-  setResultMeta({ id: null, createdAt: null, critical: false });
+  setPreview({ estanteriaCodigo: '', imagePath: '', imageUrl: null });
+  setSummary({});
+  setResultMeta({});
   toggleNextLinks(false, false);
   setOperationalStatus('idle', 'El módulo está listo para ejecutar una inspección.');
   updateImagePathState();
@@ -321,7 +313,7 @@ if (form) {
         );
       }
     } catch (err) {
-      setError('No se pudo completar la inspección visual');
+      setError(err instanceof Error ? err.message : 'No se pudo completar la inspección visual');
       setOperationalStatus(
         'error',
         'Se produjo un error durante la ejecución del flujo de visión.'

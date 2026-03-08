@@ -1,3 +1,6 @@
+const API_BASE_URL =
+  (document.body?.getAttribute('data-api-base-url')?.trim() || window.location.origin).replace(/\/$/, '');
+
 const form = document.querySelector('#vision-form');
 const estanteriaSelect = document.querySelector('#vision-estanteria');
 const modoSelect = document.querySelector('#vision-modo');
@@ -94,6 +97,45 @@ function setOperationalStatus(type, text) {
   }
 }
 
+function normalizeImageUrl(raw) {
+  const trimmed = (raw || '').trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  let normalized = trimmed;
+
+  if (normalized.startsWith('./')) {
+    normalized = normalized.substring(1);
+  }
+
+  if (!normalized.startsWith('/')) {
+    normalized = `/${normalized}`;
+  }
+
+  return `${API_BASE_URL}${normalized}`;
+}
+
+function buildPreviewImageUrl(data) {
+  const rawImageUrl = data?.imageUrl?.trim();
+
+  if (rawImageUrl) {
+    return normalizeImageUrl(rawImageUrl);
+  }
+
+  const imagePath = data?.imagePath?.trim();
+  if (!imagePath) {
+    return null;
+  }
+
+  return `${API_BASE_URL}/captures/${encodeURIComponent(imagePath)}`;
+}
+
 function setPreview(data) {
   if (previewShelf) previewShelf.textContent = data.estanteriaCodigo || '—';
   if (previewImage) previewImage.textContent = data.imagePath || '—';
@@ -103,7 +145,9 @@ function setPreview(data) {
   previewBox.innerHTML = '';
   previewBox.classList.remove('has-image');
 
-  if (!data.imageUrl) {
+  const imageUrl = buildPreviewImageUrl(data);
+
+  if (!imageUrl) {
     previewBox.innerHTML = `
       <div class="preview-placeholder">
         <p>Sin captura reciente</p>
@@ -115,8 +159,19 @@ function setPreview(data) {
 
   const img = document.createElement('img');
   img.className = 'preview-image';
-  img.src = data.imageUrl;
+  img.src = imageUrl;
   img.alt = 'Imagen capturada de la inspección';
+
+  img.onerror = () => {
+    previewBox.classList.remove('has-image');
+    previewBox.innerHTML = `
+      <div class="preview-placeholder">
+        <p>No se pudo cargar la imagen</p>
+        <small>${imageUrl}</small>
+      </div>
+    `;
+    console.error('Error cargando preview:', imageUrl);
+  };
 
   previewBox.classList.add('has-image');
   previewBox.appendChild(img);
@@ -211,9 +266,23 @@ function buildPayload() {
   };
 }
 
+async function parseJsonSafely(response) {
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 async function runVision(payload) {
   const response = await fetch(
-    `/api/vision/inspeccionar/${encodeURIComponent(payload.estanteriaCodigo)}`,
+    `${API_BASE_URL}/api/vision/inspeccionar/${encodeURIComponent(payload.estanteriaCodigo)}`,
     {
       method: 'POST',
       headers: {
@@ -227,8 +296,7 @@ async function runVision(payload) {
     }
   );
 
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  const data = await parseJsonSafely(response);
 
   if (!response.ok) {
     throw new Error(data?.message ?? 'No se pudo completar la inspección visual');

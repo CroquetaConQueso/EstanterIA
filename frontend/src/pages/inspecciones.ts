@@ -12,7 +12,7 @@ type InspeccionItem = {
 };
 
 const API_BASE_URL =
-  (document.body?.getAttribute('data-api-base-url')?.trim() || 'http://localhost:8080').replace(/\/$/, '');
+  (document.body?.getAttribute('data-api-base-url')?.trim() || window.location.origin).replace(/\/$/, '');
 
 const tbody = document.getElementById('tbody-inspecciones') as HTMLTableSectionElement | null;
 const filtroPlano = document.getElementById('filtro-plano') as HTMLInputElement | null;
@@ -86,15 +86,31 @@ function getImagenPath(ins: InspeccionItem): string | null {
   return value?.trim() ? value.trim() : null;
 }
 
+function normalizeImageUrl(raw: string): string {
+  const trimmed = raw.trim();
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  let normalized = trimmed;
+
+  if (normalized.startsWith('./')) {
+    normalized = normalized.substring(1);
+  }
+
+  if (!normalized.startsWith('/')) {
+    normalized = `/${normalized}`;
+  }
+
+  return `${API_BASE_URL}${normalized}`;
+}
+
 function buildImageUrl(ins: InspeccionItem): string | null {
   const rawImageUrl = ins.imageUrl?.trim();
 
   if (rawImageUrl) {
-    if (/^https?:\/\//i.test(rawImageUrl)) {
-      return rawImageUrl;
-    }
-
-    return `${API_BASE_URL}${rawImageUrl.startsWith('/') ? '' : '/'}${rawImageUrl}`;
+    return normalizeImageUrl(rawImageUrl);
   }
 
   const imagenPath = getImagenPath(ins);
@@ -316,7 +332,10 @@ async function loadInspecciones(): Promise<void> {
 
     setSuccess(`Inspecciones cargadas: ${inspeccionesCache.length}`);
   } catch (error) {
-    setError(error instanceof Error ? error.message : 'Error al cargar inspecciones');
+    const message =
+      error instanceof Error ? error.message : 'Error al cargar inspecciones';
+
+    setError(message);
 
     if (tbody) {
       tbody.innerHTML = '';
@@ -331,6 +350,7 @@ async function loadInspecciones(): Promise<void> {
     clearList(detalleGaps);
 
     setDetalleError('No se pudo cargar el detalle de inspecciones.');
+    console.error('Error en loadInspecciones:', error);
   }
 }
 

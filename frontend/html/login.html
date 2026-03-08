@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Acceso · Suite Tienda</title>
+  <title>Acceso · EstanterIA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/login.css" rel="stylesheet" />
@@ -15,18 +15,18 @@
     <div class="intro">
       <h1>Acceso al panel</h1>
       <p>
-        Esta pantalla simula el acceso al panel de Suite Tienda. En una versión
-        real, aquí habría autenticación contra el backend (Spring Boot, base de datos).
+        Inicia sesión para acceder al panel operativo de EstanterIA.
       </p>
       <ul>
-        <li>Credenciales de ejemplo, sin validación real.</li>
-        <li>Acceso a panel, planos, inspecciones e inventario.</li>
-        <li>Flujo pensado para jefes de zona y encargados.</li>
+        <li>Acceso a visión, inspecciones, inventario y panel principal.</li>
+        <li>Validación real contra backend Spring Boot.</li>
+        <li>Sesión simple, adecuada para la versión académica actual.</li>
       </ul>
     </div>
 
     <form class="login-card" id="form-login">
       <h2>Iniciar sesión</h2>
+
       <label>
         Correo electrónico
         <input
@@ -56,27 +56,26 @@
           <input type="checkbox" id="login-remember" />
           <span>Recordar en este dispositivo</span>
         </label>
-        <a href="#" class="link-muted">¿Has olvidado tu contraseña?</a>
+        <a href="recuperar_password.html" class="link-muted">¿Has olvidado tu contraseña?</a>
       </div>
 
-      <p class="form-error" id="login-error" role="alert" aria-live="login-error" hidden></p>
+      <p class="form-error" id="login-error" role="alert" aria-live="polite" hidden></p>
       <button class="btn primary" type="submit">Entrar</button>
-      
+
       <p class="small">
         ¿Todavía no tienes cuenta? <a href="registro.html">Crear cuenta</a>
       </p>
     </form>
+
     <pre id="out"></pre>
   </section>
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda · Acceso simulado · Boceto</small>
+  <small>EstanterIA · Acceso</small>
 </footer>
+
 <script src="../js/header.js"></script>
 <script type="module" src="/src/pages/login.ts"></script>
-
 </body>
 </html>
-
-

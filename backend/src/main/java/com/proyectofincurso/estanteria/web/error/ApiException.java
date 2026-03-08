@@ -1,9 +1,7 @@
 package com.proyectofincurso.estanteria.web.error;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-@Getter
 public class ApiException extends RuntimeException {
 
     private final HttpStatus status;
@@ -13,6 +11,14 @@ public class ApiException extends RuntimeException {
         super(message);
         this.status = status;
         this.code = code;
+    }
+
+    public HttpStatus getStatus() {
+        return status;
+    }
+
+    public String getCode() {
+        return code;
     }
 
     public static ApiException badRequest(String code, String message) {
@@ -27,11 +33,11 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.FORBIDDEN, code, message);
     }
 
-    public static ApiException notFound(String code, String message) {
-        return new ApiException(HttpStatus.NOT_FOUND, code, message);
-    }
-
     public static ApiException conflict(String code, String message) {
         return new ApiException(HttpStatus.CONFLICT, code, message);
+    }
+
+    public static ApiException internalError(String code, String message) {
+        return new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, code, message);
     }
 }

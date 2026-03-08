@@ -9,6 +9,7 @@
     "descargas.html": { zone: "public", active: "descargas", right: "download-note" },
     "login.html": { zone: "public", active: "acceso" },
     "registro.html": { zone: "public", active: "registro", right: "registro-links" },
+    "recuperar_password.html": { zone: "public", active: "acceso" },
 
     "home.html": { zone: "internal", active: "inicio" },
     "planos.html": { zone: "internal", active: "planos" },
@@ -25,6 +26,61 @@
 
   const cfg = configs[page];
   if (!cfg) return;
+
+  function getTokenStorage() {
+    if (localStorage.getItem("auth_token")) {
+      return localStorage;
+    }
+    if (sessionStorage.getItem("auth_token")) {
+      return sessionStorage;
+    }
+    return null;
+  }
+
+  function getStoredToken() {
+    return localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+  }
+
+  function clearAuthStorage() {
+    [
+      localStorage,
+      sessionStorage
+    ].forEach((storage) => {
+      storage.removeItem("auth_token");
+      storage.removeItem("auth_user");
+      storage.removeItem("auth_role");
+      storage.removeItem("auth_email");
+    });
+  }
+
+  function saveSessionSnapshot(user) {
+    const storage = getTokenStorage() || sessionStorage;
+    if (user?.userName) storage.setItem("auth_user", user.userName);
+    if (user?.role) storage.setItem("auth_role", user.role);
+    if (user?.email) storage.setItem("auth_email", user.email);
+  }
+
+  function getLoginHref() {
+    return inHtmlDir ? "login.html" : "html/login.html";
+  }
+
+  function redirectToLogin() {
+    window.location.href = getLoginHref();
+  }
+
+  async function authFetch(url, options = {}) {
+    const token = getStoredToken();
+
+    const headers = new Headers(options.headers || {});
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    return fetch(url, {
+      ...options,
+      headers
+    });
+  }
 
   const publicLinks = inHtmlDir
     ? [
@@ -72,7 +128,11 @@
     const active = cfg.active === "perfil";
     const activeClass = active ? " is-active" : "";
     const current = active ? ' aria-current="page"' : "";
-    rightHtml = `<a class="user${activeClass}"${current} href="perfil.html">Mi Perfil</a>`;
+
+    rightHtml =
+      '<span class="top-note" id="auth-user-chip">Validando sesión...</span>' +
+      `<a class="user${activeClass}"${current} href="perfil.html">Mi Perfil</a>` +
+      '<a class="user" href="#" id="logout-link">Cerrar sesión</a>';
   } else if (cfg.right === "download-note") {
     rightHtml = '<span class="top-note">Prototipo - descargas simuladas</span>';
   } else if (cfg.right === "registro-links") {
@@ -86,8 +146,8 @@
     '<div class="inner">' +
     '<div class="left">' +
     `<a class="brand" href="${brandHref}">` +
-    `<img src="${iconSrc}" alt="Suite Tienda" class="brand-icon" />` +
-    '<span class="brand-text">Suite<span class="brand-accent">Tienda</span></span>' +
+    `<img src="${iconSrc}" alt="EstanterIA" class="brand-icon" />` +
+    '<span class="brand-text">Estanter<span class="brand-accent">IA</span></span>' +
     "</a>" +
     `<nav class="nav" aria-label="Principal">${navHtml}</nav>` +
     "</div>" +
@@ -99,4 +159,66 @@
   if (target) {
     target.outerHTML = html;
   }
+
+  async function hydrateInternalHeader() {
+    if (cfg.zone !== "internal") return;
+
+    const token = getStoredToken();
+    if (!token) {
+      clearAuthStorage();
+      redirectToLogin();
+      return;
+    }
+
+    const userChip = document.getElementById("auth-user-chip");
+    const logoutLink = document.getElementById("logout-link");
+
+    const cachedUser = localStorage.getItem("auth_user") || sessionStorage.getItem("auth_user");
+    const cachedRole = localStorage.getItem("auth_role") || sessionStorage.getItem("auth_role");
+    if (userChip && cachedUser) {
+      userChip.textContent = cachedRole ? `${cachedUser} · ${cachedRole}` : cachedUser;
+    }
+
+    if (logoutLink) {
+      logoutLink.addEventListener("click", async (event) => {
+        event.preventDefault();
+        logoutLink.setAttribute("aria-disabled", "true");
+
+        try {
+          await authFetch("/api/auth/logout", {
+            method: "POST"
+          });
+        } catch (_) {
+          // Da igual. Limpiamos local y fuera.
+        } finally {
+          clearAuthStorage();
+          redirectToLogin();
+        }
+      });
+    }
+
+    try {
+      const response = await authFetch("/api/auth/me", {
+        method: "GET"
+      });
+
+      if (!response.ok) {
+        clearAuthStorage();
+        redirectToLogin();
+        return;
+      }
+
+      const data = await response.json();
+      saveSessionSnapshot(data);
+
+      if (userChip) {
+        userChip.textContent = `${data.userName} · ${data.role}`;
+      }
+    } catch (_) {
+      clearAuthStorage();
+      redirectToLogin();
+    }
+  }
+
+  hydrateInternalHeader();
 })();

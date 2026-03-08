@@ -1,52 +1,28 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Mi perfil Â· Suite Tienda</title>
+  <title>Mi perfil · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/perfil.css" rel="stylesheet" />
 </head>
 <body>
-<header class="topbar">
-  <div class="inner">
-    <div class="left">
-      <a class="brand" href="../index.html">
-        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
-        <span class="brand-text">
-          Suite<span class="brand-accent">Tienda</span>
-        </span>
-      </a>
-            <nav class="nav" aria-label="Principal">
-        <a class="nav-link" href="home.html">Inicio</a>
-        <a class="nav-link" href="planos.html">Planos</a>
-        <a class="nav-link" href="inspecciones.html">Inspecciones</a>
-        <a class="nav-link" href="inventario.html">Inventario</a>
-        <a class="nav-link" href="alertas_centro.html">Alertas</a>
-        <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
-        <a class="nav-link" href="vision.html">Visión</a>
-        <a class="nav-link" href="about.html">Acerca de</a>
-      </nav>
-    </div>
-    <div class="right">
-      <span class="user-tag">Mi perfil</span>
-    </div>
-  </div>
-</header>
+<header class="topbar" data-app-header></header>
 
 <main class="page">
   <header class="page-head">
     <h1>Perfil de usuario</h1>
     <p>
-      Pantalla de ejemplo para mostrar cÃ³mo se configurarÃ­an los datos del usuario,
-      permisos y preferencias de notificaciÃ³n.
+      Pantalla de ejemplo para mostrar cómo se configurarían los datos del usuario,
+      permisos y preferencias de notificación.
     </p>
   </header>
 
   <section class="layout">
     <section class="col-main">
       <form class="card" id="form-perfil">
-        <h2>Datos bÃ¡sicos</h2>
+        <h2>Datos básicos</h2>
 
         <label>
           Nombre
@@ -54,7 +30,7 @@
         </label>
 
         <label>
-          Correo electrÃ³nico
+          Correo electrónico
           <input type="email" id="perfil-email" name="email" value="encargado@tienda.demo" />
         </label>
 
@@ -62,15 +38,15 @@
           Rol en la tienda
           <select id="perfil-rol" name="rol">
             <option>Jefe/a de tienda</option>
-            <option selected>Encargado/a de secciÃ³n</option>
-            <option>ReposiciÃ³n</option>
-            <option>DirecciÃ³n regional</option>
+            <option selected>Encargado/a de sección</option>
+            <option>Reposición</option>
+            <option>Dirección regional</option>
           </select>
         </label>
 
         <label>
           Tienda principal asignada
-          <input type="text" id="perfil-tienda" name="tienda" value="Supermercado â€” zona seca" />
+          <input type="text" id="perfil-tienda" name="tienda" value="Supermercado — zona seca" />
         </label>
 
         <div class="row-inline">
@@ -80,15 +56,15 @@
       </form>
 
       <section class="card">
-        <h2>Preferencias de notificaciÃ³n</h2>
+        <h2>Preferencias de notificación</h2>
         <p class="help">
-          En una implementaciÃ³n real, aquÃ­ se conectarÃ­a con el backend para
-          registrar notificaciones por correo, app mÃ³vil o panel.
+          En una implementación real, aquí se conectaría con el backend para
+          registrar notificaciones por correo, app móvil o panel.
         </p>
         <div class="prefs-grid">
           <label class="pref-item">
             <input type="checkbox" id="pref-huecos" checked />
-            <span>Alertas de huecos crÃ­ticos</span>
+            <span>Alertas de huecos críticos</span>
           </label>
           <label class="pref-item">
             <input type="checkbox" id="pref-inspecciones" checked />
@@ -104,20 +80,20 @@
 
     <aside class="col-side">
       <section class="card">
-        <h2>Resumen rÃ¡pido</h2>
+        <h2>Resumen rápido</h2>
         <ul class="summary-list">
           <li><strong>Usuario demo:</strong> conectado</li>
-          <li><strong>Tienda:</strong> Supermercado â€” zona seca</li>
-          <li><strong>Rol:</strong> Encargado/a de secciÃ³n</li>
-          <li><strong>Ãmbito:</strong> Planos + inspecciones + inventario</li>
+          <li><strong>Tienda:</strong> Supermercado — zona seca</li>
+          <li><strong>Rol:</strong> Encargado/a de sección</li>
+          <li><strong>Ámbito:</strong> Planos + inspecciones + inventario</li>
         </ul>
       </section>
 
       <section class="card">
         <h2>Notas</h2>
         <p class="help">
-          Esta pantalla es meramente ilustrativa: en el backend se gestionarÃ­a
-          quiÃ©n puede editar planos, lanzar inspecciones IA o aprobar cambios de inventario.
+          Esta pantalla es meramente ilustrativa: en el backend se gestionaría
+          quién puede editar planos, lanzar inspecciones IA o aprobar cambios de inventario.
         </p>
       </section>
     </aside>
@@ -125,10 +101,11 @@
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Perfil de usuario Â· Boceto</small>
+  <small>Suite Tienda · Perfil de usuario · Boceto</small>
 </footer>
-
+<script src="../js/header.js"></script>
 <script src="../js/perfil.js"></script>
+
 </body>
 </html>
 

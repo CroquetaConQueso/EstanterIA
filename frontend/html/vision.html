@@ -1,50 +1,20 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EstanterIA Â· Vision</title>
+    <title>EstanterIA · Vision</title>
     <link rel="stylesheet" href="../css/vision.css" />
   </head>
   <body>
-    <header class="topbar">
-      <div class="inner">
-        <div class="left">
-          <a class="brand" href="index.html">
-            <img
-              src="../img/iconoFAV.png"
-              alt="Suite Tienda"
-              class="brand-icon"
-            />
-            <span class="brand-text"
-              >Estanter<span class="brand-accent">IA</span></span
-            >
-          </a>
-
-                <nav class="nav" aria-label="Principal">
-        <a class="nav-link" href="home.html">Inicio</a>
-        <a class="nav-link" href="planos.html">Planos</a>
-        <a class="nav-link" href="inspecciones.html">Inspecciones</a>
-        <a class="nav-link" href="inventario.html">Inventario</a>
-        <a class="nav-link" href="alertas_centro.html">Alertas</a>
-        <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
-        <a class="nav-link is-active" aria-current="page" href="vision.html">Visión</a>
-        <a class="nav-link" href="about.html">Acerca de</a>
-      </nav>
-        </div>
-
-        <div class="right">
-          <a class="user" href="perfil.html">PERFIL</a>
-        </div>
-      </div>
-    </header>
+    <header class="topbar" data-app-header></header>
 
     <main class="page">
       <header class="page-head">
-        <p class="page-desc">MÃ³dulo de visiÃ³n</p>
-        <h1>InspecciÃ³n visual asistida</h1>
+        <p class="page-desc">Módulo de visión</p>
+        <h1>Inspección visual asistida</h1>
         <p class="page-desc" style="color: var(--black); margin-top: 10px">
-          Lanza una inspecciÃ³n desde cÃ¡mara o desde una imagen ya existente y
+          Lanza una inspección desde cámara o desde una imagen ya existente y
           revisa el resultado al instante.
         </p>
       </header>
@@ -53,7 +23,7 @@
         <div class="panel-head">
           <div>
             <p class="section-kicker">Estado operativo</p>
-            <h2>Estado del flujo de visiÃ³n</h2>
+            <h2>Estado del flujo de visión</h2>
           </div>
           <span id="vision-status-chip" class="status-chip pendiente"
             >EN ESPERA</span
@@ -65,7 +35,7 @@
           class="page-desc"
           style="color: var(--black); margin: 0"
         >
-          El mÃ³dulo estÃ¡ listo para ejecutar una inspecciÃ³n.
+          El módulo está listo para ejecutar una inspección.
         </p>
       </section>
 
@@ -74,20 +44,20 @@
           <section class="panel">
             <div class="panel-head">
               <div>
-                <p class="section-kicker">OperaciÃ³n</p>
-                <h2>Nueva inspecciÃ³n</h2>
+                <p class="section-kicker">Operación</p>
+                <h2>Nueva inspección</h2>
               </div>
-              <span class="status-chip asignada">VISIÃ“N</span>
+              <span class="status-chip asignada">VISIÓN</span>
             </div>
 
             <form id="vision-form" class="vision-form">
               <label class="field">
-                <span>EstanterÃ­a</span>
+                <span>Estantería</span>
                 <select id="vision-estanteria" name="estanteriaCodigo" required>
-                  <option value="">Selecciona una estanterÃ­a</option>
-                  <option value="EST-001">EST-001 Â· BÃ¡sicos despensa</option>
-                  <option value="EST-002">EST-002 Â· Mascotas</option>
-                  <option value="EST-003">EST-003 Â· Legumbres</option>
+                  <option value="">Selecciona una estantería</option>
+                  <option value="EST-001">EST-001 · Básicos despensa</option>
+                  <option value="EST-002">EST-002 · Mascotas</option>
+                  <option value="EST-003">EST-003 · Legumbres</option>
                 </select>
               </label>
 
@@ -126,7 +96,7 @@
 
               <div class="form-actions">
                 <button type="submit" class="btn primary grow">
-                  Lanzar inspecciÃ³n
+                  Lanzar inspección
                 </button>
                 <button type="button" id="btn-reset" class="btn ghost">
                   Limpiar
@@ -151,19 +121,19 @@
               <div class="preview-placeholder">
                 <p>Sin captura reciente</p>
                 <small>
-                  La imagen asociada aparecerÃ¡ aquÃ­ tras ejecutar una inspecciÃ³n.
+                  La imagen asociada aparecerá aquí tras ejecutar una inspección.
                 </small>
               </div>
             </div>
 
             <ul class="detail-list">
               <li class="meta-item">
-                <span class="meta-label">EstanterÃ­a actual</span>
-                <strong class="meta-value" id="preview-shelf">â€”</strong>
+                <span class="meta-label">Estantería actual</span>
+                <strong class="meta-value" id="preview-shelf">—</strong>
               </li>
               <li class="meta-item">
                 <span class="meta-label">Imagen asociada</span>
-                <strong class="meta-value" id="preview-image">â€”</strong>
+                <strong class="meta-value" id="preview-image">—</strong>
               </li>
             </ul>
           </section>
@@ -174,7 +144,7 @@
             <div class="panel-head">
               <div>
                 <p class="section-kicker">Resultado inmediato</p>
-                <h2>Resumen de detecciÃ³n</h2>
+                <h2>Resumen de detección</h2>
               </div>
               <span id="result-chip" class="status-chip descartada"
                 >SIN RESULTADO</span
@@ -198,12 +168,12 @@
 
             <ul class="detail-list">
               <li class="meta-item">
-                <span class="meta-label">InspecciÃ³n creada</span>
-                <strong class="meta-value" id="result-id">â€”</strong>
+                <span class="meta-label">Inspección creada</span>
+                <strong class="meta-value" id="result-id">—</strong>
               </li>
               <li class="meta-item">
                 <span class="meta-label">Fecha</span>
-                <strong class="meta-value" id="result-date">â€”</strong>
+                <strong class="meta-value" id="result-date">—</strong>
               </li>
             </ul>
           </section>
@@ -243,20 +213,21 @@
             <div class="panel-head border-red">
               <div>
                 <p class="section-kicker text-gold">Trazabilidad</p>
-                <h2 class="text-red">Respuesta tÃ©cnica</h2>
+                <h2 class="text-red">Respuesta técnica</h2>
               </div>
               <span class="status-chip critica">DEBUG</span>
             </div>
-            <pre id="vision-out" class="debug-box">Sin actividad todavÃ­a.</pre>
+            <pre id="vision-out" class="debug-box">Sin actividad todavía.</pre>
           </section>
         </div>
       </div>
     </main>
 
     <footer class="foot">
-      <small>EstanterIA Â· MÃ³dulo de VisiÃ³n Computacional</small>
+      <small>EstanterIA · Módulo de Visión Computacional</small>
     </footer>
+<script src="../js/header.js"></script>
+<script src="../js/vision.js"></script>
 
-    <script src="../js/vision.js"></script>
-  </body>
+</body>
 </html>

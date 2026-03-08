@@ -1,45 +1,21 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Panel Â· Suite Tienda</title>
+    <title>Panel · Suite Tienda</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
     <link href="../css/home.css" rel="stylesheet" />
   </head>
   <body>
-    <header class="topbar">
-      <div class="inner">
-        <div class="left">
-          <a class="brand" href="../index.html">
-            <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
-            <span class="brand-text">
-              Suite<span class="brand-accent">Tienda</span>
-            </span>
-          </a>
-                <nav class="nav" aria-label="Principal">
-        <a class="nav-link is-active" aria-current="page" href="home.html">Inicio</a>
-        <a class="nav-link" href="planos.html">Planos</a>
-        <a class="nav-link" href="inspecciones.html">Inspecciones</a>
-        <a class="nav-link" href="inventario.html">Inventario</a>
-        <a class="nav-link" href="alertas_centro.html">Alertas</a>
-        <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
-        <a class="nav-link" href="vision.html">Visión</a>
-        <a class="nav-link" href="about.html">Acerca de</a>
-      </nav>
-        </div>
-        <div class="right">
-          <a class="user" href="perfil.html">Mi perfil</a>
-        </div>
-      </div>
-    </header>
+    <header class="topbar" data-app-header></header>
     <main class="page">
       <header class="page-head">
         <h1>Panel general</h1>
         <p>
-          Desde aquÃ­ accedes a los planos, las inspecciones IA y el inventario
-          con hotspots. Es la vista que verÃ­an encargados y jefes de secciÃ³n al
-          iniciar sesiÃ³n.
+          Desde aquí accedes a los planos, las inspecciones IA y el inventario
+          con hotspots. Es la vista que verían encargados y jefes de sección al
+          iniciar sesión.
         </p>
       </header>
 
@@ -47,9 +23,9 @@
       <section class="slider-section">
         <div class="slider-head">
           <div>
-            <h2>Recorridos por planos y estanterÃ­as</h2>
+            <h2>Recorridos por planos y estanterías</h2>
             <p>
-              PequeÃ±a muestra de cÃ³mo se verÃ­a el flujo de trabajo cuando la
+              Pequeña muestra de cómo se vería el flujo de trabajo cuando la
               IA empieza a marcar huecos y productos directamente sobre plano.
             </p>
           </div>
@@ -66,7 +42,7 @@
             type="button"
             aria-label="Anterior"
           >
-            â€¹
+            ‹
           </button>
 
           <div class="slider-frame">
@@ -74,12 +50,12 @@
               <article class="slide is-active">
                 <img
                   src="../img/almacenCentral.jpg"
-                  alt="Plano almacÃ©n central"
+                  alt="Plano almacén central"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">AlmacÃ©n central</div>
+                  <div class="caption-title">Almacén central</div>
                   <div class="caption-meta">
-                    Est. A-12 Â· OK: palÃ©s detergente Â· Huecos: suavizante
+                    Est. A-12 · OK: palés detergente · Huecos: suavizante
                     formato 3L
                   </div>
                 </div>
@@ -93,7 +69,7 @@
                 <div class="slide-caption">
                   <div class="caption-title">Tienda de barrio</div>
                   <div class="caption-meta">
-                    Est. B-05 Â· OK: snacks Â· Huecos: refrescos sin azÃºcar
+                    Est. B-05 · OK: snacks · Huecos: refrescos sin azúcar
                   </div>
                 </div>
               </article>
@@ -104,9 +80,9 @@
                   alt="Plano supermercado"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">Supermercado â€” zona seca</div>
+                  <div class="caption-title">Supermercado — zona seca</div>
                   <div class="caption-meta">
-                    Est. C-18 Â· OK: pasta y arroz Â· Huecos: legumbres premium
+                    Est. C-18 · OK: pasta y arroz · Huecos: legumbres premium
                   </div>
                 </div>
               </article>
@@ -114,14 +90,14 @@
               <article class="slide">
                 <img
                   src="../img/planosFerreteria.jpg"
-                  alt="Plano ferreterÃ­a"
+                  alt="Plano ferretería"
                 />
                 <div class="slide-caption">
                   <div class="caption-title">
-                    FerreterÃ­a â€” pasillo tornillerÃ­a
+                    Ferretería — pasillo tornillería
                   </div>
                   <div class="caption-meta">
-                    Est. F-03 Â· OK: tacos, brocas Â· Huecos: tornillos M6
+                    Est. F-03 · OK: tacos, brocas · Huecos: tornillos M6
                   </div>
                 </div>
               </article>
@@ -134,7 +110,7 @@
             type="button"
             aria-label="Siguiente"
           >
-            â€º
+            ›
           </button>
           <div class="slider-dots" id="slider-dots" aria-hidden="true"></div>
         </div>
@@ -143,14 +119,14 @@
       <!-- Tarjetas principales -->
       <section class="cards">
         <article class="card">
-          <h2>Planos y estanterÃ­as</h2>
+          <h2>Planos y estanterías</h2>
           <p>
-            Gestiona la estructura fÃ­sica de tu tienda: planos, estanterÃ­as y
-            zonas. Cada estanterÃ­a se convierte en un elemento que la IA puede
+            Gestiona la estructura física de tu tienda: planos, estanterías y
+            zonas. Cada estantería se convierte en un elemento que la IA puede
             entender.
           </p>
           <ul>
-            <li>DefiniciÃ³n de estanterÃ­as y posiciones.</li>
+            <li>Definición de estanterías y posiciones.</li>
             <li>Subzonas por departamento o responsable.</li>
             <li>Acceso directo al editor de plano.</li>
           </ul>
@@ -163,15 +139,15 @@
         </article>
 
         <article class="card">
-          <h2>Ãšltimas inspecciones IA</h2>
+          <h2>Últimas inspecciones IA</h2>
           <p>
-            Consulta quÃ© vieron las cÃ¡maras en cada estanterÃ­a: productos
-            presentes, huecos y posibles errores frente al stock teÃ³rico.
+            Consulta qué vieron las cámaras en cada estantería: productos
+            presentes, huecos y posibles errores frente al stock teórico.
           </p>
           <ul>
             <li>Listado de inspecciones ordenadas por fecha.</li>
-            <li>RelaciÃ³n entre estanterÃ­as y zonas de tienda.</li>
-            <li>Acceso directo al detalle de cada inspecciÃ³n.</li>
+            <li>Relación entre estanterías y zonas de tienda.</li>
+            <li>Acceso directo al detalle de cada inspección.</li>
           </ul>
           <button
             class="btn ghost"
@@ -185,11 +161,11 @@
           <h2>Inventario & hotspots</h2>
           <p>
             Visualiza el inventario desde el punto de vista de los huecos:
-            dÃ³nde faltan productos y quÃ© impacto tienen en ventas.
+            dónde faltan productos y qué impacto tienen en ventas.
           </p>
           <ul>
-            <li>Listado de estanterÃ­as con huecos detectados.</li>
-            <li>Vista rÃ¡pida de productos afectados.</li>
+            <li>Listado de estanterías con huecos detectados.</li>
+            <li>Vista rápida de productos afectados.</li>
             <li>Filtro por tienda, zona y estado.</li>
           </ul>
           <button
@@ -206,8 +182,8 @@
         <div class="summary-head">
           <h2>Resumen de estado por tienda</h2>
           <p>
-            Este mÃ³dulo serÃ­a el punto de entrada para responsables de zona,
-            mostrando el nivel de â€œsaludâ€ de cada tienda o almacÃ©n.
+            Este módulo sería el punto de entrada para responsables de zona,
+            mostrando el nivel de “salud” de cada tienda o almacén.
           </p>
         </div>
 
@@ -215,9 +191,9 @@
           <table class="summary-table">
             <thead>
               <tr>
-                <th>Tienda / AlmacÃ©n</th>
-                <th>EstanterÃ­as controladas</th>
-                <th>Ãšltima inspecciÃ³n</th>
+                <th>Tienda / Almacén</th>
+                <th>Estanterías controladas</th>
+                <th>Última inspección</th>
                 <th>Huecos detectados</th>
                 <th>Responsable(s)</th>
                 <th>Estado</th>
@@ -232,10 +208,11 @@
     </main>
 
     <footer class="foot">
-      <small>Suite Tienda Â· Panel principal Â· Boceto</small>
+      <small>Suite Tienda · Panel principal · Boceto</small>
     </footer>
+<script src="../js/header.js"></script>
+<script src="../js/home.js"></script>
 
-    <script src="../js/home.js"></script>
-  </body>
+</body>
 </html>
 

@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --red: #d52b1e;
   --gold: #f9a01b;
   --black: #111111;
@@ -154,7 +154,7 @@ button, input, select, textarea {
 }
 
 .page-head::before {
-  content: '★';
+  content: 'â˜…';
   position: absolute;
   top: 10px;
   right: 20px;

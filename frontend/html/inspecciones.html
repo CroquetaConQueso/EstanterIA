@@ -1,56 +1,29 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Inspecciones IA Â· Suite Tienda</title>
+  <title>Inspecciones IA · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/inspecciones.css" rel="stylesheet" />
 </head>
 <body>
-<header class="topbar">
-  <div class="inner">
-    <div class="left">
-      <a class="brand" href="../index.html">
-        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
-        <span class="brand-text">
-          Suite<span class="brand-accent">Tienda</span>
-        </span>
-      </a>
-
-      <!-- NavegaciÃ³n consistente con home/editor/editar -->
-            <nav class="nav" aria-label="Principal">
-        <a class="nav-link" href="home.html">Inicio</a>
-        <a class="nav-link" href="planos.html">Planos</a>
-        <a class="nav-link is-active" aria-current="page" href="inspecciones.html">Inspecciones</a>
-        <a class="nav-link" href="inventario.html">Inventario</a>
-        <a class="nav-link" href="alertas_centro.html">Alertas</a>
-        <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
-        <a class="nav-link" href="vision.html">Visión</a>
-        <a class="nav-link" href="about.html">Acerca de</a>
-      </nav>
-    </div>
-
-    <div class="right">
-      <a class="user" href="perfil.html">Mi perfil</a>
-    </div>
-  </div>
-</header>
+<header class="topbar" data-app-header></header>
 
 <main class="page">
   <header class="page-head">
     <div>
-      <h1>Inspecciones con VisiÃ³n por Computador</h1>
+      <h1>Inspecciones con Visión por Computador</h1>
       <p>
         Listado y detalle de inspecciones. En el MVP, se crea y se lista desde backend;
-        el anÃ¡lisis IA vendrÃ¡ despuÃ©s.
+        el análisis IA vendrá después.
       </p>
     </div>
 
     <div class="filters-inline">
       <label>
         Buscar por plano
-        <input type="text" id="filtro-plano" placeholder="AlmacÃ©n, Supermercado, Tienda..." />
+        <input type="text" id="filtro-plano" placeholder="Almacén, Supermercado, Tienda..." />
       </label>
 
       <label>
@@ -68,7 +41,7 @@
       </button>
 
       <a class="btn primary" href="inspeccion_nueva.html" id="btn-nueva-inspeccion">
-        Nueva inspecciÃ³n
+        Nueva inspección
       </a>
     </div>
   </header>
@@ -81,18 +54,18 @@
     <section class="list-shell">
       <h2>Listado de inspecciones</h2>
       <p class="help">
-        Selecciona una inspecciÃ³n para ver el detalle. En el MVP, esto sale de la BD.
+        Selecciona una inspección para ver el detalle. En el MVP, esto sale de la BD.
       </p>
 
       <div class="table-shell">
         <table class="table">
           <thead>
             <tr>
-              <th>Fecha Â· hora</th>
+              <th>Fecha · hora</th>
               <th>Plano</th>
-              <th>EstanterÃ­a</th>
+              <th>Estantería</th>
               <th>Encargado(s)</th>
-              <th>VersiÃ³n plano</th>
+              <th>Versión plano</th>
               <th>Productos OK</th>
               <th>Huecos</th>
               <th>Estado</th>
@@ -108,13 +81,13 @@
     </section>
 
     <aside class="detail-shell">
-      <h2>Detalle de la inspecciÃ³n</h2>
+      <h2>Detalle de la inspección</h2>
       <p class="help">
-        Al seleccionar una inspecciÃ³n se mostrarÃ¡ aquÃ­ el resumen, productos y huecos.
+        Al seleccionar una inspección se mostrará aquí el resumen, productos y huecos.
       </p>
 
       <div class="photo-placeholder" id="photo-placeholder">
-        <span>Vista de estanterÃ­a</span>
+        <span>Vista de estantería</span>
       </div>
 
       <div class="detail-grid">
@@ -138,10 +111,12 @@
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Inspecciones IA Â· MVP</small>
+  <small>Suite Tienda · Inspecciones IA · MVP</small>
 </footer>
 
 <!-- Vite + TS -->
+<script src="../js/header.js"></script>
 <script type="module" src="/src/pages/inspecciones.ts"></script>
+
 </body>
 </html>

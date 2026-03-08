@@ -1,51 +1,29 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Centro de alertas Â· Suite Tienda</title>
+  <title>Centro de alertas · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/alertas_centro.css" rel="stylesheet" />
 </head>
 <body>
-<header class="topbar">
-  <div class="inner">
-    <div class="left">
-      <a class="brand" href="../index.html">
-        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
-        <span class="brand-text">Suite<span class="brand-accent">Tienda</span></span>
-      </a>
-            <nav class="nav" aria-label="Principal">
-        <a class="nav-link" href="home.html">Inicio</a>
-        <a class="nav-link" href="planos.html">Planos</a>
-        <a class="nav-link" href="inspecciones.html">Inspecciones</a>
-        <a class="nav-link" href="inventario.html">Inventario</a>
-        <a class="nav-link is-active" aria-current="page" href="alertas_centro.html">Alertas</a>
-        <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
-        <a class="nav-link" href="vision.html">Visión</a>
-        <a class="nav-link" href="about.html">Acerca de</a>
-      </nav>
-    </div>
-    <div class="right">
-      <a class="user" href="perfil.html">Mi perfil</a>
-    </div>
-  </div>
-</header>
+<header class="topbar" data-app-header></header>
 
 <main class="page">
   <header class="page-head">
     <div>
-      <p class="eyebrow">OperaciÃ³n</p>
+      <p class="eyebrow">Operación</p>
       <h1>Centro de alertas</h1>
       <p>
-        Bandeja de entrada de incidencias crÃ­ticas y avisos operativos. En el MVP, esta vista
-        prioriza quÃ© estanterÃ­as requieren atenciÃ³n inmediata y permite despachar o asignar cada alerta.
+        Bandeja de entrada de incidencias críticas y avisos operativos. En el MVP, esta vista
+        prioriza qué estanterías requieren atención inmediata y permite despachar o asignar cada alerta.
       </p>
     </div>
 
     <div class="summary-inline" id="summary-inline">
       <article class="metric danger">
-        <span class="metric-label">CrÃ­ticas</span>
+        <span class="metric-label">Críticas</span>
         <strong id="metric-critical">0</strong>
       </article>
       <article class="metric warn">
@@ -64,7 +42,7 @@
       Gravedad
       <select id="filtro-gravedad">
         <option value="">Todas</option>
-        <option value="CRITICA">CRÃTICA</option>
+        <option value="CRITICA">CRÍTICA</option>
         <option value="ALTA">ALTA</option>
         <option value="MEDIA">MEDIA</option>
       </select>
@@ -82,7 +60,7 @@
 
     <label class="grow">
       Buscar
-      <input type="text" id="filtro-texto" placeholder="Producto, estanterÃ­a, zona, responsable..." />
+      <input type="text" id="filtro-texto" placeholder="Producto, estantería, zona, responsable..." />
     </label>
 
     <button class="btn ghost" id="btn-limpiar" type="button">Limpiar filtros</button>
@@ -93,7 +71,7 @@
       <div class="section-head">
         <h2>Alertas activas</h2>
         <p>
-          Esta vista puede nacer del estado CRÃTICO de las inspecciones y evolucionar a una bandeja de incidencias completa.
+          Esta vista puede nacer del estado CRÍTICO de las inspecciones y evolucionar a una bandeja de incidencias completa.
         </p>
       </div>
 
@@ -103,7 +81,7 @@
             <tr>
               <th>Hora</th>
               <th>Gravedad</th>
-              <th>EstanterÃ­a</th>
+              <th>Estantería</th>
               <th>Producto</th>
               <th>Zona</th>
               <th>Detectado / esperado</th>
@@ -119,9 +97,9 @@
 
     <aside class="detail-shell">
       <h2>Detalle de alerta</h2>
-      <p class="help">Selecciona una alerta para ver el contexto operativo y las acciones rÃ¡pidas.</p>
+      <p class="help">Selecciona una alerta para ver el contexto operativo y las acciones rápidas.</p>
       <div class="photo-placeholder" id="alerta-preview">
-        <span>PrevisualizaciÃ³n de la incidencia</span>
+        <span>Previsualización de la incidencia</span>
       </div>
       <ul class="detail-list" id="detalle-alerta"></ul>
       <div class="actions-vertical">
@@ -134,10 +112,11 @@
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Centro de alertas Â· MVP operativo</small>
+  <small>Suite Tienda · Centro de alertas · MVP operativo</small>
 </footer>
-
+<script src="../js/header.js"></script>
 <script src="../js/alertas_centro.js"></script>
+
 </body>
 </html>
 

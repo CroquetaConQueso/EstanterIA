@@ -1,3 +1,4 @@
 package com.proyectofincurso.estanteria.auth;
 
-public record AuthUser(String userName, String role) {}
+public record AuthUser(String userName, String email, String role) {
+}

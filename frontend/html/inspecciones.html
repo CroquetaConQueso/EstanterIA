@@ -15,15 +15,15 @@
     <div>
       <h1>Inspecciones con Visión por Computador</h1>
       <p>
-        Listado y detalle de inspecciones. En el MVP, se crea y se lista desde backend;
-        el análisis IA vendrá después.
+        Listado y detalle rápido de inspecciones. El detalle completo y la edición se separan
+        en pantallas propias, porque bastante caos hay ya en el mundo.
       </p>
     </div>
 
     <div class="filters-inline">
       <label>
-        Buscar por plano
-        <input type="text" id="filtro-plano" placeholder="Almacén, Supermercado, Tienda..." />
+        Buscar por estantería
+        <input type="text" id="filtro-plano" placeholder="EST-001, almacén, notas..." />
       </label>
 
       <label>
@@ -33,6 +33,14 @@
           <option value="CREADA">CREADA</option>
           <option value="ACTUALIZADA">ACTUALIZADA</option>
           <option value="LISTA">LISTA</option>
+        </select>
+      </label>
+
+      <label>
+        Ordenar por fecha
+        <select id="orden-fecha">
+          <option value="desc">Más reciente primero</option>
+          <option value="asc">Más antigua primero</option>
         </select>
       </label>
 
@@ -46,7 +54,6 @@
     </div>
   </header>
 
-  <!-- Feedback (lo pinta TS/JS) -->
   <p class="form-error" id="inspecciones-error" role="alert" aria-live="polite" hidden></p>
   <p class="help" id="inspecciones-success" hidden></p>
 
@@ -54,7 +61,8 @@
     <section class="list-shell">
       <h2>Listado de inspecciones</h2>
       <p class="help">
-        Selecciona una inspección para ver el detalle. En el MVP, esto sale de la BD.
+        Usa “Vista rápida” para el panel lateral o entra en “Detalle” y “Editar” para trabajar
+        sin inflar esta pantalla hasta el absurdo.
       </p>
 
       <div class="table-shell">
@@ -73,21 +81,26 @@
             </tr>
           </thead>
 
-          <tbody id="tbody-inspecciones">
-            <!-- Rellenado por /src/pages/inspecciones.ts -->
-          </tbody>
+          <tbody id="tbody-inspecciones"></tbody>
         </table>
       </div>
     </section>
 
     <aside class="detail-shell">
-      <h2>Detalle de la inspección</h2>
+      <h2>Detalle rápido de la inspección</h2>
       <p class="help">
-        Al seleccionar una inspección se mostrará aquí el resumen, productos y huecos.
+        Este panel mantiene la vista rápida. El detalle completo y la edición van a pantallas
+        separadas.
       </p>
 
       <div class="photo-placeholder" id="photo-placeholder">
         <span>Vista de estantería</span>
+      </div>
+
+      <div class="quick-actions" id="quick-actions" hidden>
+        <a class="btn ghost" id="btn-ir-detalle" href="#">Detalle</a>
+        <a class="btn ghost" id="btn-ir-editar" href="#">Editar</a>
+        <a class="btn ghost" id="btn-abrir-imagen" href="#" target="_blank" rel="noopener noreferrer">Abrir imagen</a>
       </div>
 
       <div class="detail-grid">
@@ -114,9 +127,7 @@
   <small>Suite Tienda · Inspecciones IA · MVP</small>
 </footer>
 
-<!-- Vite + TS -->
 <script src="../js/header.js"></script>
 <script type="module" src="/src/pages/inspecciones.ts"></script>
-
 </body>
 </html>

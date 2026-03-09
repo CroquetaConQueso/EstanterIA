@@ -1,0 +1,41 @@
+@import url('./inspecciones.css');
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+  gap: 20px;
+}
+
+.detail-main,
+.detail-side {
+  border: var(--border-heavy);
+  background: var(--white);
+  box-shadow: var(--shadow-block);
+  padding: 16px;
+}
+
+.detail-side {
+  display: grid;
+  gap: 16px;
+}
+
+.detail-main .photo-placeholder {
+  min-height: 520px;
+}
+
+.detail-main .inspection-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: var(--border-light);
+}
+
+@media (max-width: 980px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-main .photo-placeholder {
+    min-height: 300px;
+  }
+}

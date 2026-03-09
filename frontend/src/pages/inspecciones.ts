@@ -17,6 +17,7 @@ const API_BASE_URL =
 const tbody = document.getElementById('tbody-inspecciones') as HTMLTableSectionElement | null;
 const filtroPlano = document.getElementById('filtro-plano') as HTMLInputElement | null;
 const filtroEstado = document.getElementById('filtro-estado') as HTMLSelectElement | null;
+const ordenFecha = document.getElementById('orden-fecha') as HTMLSelectElement | null;
 const btnLimpiarFiltros = document.getElementById('btn-limpiar-filtros') as HTMLButtonElement | null;
 
 const inspeccionesError = document.getElementById('inspecciones-error') as HTMLElement | null;
@@ -28,7 +29,13 @@ const detalleOk = document.getElementById('detalle-ok') as HTMLUListElement | nu
 const detalleGaps = document.getElementById('detalle-gaps') as HTMLUListElement | null;
 const detalleError = document.getElementById('detalle-error') as HTMLElement | null;
 
+const quickActions = document.getElementById('quick-actions') as HTMLElement | null;
+const btnIrDetalle = document.getElementById('btn-ir-detalle') as HTMLAnchorElement | null;
+const btnIrEditar = document.getElementById('btn-ir-editar') as HTMLAnchorElement | null;
+const btnAbrirImagen = document.getElementById('btn-abrir-imagen') as HTMLAnchorElement | null;
+
 let inspeccionesCache: InspeccionItem[] = [];
+let selectedInspeccionId: number | null = null;
 
 function setError(msg: string | null): void {
   if (!inspeccionesError) return;
@@ -151,6 +158,23 @@ function appendListItem(el: HTMLUListElement | null, text: string): void {
   el.appendChild(li);
 }
 
+function updateQuickActionLinks(ins: InspeccionItem): void {
+  if (!quickActions || !btnIrDetalle || !btnIrEditar || !btnAbrirImagen) return;
+
+  quickActions.removeAttribute('hidden');
+  btnIrDetalle.href = `inspeccion_detalle.html?id=${encodeURIComponent(ins.id)}`;
+  btnIrEditar.href = `inspeccion_editar.html?id=${encodeURIComponent(ins.id)}`;
+
+  const imageUrl = buildImageUrl(ins);
+  if (imageUrl) {
+    btnAbrirImagen.href = imageUrl;
+    btnAbrirImagen.removeAttribute('aria-disabled');
+  } else {
+    btnAbrirImagen.href = '#';
+    btnAbrirImagen.setAttribute('aria-disabled', 'true');
+  }
+}
+
 function renderInspectionImage(ins: InspeccionItem): void {
   if (!photoPlaceholder) return;
 
@@ -178,8 +202,10 @@ function renderInspectionImage(ins: InspeccionItem): void {
 }
 
 function renderDetalle(ins: InspeccionItem): void {
+  selectedInspeccionId = ins.id;
   setDetalleError(null);
   renderInspectionImage(ins);
+  updateQuickActionLinks(ins);
 
   clearList(detalleResumen);
   clearList(detalleOk);
@@ -196,15 +222,113 @@ function renderDetalle(ins: InspeccionItem): void {
 
   appendListItem(detalleOk, 'Pendiente de conectar detalle real de productos OK');
   appendListItem(detalleGaps, 'Pendiente de conectar detalle real de huecos');
+
+  renderTable(inspeccionesCache);
 }
 
-function createActionButton(ins: InspeccionItem): HTMLButtonElement {
+function goToDetalle(id: number): void {
+  window.location.href = `inspeccion_detalle.html?id=${encodeURIComponent(id)}`;
+}
+
+function goToEditar(id: number): void {
+  window.location.href = `inspeccion_editar.html?id=${encodeURIComponent(id)}`;
+}
+
+async function deleteInspeccion(id: number): Promise<void> {
+  const accepted = window.confirm('¿Seguro que quieres eliminar esta inspección? Esta acción borra el registro de la BD.');
+  if (!accepted) return;
+
+  setError(null);
+  setSuccess(null);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/inspecciones/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+
+    const data = await parseJsonSafely(response);
+
+    if (!response.ok) {
+      throw new Error(data?.message ?? 'No se pudo eliminar la inspección');
+    }
+
+    setSuccess(data?.message ?? 'Inspección eliminada correctamente');
+
+    if (selectedInspeccionId === id) {
+      selectedInspeccionId = null;
+      if (photoPlaceholder) {
+        photoPlaceholder.innerHTML = '<span>Vista de estantería</span>';
+      }
+      if (quickActions) {
+        quickActions.setAttribute('hidden', '');
+      }
+      clearList(detalleResumen);
+      clearList(detalleOk);
+      clearList(detalleGaps);
+    }
+
+    await loadInspecciones();
+  } catch (error) {
+    setError(error instanceof Error ? error.message : 'No se pudo eliminar la inspección');
+  }
+}
+
+function createActionButton(text: string, className: string, onClick: () => void): HTMLButtonElement {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'btn-small';
-  button.textContent = 'Ver detalle';
-  button.addEventListener('click', () => renderDetalle(ins));
+  button.className = className;
+  button.textContent = text;
+  button.addEventListener('click', onClick);
   return button;
+}
+
+function createActionGroup(ins: InspeccionItem): HTMLElement {
+  const container = document.createElement('div');
+  container.className = 'table-actions';
+
+  container.appendChild(
+    createActionButton('Vista rápida', 'btn-small', () => renderDetalle(ins))
+  );
+
+  container.appendChild(
+    createActionButton('Detalle', 'btn-small ghost', () => goToDetalle(ins.id))
+  );
+
+  container.appendChild(
+    createActionButton('Editar', 'btn-small ghost', () => goToEditar(ins.id))
+  );
+
+  container.appendChild(
+    createActionButton('Eliminar', 'btn-small danger', () => {
+      void deleteInspeccion(ins.id);
+    })
+  );
+
+  return container;
+}
+
+function applyFiltersAndSort(lista: InspeccionItem[]): InspeccionItem[] {
+  const planoQuery = filtroPlano?.value.trim().toLowerCase() ?? '';
+  const estadoQuery = filtroEstado?.value.trim().toUpperCase() ?? '';
+  const order = ordenFecha?.value === 'asc' ? 'asc' : 'desc';
+
+  return [...lista]
+    .filter((ins) => {
+      const searchableText = `${ins.estanteriaCodigo} ${ins.notas ?? ''}`.toLowerCase();
+      const matchesPlano = !planoQuery || searchableText.includes(planoQuery);
+      const matchesEstado = !estadoQuery || ins.estado.toUpperCase() === estadoQuery;
+      return matchesPlano && matchesEstado;
+    })
+    .sort((a, b) => {
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+
+      if (order === 'asc') {
+        return aTime - bTime;
+      }
+
+      return bTime - aTime;
+    });
 }
 
 function renderTable(lista: InspeccionItem[]): void {
@@ -212,18 +336,7 @@ function renderTable(lista: InspeccionItem[]): void {
 
   tbody.innerHTML = '';
 
-  const planoQuery = filtroPlano?.value.trim().toLowerCase() ?? '';
-  const estadoQuery = filtroEstado?.value.trim().toUpperCase() ?? '';
-
-  const filtered = lista.filter((ins) => {
-    const matchesPlano =
-      !planoQuery || ins.estanteriaCodigo.toLowerCase().includes(planoQuery);
-
-    const matchesEstado =
-      !estadoQuery || ins.estado.toUpperCase() === estadoQuery;
-
-    return matchesPlano && matchesEstado;
-  });
+  const filtered = applyFiltersAndSort(lista);
 
   if (filtered.length === 0) {
     const tr = document.createElement('tr');
@@ -237,6 +350,10 @@ function renderTable(lista: InspeccionItem[]): void {
 
   filtered.forEach((ins) => {
     const tr = document.createElement('tr');
+
+    if (selectedInspeccionId === ins.id) {
+      tr.classList.add('row-selected');
+    }
 
     const tdFecha = document.createElement('td');
     tdFecha.textContent = formatDate(ins.createdAt);
@@ -263,7 +380,7 @@ function renderTable(lista: InspeccionItem[]): void {
     tdEstado.innerHTML = buildEstadoBadge(ins.estado);
 
     const tdAccion = document.createElement('td');
-    tdAccion.appendChild(createActionButton(ins));
+    tdAccion.appendChild(createActionGroup(ins));
 
     tr.append(
       tdFecha,
@@ -295,6 +412,15 @@ async function parseJsonSafely(response: Response): Promise<any> {
   }
 }
 
+function getSelectedIdFromQuery(): number | null {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('selectedId');
+  if (!raw) return null;
+
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 async function loadInspecciones(): Promise<void> {
   setError(null);
   setSuccess(null);
@@ -315,14 +441,24 @@ async function loadInspecciones(): Promise<void> {
     }
 
     inspeccionesCache = Array.isArray(data) ? data : [];
-
     renderTable(inspeccionesCache);
 
-    if (inspeccionesCache.length > 0) {
-      renderDetalle(inspeccionesCache[0]);
+    const selectedFromQuery = getSelectedIdFromQuery();
+    const preferredId = selectedInspeccionId ?? selectedFromQuery ?? inspeccionesCache[0]?.id ?? null;
+
+    const preferred = preferredId != null
+      ? inspeccionesCache.find((ins) => ins.id === preferredId) ?? null
+      : null;
+
+    if (preferred) {
+      renderDetalle(preferred);
     } else {
       if (photoPlaceholder) {
         photoPlaceholder.innerHTML = '<span>Sin inspecciones todavía</span>';
+      }
+
+      if (quickActions) {
+        quickActions.setAttribute('hidden', '');
       }
 
       clearList(detalleResumen);
@@ -332,10 +468,7 @@ async function loadInspecciones(): Promise<void> {
 
     setSuccess(`Inspecciones cargadas: ${inspeccionesCache.length}`);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Error al cargar inspecciones';
-
-    setError(message);
+    setError(error instanceof Error ? error.message : 'Error al cargar inspecciones');
 
     if (tbody) {
       tbody.innerHTML = '';
@@ -343,6 +476,10 @@ async function loadInspecciones(): Promise<void> {
 
     if (photoPlaceholder) {
       photoPlaceholder.innerHTML = '<span>No se pudo cargar la vista de estantería</span>';
+    }
+
+    if (quickActions) {
+      quickActions.setAttribute('hidden', '');
     }
 
     clearList(detalleResumen);
@@ -357,15 +494,17 @@ async function loadInspecciones(): Promise<void> {
 function bindFilters(): void {
   filtroPlano?.addEventListener('input', () => renderTable(inspeccionesCache));
   filtroEstado?.addEventListener('change', () => renderTable(inspeccionesCache));
+  ordenFecha?.addEventListener('change', () => renderTable(inspeccionesCache));
 
   btnLimpiarFiltros?.addEventListener('click', () => {
     if (filtroPlano) filtroPlano.value = '';
     if (filtroEstado) filtroEstado.value = '';
+    if (ordenFecha) ordenFecha.value = 'desc';
     renderTable(inspeccionesCache);
   });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   bindFilters();
-  loadInspecciones();
+  void loadInspecciones();
 });

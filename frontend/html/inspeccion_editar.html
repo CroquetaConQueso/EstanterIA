@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Editar inspección · EstanterIA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/inspeccion_editar.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar" data-app-header></header>
+
+<main class="page">
+  <header class="page-head">
+    <div>
+      <h1>Editar inspección</h1>
+      <p>Edición mínima y razonable: estado y notas. Nada de convertir esto en un editor universal.</p>
+    </div>
+
+    <div class="filters-inline">
+      <a class="btn ghost" id="btn-volver-detalle" href="#">Volver al detalle</a>
+      <a class="btn ghost" href="inspecciones.html">Volver al listado</a>
+    </div>
+  </header>
+
+  <p class="form-error" id="editar-error" role="alert" aria-live="polite" hidden></p>
+  <p class="help" id="editar-success" hidden></p>
+
+  <section class="edit-layout">
+    <section class="edit-card">
+      <form id="form-editar-inspeccion">
+        <div class="form-grid">
+          <label>
+            ID
+            <input type="text" id="inspeccion-id" readonly />
+          </label>
+
+          <label>
+            Estantería
+            <input type="text" id="inspeccion-estanteria" readonly />
+          </label>
+
+          <label>
+            Fecha
+            <input type="text" id="inspeccion-fecha" readonly />
+          </label>
+
+          <label>
+            Archivo
+            <input type="text" id="inspeccion-archivo" readonly />
+          </label>
+
+          <label>
+            Estado
+            <select id="inspeccion-estado" required>
+              <option value="CREADA">CREADA</option>
+              <option value="ACTUALIZADA">ACTUALIZADA</option>
+              <option value="LISTA">LISTA</option>
+            </select>
+          </label>
+
+          <label class="full">
+            Notas
+            <textarea id="inspeccion-notas" rows="8" placeholder="Observaciones de la inspección"></textarea>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Guardar cambios</button>
+          <button class="btn ghost" id="btn-cancelar-edicion" type="button">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <aside class="edit-side">
+      <div class="photo-placeholder" id="editar-photo-placeholder">
+        <span>Cargando imagen...</span>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<footer class="foot">
+  <small>EstanterIA · Editar inspección</small>
+</footer>
+
+<script src="../js/header.js"></script>
+<script type="module" src="/src/pages/inspeccion_editar.ts"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+@import url('./inspecciones.css');
+
+.edit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 20px;
+}
+
+.edit-card,
+.edit-side {
+  border: var(--border-heavy);
+  background: var(--white);
+  box-shadow: var(--shadow-block);
+  padding: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+  border: var(--border-light);
+  background: var(--white);
+  padding: 10px;
+  font-size: 0.84rem;
+  text-transform: none;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.form-grid textarea {
+  resize: vertical;
+  min-height: 180px;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.edit-side .photo-placeholder {
+  min-height: 420px;
+}
+
+.edit-side .inspection-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: var(--border-light);
+}
+
+@media (max-width: 980px) {
+  .edit-layout,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

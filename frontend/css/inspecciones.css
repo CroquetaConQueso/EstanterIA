@@ -466,3 +466,43 @@ a {
     padding-inline: 16px;
   }
 }
+
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 18px;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-small {
+  min-height: 34px;
+  border: var(--border-light);
+  padding: 0 10px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  box-shadow: 2px 2px 0 var(--black);
+  background: var(--red);
+  color: var(--gold);
+}
+
+.btn-small.ghost {
+  background: var(--white);
+  color: var(--black);
+}
+
+.btn-small.danger {
+  background: var(--black);
+  color: var(--white);
+}
+
+.row-selected {
+  outline: 3px solid var(--gold);
+  outline-offset: -3px;
+}

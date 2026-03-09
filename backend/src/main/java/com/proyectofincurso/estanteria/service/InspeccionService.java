@@ -1,16 +1,22 @@
 package com.proyectofincurso.estanteria.service;
 
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaEstado;
 import com.proyectofincurso.estanteria.persistence.entity.Inspeccion;
 import com.proyectofincurso.estanteria.persistence.repository.InspeccionRepository;
+import com.proyectofincurso.estanteria.web.dto.InspeccionDetailResponse;
 import com.proyectofincurso.estanteria.web.dto.InspeccionItemResponse;
+import com.proyectofincurso.estanteria.web.dto.InspeccionUpdateRequest;
 import com.proyectofincurso.estanteria.web.dto.InspeccionarResponse;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 
@@ -26,22 +32,60 @@ public class InspeccionService {
 
     private final InspeccionRepository insRepo;
 
-
-    public List<InspeccionItemResponse> obtenerInspecciones(){
-        return insRepo.findAll().stream().map(this::toResponse).toList();
+    public List<InspeccionItemResponse> obtenerInspecciones() {
+        return insRepo.findAll()
+                .stream()
+                .sorted(Comparator.comparing(Inspeccion::getCreatedAt).reversed())
+                .map(this::toItemResponse)
+                .toList();
     }
 
-    private InspeccionItemResponse toResponse(Inspeccion ins) {
-        return new InspeccionItemResponse(
+    public InspeccionDetailResponse obtenerInspeccionDetalle(Long id) {
+        Inspeccion ins = obtenerInspeccionPorId(id);
+
+        return new InspeccionDetailResponse(
                 ins.getId(),
                 ins.getEstanteriaCodigo(),
                 ins.getNotas(),
                 ins.getImagenPath(),
+                buildImageUrl(ins.getImagenPath()),
                 ins.getEstado(),
-                ins.getCreatedAt()
+                ins.getCreatedAt(),
+                buildSummaryPlaceholder(),
+                List.of("Pendiente de conectar detalle real de productos OK"),
+                List.of("Pendiente de conectar detalle real de huecos")
         );
     }
-    
+
+    public InspeccionDetailResponse actualizarInspeccion(Long id, InspeccionUpdateRequest req) {
+        Inspeccion ins = obtenerInspeccionPorId(id);
+
+        if (req == null) {
+            throw ApiException.badRequest(
+                    "INVALID_INSPECCION_UPDATE",
+                    "La petición de actualización es obligatoria"
+            );
+        }
+
+        if (req.getNotas() != null) {
+            String notasNormalizadas = req.getNotas().trim();
+            ins.setNotas(notasNormalizadas.isEmpty() ? null : notasNormalizadas);
+        }
+
+        if (req.getEstado() != null) {
+            ins.setEstado(req.getEstado());
+        }
+
+        insRepo.save(ins);
+
+        return obtenerInspeccionDetalle(ins.getId());
+    }
+
+    public void eliminarInspeccion(Long id) {
+        Inspeccion ins = obtenerInspeccionPorId(id);
+        insRepo.delete(ins);
+    }
+
     public String verificarImagenPath(String imagenPath) {
         if (imagenPath == null) {
             return null;
@@ -140,5 +184,48 @@ public class InspeccionService {
                 ins.getEstado(),
                 ins.getCreatedAt()
         );
+    }
+
+    private Inspeccion obtenerInspeccionPorId(Long id) {
+        if (id == null || id <= 0) {
+            throw ApiException.badRequest(
+                    "INVALID_INSPECCION_ID",
+                    "El id de la inspección no es válido"
+            );
+        }
+
+        return insRepo.findById(id)
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "INSPECCION_NOT_FOUND",
+                        "No existe ninguna inspección con el id indicado"
+                ));
+    }
+
+    private InspeccionItemResponse toItemResponse(Inspeccion ins) {
+        return new InspeccionItemResponse(
+                ins.getId(),
+                ins.getEstanteriaCodigo(),
+                ins.getNotas(),
+                ins.getImagenPath(),
+                ins.getEstado(),
+                ins.getCreatedAt()
+        );
+    }
+
+    private String buildImageUrl(String imageName) {
+        if (imageName == null || imageName.trim().isEmpty()) {
+            return null;
+        }
+
+        return "/captures/" + imageName.trim();
+    }
+
+    private Map<String, Integer> buildSummaryPlaceholder() {
+        Map<String, Integer> summary = new LinkedHashMap<>();
+        summary.put("lentejas", 0);
+        summary.put("arroz", 0);
+        summary.put("comida_gato", 0);
+        return summary;
     }
 }

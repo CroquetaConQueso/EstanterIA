@@ -1,124 +1,215 @@
-//Establecimiento del tipo de contrato
-type RegistroRequest = {username : string; email: string; role: string; tienda: string; password: string;}
+type RegisterRequest = {
+  username: string;
+  email: string;
+  password: string;
+  role: string | null;
+};
 
-//Toma de los valores de cada campo del formulario
-const form = document.querySelector<HTMLFormElement>("#form-registro");
-const usernameInput = document.querySelector<HTMLInputElement>("#reg-nombre");
-const useremailInput = document.querySelector<HTMLInputElement>("#reg-email");
-const userroleInput = document.querySelector<HTMLSelectElement>("#reg-rol");
-const usertiendaInput= document.querySelector<HTMLInputElement>("#reg-tienda");
-const userpasswordInput = document.querySelector<HTMLInputElement>("#reg-pass");
-const userpassword2Input = document.querySelector<HTMLInputElement>("#reg-pass2");
-const useracceptInput = document.querySelector<HTMLInputElement>("#reg-terms");
-const errorReg = document.querySelector<HTMLElement>("#reg-error");
+type ApiResponse = {
+  message?: string;
+  error?: string;
+  fieldErrors?: Record<string, string> | null;
+};
 
-//Feedback/Toma de errores
-function setError(msg:string | null){
-    if(!errorReg) return;
-    if(!msg){
-        errorReg.textContent="";
-        errorReg.setAttribute("hidden","");
-        return;
+const form = document.querySelector<HTMLFormElement>('#form-registro');
+const usernameInput = document.querySelector<HTMLInputElement>('#reg-nombre');
+const emailInput = document.querySelector<HTMLInputElement>('#reg-email');
+const passwordInput = document.querySelector<HTMLInputElement>('#reg-pass');
+const confirmPasswordInput = document.querySelector<HTMLInputElement>('#reg-pass2');
+const roleInput = document.querySelector<HTMLSelectElement>('#reg-rol');
+const termsInput = document.querySelector<HTMLInputElement>('#reg-terms');
+
+const errorEl = document.querySelector<HTMLElement>('#reg-error');
+const successEl = document.querySelector<HTMLElement>('#reg-success');
+
+function setError(msg: string | null): void {
+  if (!errorEl) return;
+
+  if (!msg) {
+    errorEl.textContent = '';
+    errorEl.setAttribute('hidden', '');
+    return;
+  }
+
+  errorEl.textContent = msg;
+  errorEl.removeAttribute('hidden');
+}
+
+function setSuccess(msg: string | null): void {
+  if (!successEl) return;
+
+  if (!msg) {
+    successEl.textContent = '';
+    successEl.setAttribute('hidden', '');
+    return;
+  }
+
+  successEl.textContent = msg;
+  successEl.removeAttribute('hidden');
+}
+
+async function parseJsonSafely(response: Response): Promise<any> {
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function validateClient(
+  username: string,
+  email: string,
+  password: string,
+  confirmPassword: string,
+  acceptedTerms: boolean
+): string[] {
+  const errors: string[] = [];
+
+  if (!username.trim()) {
+    errors.push('El nombre de usuario es obligatorio.');
+  } else if (username.trim().length < 3) {
+    errors.push('El nombre de usuario debe tener al menos 3 caracteres.');
+  }
+
+  if (!email.trim()) {
+    errors.push('El correo electrónico es obligatorio.');
+  } else {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      errors.push('Introduce un correo electrónico válido.');
+    }
+  }
+
+  if (!password.trim()) {
+    errors.push('La contraseña es obligatoria.');
+  } else if (password.trim().length < 8) {
+    errors.push('La contraseña debe tener al menos 8 caracteres.');
+  }
+
+  if (!confirmPassword.trim()) {
+    errors.push('Debes confirmar la contraseña.');
+  }
+
+  if (password && confirmPassword && password !== confirmPassword) {
+    errors.push('La confirmación de la contraseña no coincide.');
+  }
+
+  if (!acceptedTerms) {
+    errors.push('Debes aceptar las condiciones de uso.');
+  }
+
+  return errors;
+}
+
+function mapRegisterError(data: ApiResponse | null, status: number): string {
+  const errorCode = (data?.error ?? '').trim().toUpperCase();
+
+  if (errorCode === 'EMAIL_ALREADY_EXISTS') {
+    return 'Ya existe una cuenta con ese correo electrónico.';
+  }
+
+  if (errorCode === 'USERNAME_ALREADY_EXISTS') {
+    return 'Ya existe una cuenta con ese nombre de usuario.';
+  }
+
+  if (errorCode === 'USER_ALREADY_EXISTS' || errorCode === 'DATA_INTEGRITY_VIOLATION') {
+    return 'Ya existe una cuenta con esos datos.';
+  }
+
+  if (status === 400 && data?.fieldErrors) {
+    const firstFieldError = Object.values(data.fieldErrors)[0];
+    if (firstFieldError) {
+      return firstFieldError;
+    }
+  }
+
+  if (status === 400) {
+    return data?.message ?? 'Revisa los datos introducidos.';
+  }
+
+  if (status === 409) {
+    return data?.message ?? 'Ya existe una cuenta con esos datos.';
+  }
+
+  return 'No se pudo completar el registro.';
+}
+
+async function submitRegister(event: Event): Promise<void> {
+  event.preventDefault();
+  setError(null);
+  setSuccess(null);
+
+  const username = usernameInput?.value ?? '';
+  const email = emailInput?.value ?? '';
+  const password = passwordInput?.value ?? '';
+  const confirmPassword = confirmPasswordInput?.value ?? '';
+  const role = roleInput?.value?.trim() || null;
+  const acceptedTerms = Boolean(termsInput?.checked);
+
+  const clientErrors = validateClient(
+    username,
+    email,
+    password,
+    confirmPassword,
+    acceptedTerms
+  );
+
+  if (clientErrors.length > 0) {
+    setError(clientErrors.join(' '));
+    return;
+  }
+
+  const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    const payload: RegisterRequest = {
+      username: username.trim(),
+      email: email.trim(),
+      password,
+      role
+    };
+
+    const response = await fetch('/api/auth/registro', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = (await parseJsonSafely(response)) as ApiResponse | null;
+
+    if (!response.ok) {
+      throw new Error(mapRegisterError(data, response.status));
     }
 
-    errorReg.textContent = msg;
-    errorReg.removeAttribute("hidden");
+    setSuccess('Cuenta creada correctamente. Ya puedes iniciar sesión.');
+    form?.reset();
+
+    window.setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 1200);
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : 'No se pudo completar el registro.'
+    );
+    console.error('Error en registro:', error);
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 }
 
-
-//Validacion de los valores del cliente
-function validateClient(username : string, email :string, role: string,  tienda:string, password:string, acceptedTerms: boolean){
-    const errors: Record<string,string> ={};
-    if(!username.trim()) errors.username = "El nombre del usuario es obligatorio";
-    if(!email.trim()) errors.email = "El email es obligatorio";
-    else if(!email.includes("@")) errors.email = "El email no es válido";
-    if(!role) errors.role = "Debes de escoger un rol";
-    if(!tienda.trim()) errors.tienda = "Se debe de establecer el nombre de una tienda";
-    if(!password.trim()) errors.password = "La contraseña es obligatoria";
-    if(!acceptedTerms) errors.terms = "Debes aceptar las condiciones"
-
-    return errors;
-}
-
-
-
-if (form && usernameInput && useremailInput && userroleInput && usertiendaInput && userpasswordInput && userpassword2Input){
-    //Limpiamos errores antiguos al añadir listeners a cada uno de estos
-    usernameInput.addEventListener("input", ()=> setError(null));
-    useremailInput.addEventListener("input", ()=> setError(null));
-    userroleInput.addEventListener("input", ()=> setError(null));
-    usertiendaInput.addEventListener("input", ()=> setError(null));
-    userpasswordInput.addEventListener("input", ()=> setError(null));
-    userpassword2Input.addEventListener("input", ()=> setError(null));
-
-    //Evitamos recarga y controlamos el flujo con fetch
-    form.addEventListener("submit", async (e)=>{
-        e.preventDefault();
-        setError(null);
-
-        //Verificacion de las contraseñas
-        const password = userpasswordInput.value;
-        const password2 = userpassword2Input.value;
-
-        if(password != password2){
-            setError("Las contraseñas no coinciden");
-            return;
-        }
-
-        //Construccion del json
-        const payload: RegistroRequest = {
-            username : usernameInput.value.trim(),
-            email : useremailInput.value.trim(),
-            role : userroleInput.value,
-            tienda : usertiendaInput.value,
-            password,
-        };
-
-        const acceptedTerms = !!useracceptInput?.checked;
-        //Validacion de los datos
-        const clienteErrores = validateClient(payload.username, payload.email , payload.role, payload.tienda, payload.password, acceptedTerms);
-        //Si hemos encontrado algun error lo mostramos
-        if (Object.keys(clienteErrores).length > 0){
-            setError(Object.values(clienteErrores).join(" "));
-            return;
-        }
-
-        //Evita doble submit
-        const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-        if(submitBtn) submitBtn.disabled = true;
-
-
-        try{
-            //Se realiza el http request, mandado los datos al backend
-            const res = await fetch("/api/registro",{
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(payload)
-            });
-
-            //Esperamos a la respuesta
-            const text = await res.text();
-            const data = text ? JSON.parse(text) : null;
-
-            //Si no es correcto mostramos feedback
-            if(!res.ok){
-                let msg = data?.message;
-
-                if (!msg){
-                    if(res.status === 409) msg = "Ya existe una cuenta con ese email o usuario";
-                    else if(res.status === 400) msg = "Revisa los datos del formulario";
-                    else msg = "Error al crear la cuenta";
-                }
-                setError(msg);
-                return;
-            }
-
-            //Si todo es correcto volvemos al login
-            window.location.href = "/html/login.html";
-        }catch{
-            setError("No se puede conectar con el servidor");
-        }finally{
-            if(submitBtn) submitBtn.disabled = false;
-        }
-    })
-}
+document.addEventListener('DOMContentLoaded', () => {
+  form?.addEventListener('submit', (event) => {
+    void submitRegister(event);
+  });
+});

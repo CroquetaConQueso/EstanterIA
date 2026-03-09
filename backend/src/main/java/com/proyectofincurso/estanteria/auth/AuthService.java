@@ -5,9 +5,10 @@ import com.proyectofincurso.estanteria.persistence.entity.UserRole;
 import com.proyectofincurso.estanteria.persistence.repository.UserAccountRepository;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.MailException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -15,10 +16,12 @@ public class AuthService {
 
     private final UserAccountRepository repo;
     private final PasswordEncoder encoder;
-    private final PasswordRecoveryMailService passwordRecoveryMailService;
+    private final PasswordResetService passwordResetService;
 
     public AuthUser authenticate(String email, String rawPassword) {
-        UserAccount user = repo.findByEmailIgnoreCase(email)
+        String normalizedEmail = normalizeEmail(email);
+
+        UserAccount user = repo.findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(() -> ApiException.unauthorized(
                         "INVALID_CREDENTIALS",
                         "Credenciales inválidas"
@@ -46,15 +49,19 @@ public class AuthService {
         );
     }
 
+    @Transactional
     public void verificar(String username, String email, String password, String role) {
-        if (repo.existsByUsernameIgnoreCase(username)) {
+        String normalizedUsername = normalizeUsername(username);
+        String normalizedEmail = normalizeEmail(email);
+
+        if (repo.existsByUsernameIgnoreCase(normalizedUsername)) {
             throw ApiException.conflict(
                     "USERNAME_ALREADY_EXISTS",
                     "Ya existe un usuario con ese nombre"
             );
         }
 
-        if (repo.existsByEmailIgnoreCase(email)) {
+        if (repo.existsByEmailIgnoreCase(normalizedEmail)) {
             throw ApiException.conflict(
                     "EMAIL_ALREADY_EXISTS",
                     "Ya existe un usuario con ese email"
@@ -62,36 +69,32 @@ public class AuthService {
         }
 
         UserAccount user = new UserAccount();
-        user.setUsername(username);
-        user.setEmail(email);
+        user.setUsername(normalizedUsername);
+        user.setEmail(normalizedEmail);
         user.setPasswordHash(encoder.encode(password));
         user.setRole(parseRoleOrDefault(role));
         user.setEnabled(true);
 
-        repo.save(user);
+        try {
+            repo.saveAndFlush(user);
+        } catch (DataIntegrityViolationException ex) {
+            throw ApiException.conflict(
+                    "USER_ALREADY_EXISTS",
+                    "Ya existe una cuenta con esos datos"
+            );
+        }
     }
 
     public void requestPasswordRecovery(String email) {
-        String normalizedEmail = email == null ? "" : email.trim();
+        passwordResetService.requestPasswordRecovery(email);
+    }
 
-        if (normalizedEmail.isEmpty()) {
-            throw ApiException.badRequest(
-                    "INVALID_EMAIL",
-                    "El email es obligatorio"
-            );
-        }
+    private String normalizeUsername(String username) {
+        return username == null ? "" : username.trim();
+    }
 
-        repo.findByEmailIgnoreCase(normalizedEmail)
-                .ifPresent(user -> {
-                    try {
-                        passwordRecoveryMailService.sendRecoveryEmail(user);
-                    } catch (MailException ex) {
-                        throw ApiException.internalError(
-                                "RECOVERY_MAIL_ERROR",
-                                "No se pudo enviar el correo de recuperación"
-                        );
-                    }
-                });
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase();
     }
 
     private UserRole parseRoleOrDefault(String role) {

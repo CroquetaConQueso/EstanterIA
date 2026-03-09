@@ -20,7 +20,12 @@ public class SessionService {
         String token = UUID.randomUUID().toString();
         sessionsByToken.put(
                 token,
-                new SessionUser(user.userName(), user.email(), user.role(), Instant.now())
+                new SessionUser(
+                        user.userName(),
+                        user.email(),
+                        user.role(),
+                        Instant.now()
+                )
         );
         return token;
     }
@@ -41,6 +46,28 @@ public class SessionService {
         }
 
         return session;
+    }
+
+    public void updateSessionUser(String authorizationHeader, String userName, String email, String role) {
+        String token = extractBearerToken(authorizationHeader);
+        SessionUser current = sessionsByToken.get(token);
+
+        if (current == null) {
+            throw ApiException.unauthorized(
+                    "INVALID_SESSION",
+                    "La sesión no es válida o ha expirado"
+            );
+        }
+
+        sessionsByToken.put(
+                token,
+                new SessionUser(
+                        userName,
+                        email,
+                        role,
+                        current.createdAt()
+                )
+        );
     }
 
     public void invalidateSession(String authorizationHeader) {

@@ -129,8 +129,16 @@
     return "Sesión activa";
   }
 
-  function redirectToLogin() {
-    window.location.href = pageHref("login.html");
+  function redirectToLogin(reason = "") {
+    const loginUrl = pageHref("login.html");
+
+    if (!reason) {
+      window.location.href = loginUrl;
+      return;
+    }
+
+    const separator = loginUrl.includes("?") ? "&" : "?";
+    window.location.href = `${loginUrl}${separator}reason=${encodeURIComponent(reason)}`;
   }
 
   async function authFetch(url, options = {}) {
@@ -245,7 +253,7 @@
     const token = getStoredToken();
     if (!token) {
       clearAuthStorage();
-      redirectToLogin();
+      redirectToLogin("session-expired");
       return;
     }
 
@@ -280,7 +288,7 @@
 
       if (!response.ok) {
         clearAuthStorage();
-        redirectToLogin();
+        redirectToLogin("session-expired");
         return;
       }
 
@@ -292,7 +300,7 @@
       }
     } catch (_) {
       clearAuthStorage();
-      redirectToLogin();
+      redirectToLogin("session-expired");
     }
   }
 

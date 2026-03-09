@@ -7,56 +7,55 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @Service
 @RequiredArgsConstructor
 public class PasswordRecoveryMailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${app.auth.recovery.from}")
-    private String fromEmail;
+    @Value("${app.auth.recovery.from:${MAIL_USERNAME:}}")
+    private String from;
 
-    @Value("${app.frontend.base-url}")
+    @Value("${app.frontend.base-url:http://localhost:5173}")
     private String frontendBaseUrl;
 
-    public void sendRecoveryEmail(UserAccount user) {
+    public void sendRecoveryEmail(UserAccount user, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromEmail);
+
+        if (from != null && !from.isBlank()) {
+            message.setFrom(from);
+        }
+
         message.setTo(user.getEmail());
-        message.setSubject("EstanterIA · Recuperación de contraseña");
-        message.setText(buildBody(user.getUsername()));
+        message.setSubject("Recuperación de contraseña - EstanterIA");
+        message.setText(buildBody(user.getUsername(), buildResetUrl(token)));
+
         mailSender.send(message);
     }
 
-    private String buildBody(String username) {
-        String loginUrl = buildLoginUrl();
+    private String buildResetUrl(String token) {
+        String base = frontendBaseUrl.replaceAll("/+$", "");
+        String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
+        return base + "/html/reset_password.html?token=" + encodedToken;
+    }
 
+    private String buildBody(String username, String resetUrl) {
         return """
                 Hola %s,
 
-                Hemos recibido una solicitud de recuperación de contraseña para tu cuenta de EstanterIA.
+                Hemos recibido una solicitud para restablecer la contraseña de tu cuenta de EstanterIA.
 
-                Esta implementación es la versión académica del proyecto:
-                - el correo demuestra el flujo de recuperación
-                - no cambia automáticamente la contraseña todavía
-                - el enlace te devuelve al acceso de la aplicación
-
-                Enlace de acceso:
+                Usa este enlace para establecer una nueva contraseña:
                 %s
 
-                Si no has solicitado esta recuperación, puedes ignorar este mensaje.
+                Este enlace caduca en 30 minutos.
+
+                Si no has solicitado este cambio, puedes ignorar este mensaje.
 
                 EstanterIA
-                """.formatted(username, loginUrl);
-    }
-
-    private String buildLoginUrl() {
-        String base = frontendBaseUrl == null ? "" : frontendBaseUrl.trim();
-
-        if (base.endsWith("/")) {
-            return base + "html/login.html";
-        }
-
-        return base + "/html/login.html";
+                """.formatted(username, resetUrl);
     }
 }

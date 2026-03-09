@@ -3,7 +3,8 @@ type ForgotPasswordRequest = {
 };
 
 type MessageResponse = {
-  message: string;
+  message?: string;
+  error?: string;
 };
 
 const form = document.querySelector<HTMLFormElement>('#form-recovery');
@@ -37,77 +38,101 @@ function setSuccess(msg: string | null): void {
   successEl.removeAttribute('hidden');
 }
 
-function validateClient(email: string): Record<string, string> {
-  const errors: Record<string, string> = {};
+function validateClient(email: string): string[] {
+  const errors: string[] = [];
 
   if (!email.trim()) {
-    errors.email = 'El email es obligatorio';
+    errors.push('El correo electrónico es obligatorio.');
     return errors;
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email.trim())) {
-    errors.email = 'El email no tiene un formato válido';
+    errors.push('Introduce un correo electrónico válido.');
   }
 
   return errors;
 }
 
-if (form && emailInput) {
-  emailInput.addEventListener('input', () => {
-    setError(null);
-    setSuccess(null);
-  });
+async function parseJsonSafely(response: Response): Promise<any> {
+  const text = await response.text();
 
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
+  if (!text) {
+    return null;
+  }
 
-    setError(null);
-    setSuccess(null);
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
 
+function getRecoverySuccessMessage(): string {
+  return 'Si el correo existe, recibirás instrucciones para restablecer tu contraseña.';
+}
+
+async function submitRecovery(event: Event): Promise<void> {
+  event.preventDefault();
+
+  setError(null);
+  setSuccess(null);
+
+  const email = emailInput?.value ?? '';
+  const validationErrors = validateClient(email);
+
+  if (validationErrors.length > 0) {
+    setError(validationErrors.join(' '));
+    return;
+  }
+
+  const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
     const payload: ForgotPasswordRequest = {
-      email: emailInput.value.trim()
+      email: email.trim()
     };
 
-    const clientErrors = validateClient(payload.email);
-    if (Object.keys(clientErrors).length > 0) {
-      setError(Object.values(clientErrors).join(' · '));
-      return;
-    }
+    const response = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
 
-    const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-    }
+    const data = (await parseJsonSafely(response)) as MessageResponse | null;
 
-    try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const text = await response.text();
-      const data = text ? (JSON.parse(text) as MessageResponse) : null;
-
-      if (!response.ok) {
-        setError(data?.message ?? 'No se pudo procesar la recuperación de contraseña');
-        return;
+    if (!response.ok) {
+      if (response.status === 400) {
+        throw new Error(data?.message ?? 'Revisa el correo introducido.');
       }
 
-      setSuccess(
-        data?.message ?? 'Si el correo existe, se ha enviado un enlace de recuperación.'
-      );
-
-      form.reset();
-    } catch {
-      setError('No se pudo conectar con el servidor.');
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-      }
+      throw new Error('No se pudo procesar la solicitud en este momento.');
     }
-  });
+
+    setSuccess(getRecoverySuccessMessage());
+    form?.reset();
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : 'No se pudo procesar la solicitud en este momento.'
+    );
+    console.error('Error en recuperación de contraseña:', error);
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  emailInput?.addEventListener('input', () => {
+    setError(null);
+    setSuccess(null);
+  });
+
+  form?.addEventListener('submit', (event) => {
+    void submitRecovery(event);
+  });
+});

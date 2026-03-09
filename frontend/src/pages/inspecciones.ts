@@ -17,6 +17,9 @@ const API_BASE_URL =
 const tbody = document.getElementById('tbody-inspecciones') as HTMLTableSectionElement | null;
 const filtroPlano = document.getElementById('filtro-plano') as HTMLInputElement | null;
 const filtroEstado = document.getElementById('filtro-estado') as HTMLSelectElement | null;
+const filtroDia = document.getElementById('filtro-dia') as HTMLInputElement | null;
+const filtroDesde = document.getElementById('filtro-desde') as HTMLInputElement | null;
+const filtroHasta = document.getElementById('filtro-hasta') as HTMLInputElement | null;
 const ordenFecha = document.getElementById('orden-fecha') as HTMLSelectElement | null;
 const btnLimpiarFiltros = document.getElementById('btn-limpiar-filtros') as HTMLButtonElement | null;
 
@@ -86,6 +89,22 @@ function formatDate(iso: string | null | undefined): string {
     dateStyle: 'short',
     timeStyle: 'short'
   }).format(date);
+}
+
+function getDateKeyLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getItemDateKey(ins: InspeccionItem): string | null {
+  if (!ins.createdAt) return null;
+
+  const date = new Date(ins.createdAt);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return getDateKeyLocal(date);
 }
 
 function getImagenPath(ins: InspeccionItem): string | null {
@@ -256,12 +275,15 @@ async function deleteInspeccion(id: number): Promise<void> {
 
     if (selectedInspeccionId === id) {
       selectedInspeccionId = null;
+
       if (photoPlaceholder) {
-        photoPlaceholder.innerHTML = '<span>Vista de estantería</span>';
+        photoPlaceholder.innerHTML = '<span>Selecciona una inspección para ver la imagen</span>';
       }
+
       if (quickActions) {
         quickActions.setAttribute('hidden', '');
       }
+
       clearList(detalleResumen);
       clearList(detalleOk);
       clearList(detalleGaps);
@@ -278,17 +300,16 @@ function createActionButton(text: string, className: string, onClick: () => void
   button.type = 'button';
   button.className = className;
   button.textContent = text;
-  button.addEventListener('click', onClick);
+  button.addEventListener('click', (event) => {
+    event.stopPropagation();
+    onClick();
+  });
   return button;
 }
 
 function createActionGroup(ins: InspeccionItem): HTMLElement {
   const container = document.createElement('div');
   container.className = 'table-actions';
-
-  container.appendChild(
-    createActionButton('Vista rápida', 'btn-small', () => renderDetalle(ins))
-  );
 
   container.appendChild(
     createActionButton('Detalle', 'btn-small ghost', () => goToDetalle(ins.id))
@@ -310,6 +331,9 @@ function createActionGroup(ins: InspeccionItem): HTMLElement {
 function applyFiltersAndSort(lista: InspeccionItem[]): InspeccionItem[] {
   const planoQuery = filtroPlano?.value.trim().toLowerCase() ?? '';
   const estadoQuery = filtroEstado?.value.trim().toUpperCase() ?? '';
+  const diaExacto = filtroDia?.value ?? '';
+  const desde = filtroDesde?.value ?? '';
+  const hasta = filtroHasta?.value ?? '';
   const order = ordenFecha?.value === 'asc' ? 'asc' : 'desc';
 
   return [...lista]
@@ -317,7 +341,19 @@ function applyFiltersAndSort(lista: InspeccionItem[]): InspeccionItem[] {
       const searchableText = `${ins.estanteriaCodigo} ${ins.notas ?? ''}`.toLowerCase();
       const matchesPlano = !planoQuery || searchableText.includes(planoQuery);
       const matchesEstado = !estadoQuery || ins.estado.toUpperCase() === estadoQuery;
-      return matchesPlano && matchesEstado;
+
+      const itemDateKey = getItemDateKey(ins);
+
+      const matchesDia =
+        !diaExacto || (itemDateKey !== null && itemDateKey === diaExacto);
+
+      const matchesDesde =
+        !desde || (itemDateKey !== null && itemDateKey >= desde);
+
+      const matchesHasta =
+        !hasta || (itemDateKey !== null && itemDateKey <= hasta);
+
+      return matchesPlano && matchesEstado && matchesDia && matchesDesde && matchesHasta;
     })
     .sort((a, b) => {
       const aTime = new Date(a.createdAt).getTime();
@@ -350,10 +386,20 @@ function renderTable(lista: InspeccionItem[]): void {
 
   filtered.forEach((ins) => {
     const tr = document.createElement('tr');
+    tr.classList.add('inspection-row');
+    tr.tabIndex = 0;
 
     if (selectedInspeccionId === ins.id) {
       tr.classList.add('row-selected');
     }
+
+    tr.addEventListener('click', () => renderDetalle(ins));
+    tr.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        renderDetalle(ins);
+      }
+    });
 
     const tdFecha = document.createElement('td');
     tdFecha.textContent = formatDate(ins.createdAt);
@@ -443,12 +489,21 @@ async function loadInspecciones(): Promise<void> {
     inspeccionesCache = Array.isArray(data) ? data : [];
     renderTable(inspeccionesCache);
 
+    const filtered = applyFiltersAndSort(inspeccionesCache);
     const selectedFromQuery = getSelectedIdFromQuery();
-    const preferredId = selectedInspeccionId ?? selectedFromQuery ?? inspeccionesCache[0]?.id ?? null;
 
-    const preferred = preferredId != null
-      ? inspeccionesCache.find((ins) => ins.id === preferredId) ?? null
-      : null;
+    const preferredId =
+      selectedInspeccionId ??
+      selectedFromQuery ??
+      filtered[0]?.id ??
+      null;
+
+    const preferred =
+      preferredId != null
+        ? filtered.find((ins) => ins.id === preferredId) ??
+          inspeccionesCache.find((ins) => ins.id === preferredId) ??
+          null
+        : null;
 
     if (preferred) {
       renderDetalle(preferred);
@@ -492,15 +547,54 @@ async function loadInspecciones(): Promise<void> {
 }
 
 function bindFilters(): void {
-  filtroPlano?.addEventListener('input', () => renderTable(inspeccionesCache));
-  filtroEstado?.addEventListener('change', () => renderTable(inspeccionesCache));
-  ordenFecha?.addEventListener('change', () => renderTable(inspeccionesCache));
+  const rerender = () => {
+    renderTable(inspeccionesCache);
+
+    const filtered = applyFiltersAndSort(inspeccionesCache);
+
+    if (selectedInspeccionId != null) {
+      const selected = filtered.find((ins) => ins.id === selectedInspeccionId);
+      if (selected) {
+        renderDetalle(selected);
+        return;
+      }
+    }
+
+    if (filtered[0]) {
+      renderDetalle(filtered[0]);
+      return;
+    }
+
+    selectedInspeccionId = null;
+
+    if (photoPlaceholder) {
+      photoPlaceholder.innerHTML = '<span>No hay inspecciones que coincidan con los filtros</span>';
+    }
+
+    if (quickActions) {
+      quickActions.setAttribute('hidden', '');
+    }
+
+    clearList(detalleResumen);
+    clearList(detalleOk);
+    clearList(detalleGaps);
+  };
+
+  filtroPlano?.addEventListener('input', rerender);
+  filtroEstado?.addEventListener('change', rerender);
+  filtroDia?.addEventListener('change', rerender);
+  filtroDesde?.addEventListener('change', rerender);
+  filtroHasta?.addEventListener('change', rerender);
+  ordenFecha?.addEventListener('change', rerender);
 
   btnLimpiarFiltros?.addEventListener('click', () => {
     if (filtroPlano) filtroPlano.value = '';
     if (filtroEstado) filtroEstado.value = '';
+    if (filtroDia) filtroDia.value = '';
+    if (filtroDesde) filtroDesde.value = '';
+    if (filtroHasta) filtroHasta.value = '';
     if (ordenFecha) ordenFecha.value = 'desc';
-    renderTable(inspeccionesCache);
+    rerender();
   });
 }
 

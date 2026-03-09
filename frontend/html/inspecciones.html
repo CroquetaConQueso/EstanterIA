@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Inspecciones IA · Suite Tienda</title>
+  <title>Inspecciones IA · EstanterIA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/inspecciones.css" rel="stylesheet" />
@@ -15,15 +15,61 @@
     <div>
       <h1>Inspecciones con Visión por Computador</h1>
       <p>
-        Listado y detalle rápido de inspecciones. El detalle completo y la edición se separan
-        en pantallas propias, porque bastante caos hay ya en el mundo.
+        Listado de inspecciones con detalle rápido. Haz clic en una fila para cargar la
+        previsualización sin convertir esta pantalla en un pequeño vertedero de funciones.
       </p>
     </div>
+  </header>
 
-    <div class="filters-inline">
+  <p class="form-error" id="inspecciones-error" role="alert" aria-live="polite" hidden></p>
+  <p class="help" id="inspecciones-success" hidden></p>
+
+  <section class="quick-detail-shell">
+    <h2>Detalle rápido de la inspección</h2>
+    <p class="help">
+      Selecciona una fila para ver imagen y resumen. El detalle completo y la edición siguen en
+      pantallas separadas, como debe ser.
+    </p>
+
+    <div class="quick-detail-layout">
+      <section class="quick-detail-media">
+        <div class="photo-placeholder" id="photo-placeholder">
+          <span>Selecciona una inspección para ver la imagen</span>
+        </div>
+      </section>
+
+      <aside class="quick-detail-side">
+        <div class="quick-actions" id="quick-actions" hidden>
+          <a class="btn ghost" id="btn-ir-detalle" href="#">Detalle</a>
+          <a class="btn ghost" id="btn-ir-editar" href="#">Editar</a>
+          <a class="btn ghost" id="btn-abrir-imagen" href="#" target="_blank" rel="noopener noreferrer">Abrir imagen</a>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-block">
+            <h3>Resumen</h3>
+            <ul id="detalle-resumen"></ul>
+          </div>
+          <div class="detail-block">
+            <h3>Productos OK</h3>
+            <ul id="detalle-ok"></ul>
+          </div>
+          <div class="detail-block">
+            <h3>Huecos detectados</h3>
+            <ul id="detalle-gaps"></ul>
+          </div>
+        </div>
+
+        <p class="form-error" id="detalle-error" role="alert" aria-live="polite" hidden></p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="filters-bar">
+    <div class="filters-grid filters-grid--dates">
       <label>
-        Buscar por estantería
-        <input type="text" id="filtro-plano" placeholder="EST-001, almacén, notas..." />
+        Buscar por estantería o notas
+        <input type="text" id="filtro-plano" placeholder="EST-001, notas, almacén..." />
       </label>
 
       <label>
@@ -37,13 +83,30 @@
       </label>
 
       <label>
+        Día exacto
+        <input type="date" id="filtro-dia" />
+      </label>
+
+      <label>
+        Desde
+        <input type="date" id="filtro-desde" />
+      </label>
+
+      <label>
+        Hasta
+        <input type="date" id="filtro-hasta" />
+      </label>
+
+      <label>
         Ordenar por fecha
         <select id="orden-fecha">
           <option value="desc">Más reciente primero</option>
           <option value="asc">Más antigua primero</option>
         </select>
       </label>
+    </div>
 
+    <div class="filters-actions">
       <button class="btn ghost" id="btn-limpiar-filtros" type="button">
         Limpiar filtros
       </button>
@@ -52,79 +115,39 @@
         Nueva inspección
       </a>
     </div>
-  </header>
+  </section>
 
-  <p class="form-error" id="inspecciones-error" role="alert" aria-live="polite" hidden></p>
-  <p class="help" id="inspecciones-success" hidden></p>
+  <section class="list-shell">
+    <h2>Listado de inspecciones</h2>
+    <p class="help">
+      Haz clic en una fila para cargar la vista rápida. Usa las acciones solo para entrar al
+      detalle, editar o eliminar.
+    </p>
 
-  <section class="layout">
-    <section class="list-shell">
-      <h2>Listado de inspecciones</h2>
-      <p class="help">
-        Usa “Vista rápida” para el panel lateral o entra en “Detalle” y “Editar” para trabajar
-        sin inflar esta pantalla hasta el absurdo.
-      </p>
+    <div class="table-shell">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fecha · hora</th>
+            <th>Plano</th>
+            <th>Estantería</th>
+            <th>Encargado(s)</th>
+            <th>Versión plano</th>
+            <th>Productos OK</th>
+            <th>Huecos</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
 
-      <div class="table-shell">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Fecha · hora</th>
-              <th>Plano</th>
-              <th>Estantería</th>
-              <th>Encargado(s)</th>
-              <th>Versión plano</th>
-              <th>Productos OK</th>
-              <th>Huecos</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-
-          <tbody id="tbody-inspecciones"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <aside class="detail-shell">
-      <h2>Detalle rápido de la inspección</h2>
-      <p class="help">
-        Este panel mantiene la vista rápida. El detalle completo y la edición van a pantallas
-        separadas.
-      </p>
-
-      <div class="photo-placeholder" id="photo-placeholder">
-        <span>Vista de estantería</span>
-      </div>
-
-      <div class="quick-actions" id="quick-actions" hidden>
-        <a class="btn ghost" id="btn-ir-detalle" href="#">Detalle</a>
-        <a class="btn ghost" id="btn-ir-editar" href="#">Editar</a>
-        <a class="btn ghost" id="btn-abrir-imagen" href="#" target="_blank" rel="noopener noreferrer">Abrir imagen</a>
-      </div>
-
-      <div class="detail-grid">
-        <div class="detail-block">
-          <h3>Resumen</h3>
-          <ul id="detalle-resumen"></ul>
-        </div>
-        <div class="detail-block">
-          <h3>Productos OK</h3>
-          <ul id="detalle-ok"></ul>
-        </div>
-        <div class="detail-block">
-          <h3>Huecos detectados</h3>
-          <ul id="detalle-gaps"></ul>
-        </div>
-      </div>
-
-      <p class="form-error" id="detalle-error" role="alert" aria-live="polite" hidden></p>
-    </aside>
+        <tbody id="tbody-inspecciones"></tbody>
+      </table>
+    </div>
   </section>
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda · Inspecciones IA · MVP</small>
+  <small>EstanterIA · Inspecciones IA · MVP</small>
 </footer>
 
 <script src="../js/header.js"></script>

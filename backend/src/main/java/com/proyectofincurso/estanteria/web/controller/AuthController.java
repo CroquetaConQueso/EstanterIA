@@ -2,14 +2,17 @@ package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.auth.AuthService;
 import com.proyectofincurso.estanteria.auth.AuthUser;
+import com.proyectofincurso.estanteria.auth.PasswordResetService;
 import com.proyectofincurso.estanteria.auth.SessionService;
 import com.proyectofincurso.estanteria.web.dto.ForgotPasswordRequest;
 import com.proyectofincurso.estanteria.web.dto.LoginRequest;
 import com.proyectofincurso.estanteria.web.dto.LoginResponse;
 import com.proyectofincurso.estanteria.web.dto.MeResponse;
 import com.proyectofincurso.estanteria.web.dto.MessageResponse;
+import com.proyectofincurso.estanteria.web.dto.PasswordResetValidateResponse;
 import com.proyectofincurso.estanteria.web.dto.RegistroRequest;
 import com.proyectofincurso.estanteria.web.dto.RegistroResponse;
+import com.proyectofincurso.estanteria.web.dto.ResetPasswordRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -24,10 +28,16 @@ public class AuthController {
 
     private final AuthService authService;
     private final SessionService sessionService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(AuthService authService, SessionService sessionService) {
+    public AuthController(
+            AuthService authService,
+            SessionService sessionService,
+            PasswordResetService passwordResetService
+    ) {
         this.authService = authService;
         this.sessionService = sessionService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping(
@@ -70,13 +80,25 @@ public class AuthController {
     )
     public MessageResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
         authService.requestPasswordRecovery(req.getEmail());
-        return new MessageResponse("Si el correo existe, se ha enviado un enlace de recuperación.");
+        return new MessageResponse("Si el correo existe, recibirás un enlace para restablecer tu contraseña.");
     }
 
-    @GetMapping(
-            value = "/api/auth/me",
+    @GetMapping(value = "/api/auth/reset-password/validate", produces = MediaType.APPLICATION_JSON_VALUE)
+    public PasswordResetValidateResponse validateResetToken(@RequestParam("token") String token) {
+        return passwordResetService.validateResetToken(token);
+    }
+
+    @PostMapping(
+            value = "/api/auth/reset-password",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
+    public MessageResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
+        return new MessageResponse("Contraseña actualizada correctamente.");
+    }
+
+    @GetMapping(value = "/api/auth/me", produces = MediaType.APPLICATION_JSON_VALUE)
     public MeResponse me(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false)
             String authorizationHeader
@@ -91,10 +113,7 @@ public class AuthController {
         );
     }
 
-    @PostMapping(
-            value = "/api/auth/logout",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
+    @PostMapping(value = "/api/auth/logout", produces = MediaType.APPLICATION_JSON_VALUE)
     public MessageResponse logout(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false)
             String authorizationHeader

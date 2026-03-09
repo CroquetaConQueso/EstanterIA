@@ -2,6 +2,7 @@ package com.proyectofincurso.estanteria.web.error;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -43,6 +44,21 @@ public class ApiExceptionHandler {
                 .status(ex.getStatus().value())
                 .error(ex.getCode())
                 .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .fieldErrors(null)
+                .build();
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ApiErrorResponse handleDataIntegrity(DataIntegrityViolationException ex,
+                                                HttpServletRequest request) {
+        log.warn("Violación de integridad de datos en {}: {}", request.getRequestURI(), ex.getMessage());
+
+        return ApiErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("DATA_INTEGRITY_VIOLATION")
+                .message("Ya existe una cuenta con esos datos")
                 .path(request.getRequestURI())
                 .fieldErrors(null)
                 .build();

@@ -154,7 +154,7 @@ button, input, select, textarea {
 }
 
 .page-head::before {
-  content: 'â˜…';
+  content: '★';
   position: absolute;
   top: 10px;
   right: 20px;

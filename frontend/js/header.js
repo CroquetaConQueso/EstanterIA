@@ -6,9 +6,9 @@
   const configs = {
     "index.html": { zone: "public", active: "inicio" },
     "about.html": { zone: "public", active: "about" },
-    "descargas.html": { zone: "public", active: "descargas", right: "download-note" },
+    "descargas.html": { zone: "public", active: "descargas" },
     "login.html": { zone: "public", active: "acceso" },
-    "registro.html": { zone: "public", active: "registro", right: "registro-links" },
+    "registro.html": { zone: "public", active: "registro" },
     "recuperar_password.html": { zone: "public", active: "acceso" },
 
     "home.html": { zone: "internal", active: "inicio" },
@@ -18,34 +18,57 @@
     "inspecciones.html": { zone: "internal", active: "inspecciones" },
     "inspeccion_nueva.html": { zone: "internal", active: "inspecciones" },
     "inventario.html": { zone: "internal", active: "inventario" },
+    "vision.html": { zone: "internal", active: "vision" },
     "alertas_centro.html": { zone: "internal", active: "alertas" },
     "tareas_reposicion.html": { zone: "internal", active: "tareas" },
-    "vision.html": { zone: "internal", active: "vision" },
     "perfil.html": { zone: "internal", active: "perfil" }
   };
 
   const cfg = configs[page];
   if (!cfg) return;
 
-  function getTokenStorage() {
-    if (localStorage.getItem("auth_token")) {
-      return localStorage;
+  injectHeaderCss();
+
+  function pageHref(fileName) {
+    return inHtmlDir ? fileName : `html/${fileName}`;
+  }
+
+  function getBrandHref() {
+    return inHtmlDir ? "../index.html" : "index.html";
+  }
+
+  function getIconSrc() {
+    return inHtmlDir ? "../img/iconoFAV.png" : "img/iconoFAV.png";
+  }
+
+  function getHeaderCssHref() {
+    return inHtmlDir ? "../css/header.css" : "css/header.css";
+  }
+
+  function injectHeaderCss() {
+    if (document.querySelector('link[data-estanteria-header-css="true"]')) {
+      return;
     }
-    if (sessionStorage.getItem("auth_token")) {
-      return sessionStorage;
-    }
-    return null;
+
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = getHeaderCssHref();
+    link.setAttribute("data-estanteria-header-css", "true");
+    document.head.appendChild(link);
   }
 
   function getStoredToken() {
     return localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
   }
 
+  function getTokenStorage() {
+    if (localStorage.getItem("auth_token")) return localStorage;
+    if (sessionStorage.getItem("auth_token")) return sessionStorage;
+    return null;
+  }
+
   function clearAuthStorage() {
-    [
-      localStorage,
-      sessionStorage
-    ].forEach((storage) => {
+    [localStorage, sessionStorage].forEach((storage) => {
       storage.removeItem("auth_token");
       storage.removeItem("auth_user");
       storage.removeItem("auth_role");
@@ -55,23 +78,65 @@
 
   function saveSessionSnapshot(user) {
     const storage = getTokenStorage() || sessionStorage;
-    if (user?.userName) storage.setItem("auth_user", user.userName);
-    if (user?.role) storage.setItem("auth_role", user.role);
-    if (user?.email) storage.setItem("auth_email", user.email);
+    const resolvedUserName = resolveUserName(user);
+    const resolvedRole = resolveUserRole(user);
+    const resolvedEmail = resolveUserEmail(user);
+
+    if (resolvedUserName) storage.setItem("auth_user", resolvedUserName);
+    if (resolvedRole) storage.setItem("auth_role", resolvedRole);
+    if (resolvedEmail) storage.setItem("auth_email", resolvedEmail);
   }
 
-  function getLoginHref() {
-    return inHtmlDir ? "login.html" : "html/login.html";
+  function resolveUserName(data) {
+    return (
+      data?.userName ||
+      data?.username ||
+      data?.user ||
+      localStorage.getItem("auth_user") ||
+      sessionStorage.getItem("auth_user") ||
+      null
+    );
+  }
+
+  function resolveUserRole(data) {
+    return (
+      data?.role ||
+      data?.rol ||
+      localStorage.getItem("auth_role") ||
+      sessionStorage.getItem("auth_role") ||
+      null
+    );
+  }
+
+  function resolveUserEmail(data) {
+    return (
+      data?.email ||
+      data?.mail ||
+      localStorage.getItem("auth_email") ||
+      sessionStorage.getItem("auth_email") ||
+      null
+    );
+  }
+
+  function buildUserChipText(data) {
+    const userName = resolveUserName(data);
+    const role = resolveUserRole(data);
+
+    if (userName && role) return `${userName} · ${role}`;
+    if (userName) return userName;
+    if (role) return role;
+
+    return "Sesión activa";
   }
 
   function redirectToLogin() {
-    window.location.href = getLoginHref();
+    window.location.href = pageHref("login.html");
   }
 
   async function authFetch(url, options = {}) {
     const token = getStoredToken();
-
     const headers = new Headers(options.headers || {});
+
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
@@ -82,82 +147,96 @@
     });
   }
 
-  const publicLinks = inHtmlDir
-    ? [
-        { key: "inicio", href: "../index.html", label: "Inicio" },
-        { key: "descargas", href: "descargas.html", label: "Descargas" },
-        { key: "acceso", href: "login.html", label: "Acceso" },
-        { key: "registro", href: "registro.html", label: "Crear cuenta" },
-        { key: "about", href: "about.html", label: "Acerca de" }
-      ]
-    : [
-        { key: "inicio", href: "index.html", label: "Inicio" },
-        { key: "descargas", href: "html/descargas.html", label: "Descargas" },
-        { key: "acceso", href: "html/login.html", label: "Acceso" },
-        { key: "registro", href: "html/registro.html", label: "Crear cuenta" },
-        { key: "about", href: "html/about.html", label: "Acerca de" }
-      ];
+  const publicLinks = [
+    { key: "inicio", href: inHtmlDir ? "../index.html" : "index.html", label: "Inicio" },
+    { key: "descargas", href: pageHref("descargas.html"), label: "Descargas" },
+    { key: "acceso", href: pageHref("login.html"), label: "Acceso" },
+    { key: "registro", href: pageHref("registro.html"), label: "Registro" },
+    { key: "about", href: pageHref("about.html"), label: "Acerca de" }
+  ];
 
   const internalLinks = [
-    { key: "inicio", href: "home.html", label: "Inicio" },
-    { key: "planos", href: "planos.html", label: "Planos" },
-    { key: "inspecciones", href: "inspecciones.html", label: "Inspecciones" },
-    { key: "inventario", href: "inventario.html", label: "Inventario" },
-    { key: "alertas", href: "alertas_centro.html", label: "Alertas" },
-    { key: "tareas", href: "tareas_reposicion.html", label: "Tareas" },
-    { key: "vision", href: "vision.html", label: "Visión" }
+    { key: "inicio", href: pageHref("home.html"), label: "Inicio" },
+    { key: "planos", href: pageHref("planos.html"), label: "Planos" },
+    { key: "inspecciones", href: pageHref("inspecciones.html"), label: "Inspecciones" },
+    { key: "inventario", href: pageHref("inventario.html"), label: "Inventario" },
+    { key: "vision", href: pageHref("vision.html"), label: "Visión" },
+    { key: "alertas", href: pageHref("alertas_centro.html"), label: "Alertas" },
+    { key: "tareas", href: pageHref("tareas_reposicion.html"), label: "Tareas" }
   ];
 
   const links = cfg.zone === "public" ? publicLinks : internalLinks;
-  const brandHref = inHtmlDir ? "../index.html" : "index.html";
-  const iconSrc = inHtmlDir ? "../img/iconoFAV.png" : "img/iconoFAV.png";
-  const headerClass = page === "registro.html" ? "topbar home-topbar" : "topbar";
-  const rightClass = page === "registro.html" ? "right home-right" : "right";
 
-  const navHtml = links
-    .map((item) => {
-      const active = item.key === cfg.active;
-      const activeClass = active ? " is-active" : "";
-      const current = active ? ' aria-current="page"' : "";
-      return `<a class="nav-link${activeClass}"${current} href="${item.href}">${item.label}</a>`;
-    })
-    .join("");
-
-  let rightHtml = "";
-  if (cfg.zone === "internal") {
-    const active = cfg.active === "perfil";
-    const activeClass = active ? " is-active" : "";
-    const current = active ? ' aria-current="page"' : "";
-
-    rightHtml =
-      '<span class="top-note" id="auth-user-chip">Validando sesión...</span>' +
-      `<a class="user${activeClass}"${current} href="perfil.html">Mi Perfil</a>` +
-      '<a class="user" href="#" id="logout-link">Cerrar sesión</a>';
-  } else if (cfg.right === "download-note") {
-    rightHtml = '<span class="top-note">Prototipo - descargas simuladas</span>';
-  } else if (cfg.right === "registro-links") {
-    rightHtml =
-      '<a class="home-link" href="login.html">Acceder</a>' +
-      '<a class="home-link is-active" href="registro.html">Registrarse</a>';
+  function renderNavLinks(items, activeKey) {
+    return items
+      .map((item) => {
+        const active = item.key === activeKey;
+        return `
+          <a
+            class="ea-nav__link${active ? " is-active" : ""}"
+            href="${item.href}"
+            ${active ? 'aria-current="page"' : ""}
+          >
+            ${item.label}
+          </a>
+        `;
+      })
+      .join("");
   }
 
-  const html =
-    `<header class="${headerClass}">` +
-    '<div class="inner">' +
-    '<div class="left">' +
-    `<a class="brand" href="${brandHref}">` +
-    `<img src="${iconSrc}" alt="EstanterIA" class="brand-icon" />` +
-    '<span class="brand-text">Estanter<span class="brand-accent">IA</span></span>' +
-    "</a>" +
-    `<nav class="nav" aria-label="Principal">${navHtml}</nav>` +
-    "</div>" +
-    `<div class="${rightClass}">${rightHtml}</div>` +
-    "</div>" +
-    "</header>";
+  function renderRightSide() {
+    if (cfg.zone === "internal") {
+      return `
+        <div class="ea-user" id="ea-user-chip">Validando sesión...</div>
+        <a class="ea-btn ea-btn--ghost" href="${pageHref("perfil.html")}">Mi perfil</a>
+        <button class="ea-btn ea-btn--danger" type="button" id="ea-logout-btn">
+          <span class="ea-btn__icon" aria-hidden="true"></span>
+          <span>Salir</span>
+        </button>
+      `;
+    }
+
+    if (page === "login.html") {
+      return `<a class="ea-btn ea-btn--ghost" href="${pageHref("registro.html")}">Crear cuenta</a>`;
+    }
+
+    if (page === "registro.html") {
+      return `<a class="ea-btn ea-btn--ghost" href="${pageHref("login.html")}">Acceder</a>`;
+    }
+
+    if (page === "recuperar_password.html") {
+      return `<a class="ea-btn ea-btn--ghost" href="${pageHref("login.html")}">Volver al acceso</a>`;
+    }
+
+    return `<a class="ea-btn ea-btn--ghost" href="${pageHref("login.html")}">Acceso</a>`;
+  }
+
+  const html = `
+    <header class="ea-header">
+      <div class="ea-header__inner">
+        <div class="ea-header__left">
+          <a class="ea-brand" href="${getBrandHref()}">
+            <img src="${getIconSrc()}" alt="EstanterIA" class="ea-brand__icon" />
+            <span class="ea-brand__text">Estanter<span class="ea-brand__accent">IA</span></span>
+          </a>
+
+          <nav class="ea-nav" aria-label="Principal">
+            ${renderNavLinks(links, cfg.active)}
+          </nav>
+        </div>
+
+        <div class="ea-header__right">
+          ${renderRightSide()}
+        </div>
+      </div>
+    </header>
+  `;
 
   const target = document.querySelector("[data-app-header]") || document.querySelector("header");
   if (target) {
     target.outerHTML = html;
+  } else {
+    document.body.insertAdjacentHTML("afterbegin", html);
   }
 
   async function hydrateInternalHeader() {
@@ -170,26 +249,23 @@
       return;
     }
 
-    const userChip = document.getElementById("auth-user-chip");
-    const logoutLink = document.getElementById("logout-link");
+    const userChip = document.getElementById("ea-user-chip");
+    const logoutBtn = document.getElementById("ea-logout-btn");
 
-    const cachedUser = localStorage.getItem("auth_user") || sessionStorage.getItem("auth_user");
-    const cachedRole = localStorage.getItem("auth_role") || sessionStorage.getItem("auth_role");
-    if (userChip && cachedUser) {
-      userChip.textContent = cachedRole ? `${cachedUser} · ${cachedRole}` : cachedUser;
+    if (userChip) {
+      userChip.textContent = buildUserChipText({});
     }
 
-    if (logoutLink) {
-      logoutLink.addEventListener("click", async (event) => {
-        event.preventDefault();
-        logoutLink.setAttribute("aria-disabled", "true");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        logoutBtn.disabled = true;
 
         try {
           await authFetch("/api/auth/logout", {
             method: "POST"
           });
         } catch (_) {
-          // Da igual. Limpiamos local y fuera.
+          // La sesión local se limpia igualmente.
         } finally {
           clearAuthStorage();
           redirectToLogin();
@@ -212,7 +288,7 @@
       saveSessionSnapshot(data);
 
       if (userChip) {
-        userChip.textContent = `${data.userName} · ${data.role}`;
+        userChip.textContent = buildUserChipText(data);
       }
     } catch (_) {
       clearAuthStorage();

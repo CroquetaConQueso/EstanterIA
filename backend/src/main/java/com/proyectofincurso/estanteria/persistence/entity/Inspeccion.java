@@ -1,7 +1,5 @@
 package com.proyectofincurso.estanteria.persistence.entity;
 
-import org.hibernate.annotations.JdbcType;
-import org.hibernate.type.descriptor.jdbc.VarcharJdbcType;
 import jakarta.persistence.*;
 import lombok.*;
 

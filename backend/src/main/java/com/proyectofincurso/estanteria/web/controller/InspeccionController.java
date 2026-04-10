@@ -24,7 +24,7 @@ public class InspeccionController {
         this.inspeccionService = inspeccionService;
     }
 
-    @PostMapping(value = { "/inspeccion_nueva", "/inspecciones" }, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/inspecciones", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public InspeccionarResponse inspeccionar(@Valid @RequestBody InspeccionarRequest req) {
         return inspeccionService.crearInspeccion(
                 req.getEstanteriaCodigo(),

@@ -39,7 +39,7 @@ const errorEl = document.querySelector<HTMLElement>("#insp-error");
 const successEl = document.querySelector<HTMLElement>("#insp-success");
 const out = document.querySelector<HTMLPreElement>("#out");
 
-const API_URL = "/api/inspeccion_nueva";
+const API_URL = "/api/inspecciones";
 
 // ===============================
 // Helpers visuales

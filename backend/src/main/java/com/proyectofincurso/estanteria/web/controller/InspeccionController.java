@@ -24,7 +24,7 @@ public class InspeccionController {
         this.inspeccionService = inspeccionService;
     }
 
-    @PostMapping(value = "/inspeccion_nueva", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = { "/inspeccion_nueva", "/inspecciones" }, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public InspeccionarResponse inspeccionar(@Valid @RequestBody InspeccionarRequest req) {
         return inspeccionService.crearInspeccion(
                 req.getEstanteriaCodigo(),
@@ -45,7 +45,7 @@ public class InspeccionController {
     @PutMapping(value = "/inspecciones/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public InspeccionDetailResponse actualizarInspeccion(
             @PathVariable Long id,
-            @RequestBody InspeccionUpdateRequest req) {
+            @Valid @RequestBody InspeccionUpdateRequest req) {
         return inspeccionService.actualizarInspeccion(id, req);
     }
 
@@ -53,21 +53,5 @@ public class InspeccionController {
     public MessageResponse eliminarInspeccion(@PathVariable Long id) {
         inspeccionService.eliminarInspeccion(id);
         return new MessageResponse("INSPECCION_ELIMINADA");
-    }
-
-    @PostMapping(value = { "/inspeccion_nueva",
-            "/inspecciones" }, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public InspeccionarResponse inspeccionar(@Valid @RequestBody InspeccionarRequest req) {
-        return inspeccionService.crearInspeccion(
-                req.getEstanteriaCodigo(),
-                req.getNotas(),
-                req.getImagenPath());
-    }
-
-    @PutMapping(value = "/inspecciones/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public InspeccionDetailResponse actualizarInspeccion(
-            @PathVariable Long id,
-            @Valid @RequestBody InspeccionUpdateRequest req) {
-        return inspeccionService.actualizarInspeccion(id, req);
     }
 }

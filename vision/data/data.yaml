@@ -6,5 +6,6 @@ test: imagenes/test
 
 names:
   0: lentejas
-  1: arroz
-  2: comida_gato
+  1: macarrones
+  2: arroz
+  3: comida_gato

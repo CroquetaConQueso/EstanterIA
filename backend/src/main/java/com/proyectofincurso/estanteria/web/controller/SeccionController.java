@@ -1,6 +1,8 @@
 package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.service.ModeloOperativoService;
+import com.proyectofincurso.estanteria.service.AlertaOperativaService;
+import com.proyectofincurso.estanteria.web.dto.AlertaResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -17,9 +19,15 @@ import java.util.List;
 public class SeccionController {
 
     private final ModeloOperativoService modeloOperativoService;
+    private final AlertaOperativaService alertaOperativaService;
 
     @GetMapping(value = "/{seccionId}/estanterias", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<EstanteriaResumenResponse> obtenerEstanterias(@PathVariable Long seccionId) {
         return modeloOperativoService.obtenerEstanteriasDeSeccion(seccionId);
+    }
+
+    @GetMapping(value = "/{seccionId}/alertas/abiertas", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<AlertaResponse> obtenerAlertasAbiertas(@PathVariable Long seccionId) {
+        return alertaOperativaService.obtenerAlertasAbiertasDeSeccion(seccionId);
     }
 }

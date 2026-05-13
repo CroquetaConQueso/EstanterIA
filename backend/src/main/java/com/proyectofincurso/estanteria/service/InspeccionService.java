@@ -115,13 +115,6 @@ public class InspeccionService {
             );
         }
 
-        if (insRepo.existsByEstanteriaCodigoIgnoreCase(estanteriaCodigo)) {
-            throw ApiException.conflict(
-                    "ESTANTERIA_CODIGO_ALREADY_EXISTS",
-                    "Ya existe una estantería con ese código"
-            );
-        }
-
         return verificarImagenPath(imagenPath);
     }
 

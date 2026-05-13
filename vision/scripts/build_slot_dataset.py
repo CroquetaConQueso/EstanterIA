@@ -34,11 +34,12 @@ CORE_SCENES = {
     "P-P-P-E",
     "E-E-P-P",
     "P-P-E-E",
+    "E-E-E-E",
     "X-P-P-P",
     "P-X-P-P",
     "P-P-X-P",
     "P-P-P-X",
-    "E-E-E-E",
+    "X-X-X-X",
 }
 
 

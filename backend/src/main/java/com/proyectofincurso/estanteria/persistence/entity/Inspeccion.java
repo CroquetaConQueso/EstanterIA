@@ -10,12 +10,6 @@ import org.hibernate.annotations.CreationTimestamp;
 @Entity
 @Table(
     name = "inspeccion",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_inspeccion_estanteria_codigo",
-            columnNames = "estanteria_codigo"
-        )
-    },
     indexes = {
         @Index(name = "idx_inspeccion_created_at", columnList = "created_at"),
         @Index(name = "idx_inspeccion_estanteria_codigo", columnList = "estanteria_codigo")

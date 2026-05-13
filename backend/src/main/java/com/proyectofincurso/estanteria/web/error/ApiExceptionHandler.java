@@ -3,6 +3,7 @@ package com.proyectofincurso.estanteria.web.error;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,15 +18,15 @@ import java.util.Map;
 public class ApiExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ApiErrorResponse handleValidation(MethodArgumentNotValidException ex,
-                                             HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException ex,
+                                                             HttpServletRequest request) {
         Map<String, String> fieldErrors = new LinkedHashMap<>();
 
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
             fieldErrors.put(fe.getField(), fe.getDefaultMessage());
         }
 
-        return ApiErrorResponse.builder()
+        ApiErrorResponse response = ApiErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("VALIDATION_ERROR")
@@ -33,12 +34,14 @@ public class ApiExceptionHandler {
                 .path(request.getRequestURI())
                 .fieldErrors(fieldErrors)
                 .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(ApiException.class)
-    public ApiErrorResponse handleApiException(ApiException ex,
-                                               HttpServletRequest request) {
-        return ApiErrorResponse.builder()
+    public ResponseEntity<ApiErrorResponse> handleApiException(ApiException ex,
+                                                               HttpServletRequest request) {
+        ApiErrorResponse response = ApiErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(ex.getStatus().value())
                 .error(ex.getCode())
@@ -46,14 +49,16 @@ public class ApiExceptionHandler {
                 .path(request.getRequestURI())
                 .fieldErrors(null)
                 .build();
+
+        return ResponseEntity.status(ex.getStatus()).body(response);
     }
 
     @ExceptionHandler(Exception.class)
-    public ApiErrorResponse handleGenericException(Exception ex,
-                                                   HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex,
+                                                                   HttpServletRequest request) {
         log.error("Error interno no controlado en {}", request.getRequestURI(), ex);
 
-        return ApiErrorResponse.builder()
+        ApiErrorResponse response = ApiErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("INTERNAL_SERVER_ERROR")
@@ -61,5 +66,7 @@ public class ApiExceptionHandler {
                 .path(request.getRequestURI())
                 .fieldErrors(null)
                 .build();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

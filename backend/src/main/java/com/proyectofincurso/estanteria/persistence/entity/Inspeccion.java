@@ -33,6 +33,10 @@ public class Inspeccion {
     @Column(name = "estanteria_codigo", nullable = false, length = 50)
     private String estanteriaCodigo;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "estanteria_id")
+    private Estanteria estanteria;
+
     @Column(name = "notas", columnDefinition = "text")
     private String notas;
 

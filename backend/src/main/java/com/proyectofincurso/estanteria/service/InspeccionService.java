@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaEstado;
 import com.proyectofincurso.estanteria.persistence.entity.Inspeccion;
 import com.proyectofincurso.estanteria.persistence.entity.InspeccionSlotResultado;
+import com.proyectofincurso.estanteria.persistence.repository.EstanteriaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.InspeccionRepository;
 import com.proyectofincurso.estanteria.web.dto.ImagenVisualResponse;
 import com.proyectofincurso.estanteria.web.dto.InspeccionDetalleResponse;
@@ -32,6 +33,7 @@ public class InspeccionService {
     private static final Set<String> ALLOWED_EXT = Set.of("jpg", "jpeg", "png", "webp");
 
     private final InspeccionRepository insRepo;
+    private final EstanteriaRepository estanteriaRepository;
 
     @Transactional(readOnly = true)
     public List<InspeccionItemResponse> obtenerInspecciones() {
@@ -193,6 +195,7 @@ public class InspeccionService {
 
         Inspeccion ins = new Inspeccion();
         ins.setEstanteriaCodigo(codigoNormalizado);
+        estanteriaRepository.findByCodigoAndActivaTrue(codigoNormalizado).ifPresent(ins::setEstanteria);
         ins.setNotas(notas);
         ins.setImagenPath(imagenPathValidado);
         ins.setEstado(EstanteriaEstado.CREADA);
@@ -222,6 +225,7 @@ public class InspeccionService {
 
         Inspeccion ins = new Inspeccion();
         ins.setEstanteriaCodigo(resultadoVisual.getEstanteriaCodigo().trim());
+        estanteriaRepository.findByCodigoAndActivaTrue(ins.getEstanteriaCodigo()).ifPresent(ins::setEstanteria);
         ins.setNotas(notas);
         ins.setEstado(EstanteriaEstado.CREADA);
         ins.setCreatedAt(resultadoVisual.getCapturadaEn() == null ? Instant.now() : resultadoVisual.getCapturadaEn());

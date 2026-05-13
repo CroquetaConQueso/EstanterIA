@@ -175,7 +175,7 @@
             <div class="panel-head">
               <div>
                 <p class="section-kicker">Resultado inmediato</p>
-                <h2>Resumen de detecciÃ³n</h2>
+                <h2>Resumen visual por slots</h2>
               </div>
               <span id="result-chip" class="status-chip descartada"
                 >SIN RESULTADO</span
@@ -184,16 +184,20 @@
 
             <div class="summary-grid">
               <article class="metric">
-                <span>Lentejas</span>
-                <strong id="sum-lentejas">0</strong>
+                <span>Estado visual</span>
+                <strong id="sum-estado">â€”</strong>
               </article>
               <article class="metric">
-                <span>Arroz</span>
-                <strong id="sum-arroz">0</strong>
+                <span>Ocupados</span>
+                <strong id="sum-ocupados">0</strong>
               </article>
               <article class="metric">
-                <span>Comida gato</span>
-                <strong id="sum-comida">0</strong>
+                <span>VacÃ­os</span>
+                <strong id="sum-vacios">0</strong>
+              </article>
+              <article class="metric">
+                <span>AnomalÃ­as</span>
+                <strong id="sum-anomalias">0</strong>
               </article>
             </div>
 
@@ -205,6 +209,14 @@
               <li class="meta-item">
                 <span class="meta-label">Fecha</span>
                 <strong class="meta-value" id="result-date">â€”</strong>
+              </li>
+              <li class="meta-item">
+                <span class="meta-label">Modelo</span>
+                <strong class="meta-value" id="result-model">â€”</strong>
+              </li>
+              <li class="meta-item">
+                <span class="meta-label">Slots</span>
+                <strong class="meta-value" id="result-slots">Sin anÃ¡lisis visual</strong>
               </li>
             </ul>
           </section>

@@ -42,15 +42,15 @@
     <div>
       <h1>Inspecciones con VisiÃ³n por Computador</h1>
       <p>
-        Listado y detalle de inspecciones. En el MVP, se crea y se lista desde backend;
-        el anÃ¡lisis IA vendrÃ¡ despuÃ©s.
+        Listado y detalle de inspecciones visuales por slots. El resumen se toma del
+        resultado visual persistido en backend.
       </p>
     </div>
 
     <div class="filters-inline">
       <label>
-        Buscar por plano
-        <input type="text" id="filtro-plano" placeholder="AlmacÃ©n, Supermercado, Tienda..." />
+        Buscar por estanterÃ­a o notas
+        <input type="text" id="filtro-plano" placeholder="EST-001, notas, estado visual..." />
       </label>
 
       <label>
@@ -89,13 +89,12 @@
           <thead>
             <tr>
               <th>Fecha Â· hora</th>
-              <th>Plano</th>
               <th>EstanterÃ­a</th>
-              <th>Encargado(s)</th>
-              <th>VersiÃ³n plano</th>
-              <th>Productos OK</th>
-              <th>Huecos</th>
-              <th>Estado</th>
+              <th>Estado visual</th>
+              <th>Ocupados</th>
+              <th>VacÃ­os</th>
+              <th>AnomalÃ­as</th>
+              <th>Modelo</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -110,7 +109,7 @@
     <aside class="detail-shell">
       <h2>Detalle de la inspecciÃ³n</h2>
       <p class="help">
-        Al seleccionar una inspecciÃ³n se mostrarÃ¡ aquÃ­ el resumen, productos y huecos.
+        Al seleccionar una inspecciÃ³n se consultarÃ¡ su detalle real, con resumen visual y slots.
       </p>
 
       <div class="photo-placeholder" id="photo-placeholder">
@@ -123,14 +122,20 @@
           <ul id="detalle-resumen"></ul>
         </div>
         <div class="detail-block">
-          <h3>Productos OK</h3>
-          <ul id="detalle-ok"></ul>
+          <h3>Resultado visual</h3>
+          <ul id="detalle-visual"></ul>
         </div>
         <div class="detail-block">
-          <h3>Huecos detectados</h3>
-          <ul id="detalle-gaps"></ul>
+          <h3>Slots</h3>
+          <ul id="detalle-slots"></ul>
         </div>
       </div>
+
+      <p>
+        <a class="btn ghost" id="detalle-completo-link" href="inspeccion_detalle.html" hidden>
+          Abrir detalle completo
+        </a>
+      </p>
 
       <p class="form-error" id="detalle-error" role="alert" aria-live="polite" hidden></p>
     </aside>

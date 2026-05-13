@@ -16,10 +16,13 @@ const previewImage = document.querySelector('#preview-image');
 const resultChip = document.querySelector('#result-chip');
 const resultId = document.querySelector('#result-id');
 const resultDate = document.querySelector('#result-date');
+const resultModel = document.querySelector('#result-model');
+const resultSlots = document.querySelector('#result-slots');
 
-const sumLentejas = document.querySelector('#sum-lentejas');
-const sumArroz = document.querySelector('#sum-arroz');
-const sumComida = document.querySelector('#sum-comida');
+const sumEstado = document.querySelector('#sum-estado');
+const sumOcupados = document.querySelector('#sum-ocupados');
+const sumVacios = document.querySelector('#sum-vacios');
+const sumAnomalias = document.querySelector('#sum-anomalias');
 
 const goInspecciones = document.querySelector('#go-inspecciones');
 const goAlertas = document.querySelector('#go-alertas');
@@ -81,7 +84,7 @@ function setOperationalStatus(type, text) {
       break;
     case 'critical':
       visionStatusChip.classList.add('critica');
-      visionStatusChip.textContent = 'CRÍTICA';
+      visionStatusChip.textContent = 'REVISAR';
       break;
     case 'error':
       visionStatusChip.classList.add('descartada');
@@ -94,15 +97,64 @@ function setOperationalStatus(type, text) {
   }
 }
 
-function setPreview(data) {
-  if (previewShelf) previewShelf.textContent = data.estanteriaCodigo || '—';
-  if (previewImage) previewImage.textContent = data.imagePath || '—';
+function getResumen(resultadoVisual) {
+  return resultadoVisual?.resumen ?? null;
+}
+
+function getImagePath(result) {
+  return result?.imageUrl || result?.imagePath || result?.resultadoVisual?.imagen?.ruta || '';
+}
+
+function getEstadoGeneral(result) {
+  return getResumen(result?.resultadoVisual)?.estadoGeneralVisual || 'Sin analisis';
+}
+
+function isResultadoRevisable(result) {
+  const resumen = getResumen(result?.resultadoVisual);
+  return Boolean(resumen?.hayHuecosVacios || resumen?.hayAnomalias || result?.critical);
+}
+
+function formatFecha(value) {
+  if (!value) return 'â€”';
+
+  const fecha = new Date(value);
+  if (Number.isNaN(fecha.getTime())) return value;
+
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  }).format(fecha);
+}
+
+async function parseErrorResponse(res) {
+  try {
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  } catch {
+    return null;
+  }
+}
+
+function getBackendErrorMessage(data, status) {
+  if (data?.message) return data.message;
+  if (status === 400) return 'La peticion de vision no es valida';
+  if (status === 404) return 'No se encontro la estanteria solicitada';
+  if (status >= 500) return 'Error interno al ejecutar la inspeccion visual';
+  return `Error HTTP ${status}`;
+}
+
+function setPreview(result) {
+  const imagePath = getImagePath(result);
+
+  if (previewShelf) previewShelf.textContent = result?.estanteriaCodigo || 'â€”';
+  if (previewImage) previewImage.textContent = imagePath || 'â€”';
 
   if (!previewBox) return;
 
   previewBox.innerHTML = '';
+  previewBox.classList.toggle('has-image', Boolean(imagePath));
 
-  if (!data.imagePath) {
+  if (!imagePath) {
     previewBox.innerHTML = `
       <div class="preview-placeholder">
         <p>Sin captura reciente</p>
@@ -112,58 +164,64 @@ function setPreview(data) {
     return;
   }
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'preview-placeholder';
-  wrapper.innerHTML = `
-    <p>Imagen asociada</p>
-    <small>${data.imagePath}</small>
-  `;
-  previewBox.appendChild(wrapper);
+  const img = document.createElement('img');
+  img.className = 'preview-image';
+  img.src = imagePath;
+  img.alt = `Imagen de inspeccion ${result?.estanteriaCodigo ?? ''}`.trim();
+  previewBox.appendChild(img);
 }
 
-function setSummary(summary = {}) {
-  if (sumLentejas) sumLentejas.textContent = String(summary.lentejas ?? 0);
-  if (sumArroz) sumArroz.textContent = String(summary.arroz ?? 0);
-  if (sumComida) sumComida.textContent = String(summary.comida_gato ?? 0);
+function setSummary(resultadoVisual) {
+  const resumen = getResumen(resultadoVisual ? { resultadoVisual } : null);
+
+  if (sumEstado) sumEstado.textContent = resumen?.estadoGeneralVisual ?? 'â€”';
+  if (sumOcupados) sumOcupados.textContent = String(resumen?.ocupados ?? 0);
+  if (sumVacios) sumVacios.textContent = String(resumen?.vacios ?? 0);
+  if (sumAnomalias) sumAnomalias.textContent = String(resumen?.anomalias ?? 0);
 }
 
 function setResultMeta(result) {
-  if (resultId) resultId.textContent = result.id ? `#${result.id}` : '—';
+  const resultadoVisual = result?.resultadoVisual ?? null;
+  const resumen = getResumen(resultadoVisual ? { resultadoVisual } : null);
+  const slots = Array.isArray(resultadoVisual?.slots) ? resultadoVisual.slots : [];
 
-  if (resultDate) {
-    resultDate.textContent = result.createdAt
-      ? new Intl.DateTimeFormat('es-ES', {
-          dateStyle: 'short',
-          timeStyle: 'short'
-        }).format(new Date(result.createdAt))
-      : '—';
+  if (resultId) resultId.textContent = result?.id ? `#${result.id}` : 'â€”';
+  if (resultDate) resultDate.textContent = formatFecha(result?.createdAt || resultadoVisual?.capturadaEn);
+  if (resultModel) resultModel.textContent = resultadoVisual?.modeloVersion || 'â€”';
+  if (resultSlots) {
+    resultSlots.textContent = slots.length > 0
+      ? slots.map((slot) => `${slot.slotId}: ${slot.estadoVisual} (${Math.round((slot.confianza ?? 0) * 100)}%)`).join(' | ')
+      : 'Sin analisis visual';
   }
 
   if (!resultChip) return;
 
-  if (result.critical) {
-    resultChip.textContent = 'RESULTADO CRÍTICO';
-    resultChip.className = 'status-chip critica';
-  } else if (result.id) {
-    resultChip.textContent = 'RESULTADO OK';
-    resultChip.className = 'status-chip ok';
-  } else {
-    resultChip.textContent = 'SIN RESULTADO';
+  if (!resultadoVisual) {
+    resultChip.textContent = 'SIN ANALISIS VISUAL';
     resultChip.className = 'status-chip descartada';
+  } else if (resumen?.hayHuecosVacios || resumen?.hayAnomalias) {
+    resultChip.textContent = resumen.estadoGeneralVisual || 'REVISAR';
+    resultChip.className = 'status-chip critica';
+  } else {
+    resultChip.textContent = resumen?.estadoGeneralVisual || 'RESULTADO OK';
+    resultChip.className = 'status-chip ok';
   }
 }
 
-function toggleNextLinks(enabled, critical = false) {
+function toggleNextLinks(enabled, revisable = false, inspeccionId = null) {
   if (goInspecciones) {
     goInspecciones.classList.toggle('disabled', !enabled);
+    goInspecciones.href = inspeccionId
+      ? `inspeccion_detalle.html?id=${encodeURIComponent(String(inspeccionId))}`
+      : 'inspecciones.html';
   }
 
   if (goAlertas) {
-    goAlertas.classList.toggle('disabled', !(enabled && critical));
+    goAlertas.classList.toggle('disabled', !(enabled && revisable));
   }
 
   if (goTareas) {
-    goTareas.classList.toggle('disabled', !(enabled && critical));
+    goTareas.classList.toggle('disabled', !(enabled && revisable));
   }
 }
 
@@ -187,11 +245,11 @@ function validateClient(estanteriaCodigo, modo, imagePath) {
   const errors = {};
 
   if (!estanteriaCodigo.trim()) {
-    errors.estanteriaCodigo = 'Debes seleccionar una estantería';
+    errors.estanteriaCodigo = 'Debes seleccionar una estanteria';
   }
 
   if (!modo) {
-    errors.modo = 'Debes seleccionar un modo de ejecución';
+    errors.modo = 'Debes seleccionar un modo de ejecucion';
   }
 
   if (modo === 'predict-existing' && !imagePath.trim()) {
@@ -210,50 +268,37 @@ function buildPayload() {
   };
 }
 
-function createMockResult(payload) {
-  const isCritical = payload.estanteriaCodigo === 'EST-002';
-
-  return {
-    message: 'VISION_INSPECCION_OK',
-    id: Math.floor(Math.random() * 9000) + 1000,
-    estanteriaCodigo: payload.estanteriaCodigo,
-    imagePath:
-      payload.imagePath ||
-      `data/raw/capture_${String(Math.floor(Math.random() * 90) + 10).padStart(6, '0')}.png`,
-    summary: {
-      lentejas: isCritical ? 0 : 2,
-      arroz: isCritical ? 1 : 2,
-      comida_gato: isCritical ? 0 : 1
-    },
-    createdAt: new Date().toISOString(),
-    critical: isCritical
-  };
-}
-
-/*
- * Punto de integración real con Spring Boot.
- * Cuando quieras dejar el mock, esta función debería hacer algo como:
- *
- * return fetch(`/api/vision/inspeccionar/${payload.estanteriaCodigo}`, {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify(payload)
- * }).then(...)
- */
 async function runVision(payload) {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  return createMockResult(payload);
+  const res = await fetch(`/api/vision/inspeccionar/${encodeURIComponent(payload.estanteriaCodigo)}`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      modo: payload.modo,
+      imagePath: payload.imagePath,
+      notas: payload.notas
+    })
+  });
+
+  if (!res.ok) {
+    const errorData = await parseErrorResponse(res);
+    throw new Error(getBackendErrorMessage(errorData, res.status));
+  }
+
+  return res.json();
 }
 
 function resetView() {
   setError(null);
   setSuccess(null);
-  show('Sin actividad todavía.');
+  show('Sin actividad todavia.');
   setPreview({ estanteriaCodigo: '', imagePath: '' });
-  setSummary({ lentejas: 0, arroz: 0, comida_gato: 0 });
-  setResultMeta({ id: null, createdAt: null, critical: false });
-  toggleNextLinks(false, false);
-  setOperationalStatus('idle', 'El módulo está listo para ejecutar una inspección.');
+  setSummary(null);
+  setResultMeta({ id: null, createdAt: null, resultadoVisual: null });
+  toggleNextLinks(false, false, null);
+  setOperationalStatus('idle', 'El modulo esta listo para ejecutar una inspeccion.');
   updateImagePathState();
 }
 
@@ -283,8 +328,8 @@ if (form) {
     );
 
     if (Object.keys(errors).length > 0) {
-      setError(Object.values(errors).join(' · '));
-      setOperationalStatus('error', 'La inspección no puede ejecutarse porque faltan datos.');
+      setError(Object.values(errors).join(' | '));
+      setOperationalStatus('error', 'La inspeccion no puede ejecutarse porque faltan datos.');
       show({ error: 'CLIENT_VALIDATION_ERROR', fieldErrors: errors });
       return;
     }
@@ -297,34 +342,46 @@ if (form) {
     }
 
     try {
-      setOperationalStatus('running', 'La inspección visual está en ejecución.');
-      show({ request: payload });
+      setOperationalStatus('running', 'La inspeccion visual esta en ejecucion.');
+      show({
+        endpoint: `/api/vision/inspeccionar/${payload.estanteriaCodigo}`,
+        body: {
+          modo: payload.modo,
+          imagePath: payload.imagePath,
+          notas: payload.notas
+        }
+      });
 
       const result = await runVision(payload);
+      const revisable = isResultadoRevisable(result);
 
-      setSuccess(`Inspección visual completada para ${result.estanteriaCodigo}`);
+      setSuccess(`Inspeccion visual completada para ${result.estanteriaCodigo}`);
       setPreview(result);
-      setSummary(result.summary);
+      setSummary(result.resultadoVisual);
       setResultMeta(result);
-      toggleNextLinks(true, result.critical);
+      toggleNextLinks(true, revisable, result.id);
       show(result);
 
-      if (result.critical) {
+      if (result.id) {
+        sessionStorage.setItem('nuevaInspeccionId', String(result.id));
+      }
+
+      if (revisable) {
         setOperationalStatus(
           'critical',
-          'La inspección ha generado un resultado crítico. Se recomienda revisar alertas o tareas.'
+          `Resultado ${getEstadoGeneral(result)}. Revisa los slots detectados.`
         );
       } else {
         setOperationalStatus(
           'success',
-          'La inspección se completó correctamente y ya puede revisarse en el historial.'
+          'La inspeccion se completo correctamente y ya puede revisarse en el historial.'
         );
       }
     } catch (err) {
-      setError('No se pudo completar la inspección visual');
+      setError(err instanceof Error ? err.message : 'No se pudo completar la inspeccion visual');
       setOperationalStatus(
         'error',
-        'Se produjo un error durante la ejecución del flujo de visión.'
+        'Se produjo un error durante la ejecucion del flujo de vision.'
       );
       show({
         error: 'VISION_EXECUTION_ERROR',

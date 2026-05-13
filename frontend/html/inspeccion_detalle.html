@@ -41,7 +41,7 @@
     <div>
       <h1>Detalle de la inspeccion</h1>
       <p>
-        Ruta preparada para acceder al detalle dedicado de una inspeccion cuando la vista se separe del listado.
+        Consulta dedicada del resultado visual persistido para una inspeccion concreta.
       </p>
     </div>
 
@@ -53,27 +53,26 @@
   <section class="layout">
     <aside class="detail-shell">
       <h2>Detalle de la inspeccion</h2>
-      <p class="help">
-        El detalle operativo sigue mostrandose en la pagina de inspecciones hasta que se conecte esta vista dedicada.
-      </p>
+      <p class="help" id="detalle-estado-carga">Cargando detalle de inspeccion...</p>
 
-      <div class="photo-placeholder">
+      <p class="form-error" id="detalle-error" role="alert" aria-live="polite" hidden></p>
+
+      <div class="photo-placeholder" id="detalle-imagen">
         <span>Vista de estanteria</span>
       </div>
 
       <div class="detail-grid">
         <div class="detail-block">
           <h3>Resumen</h3>
-          <ul>
-            <li><strong>Estado:</strong> pendiente de seleccion</li>
-            <li><strong>Origen:</strong> listado de inspecciones</li>
-          </ul>
+          <ul id="detalle-resumen"></ul>
         </div>
         <div class="detail-block">
           <h3>Resultado visual</h3>
-          <ul>
-            <li><strong>Slots:</strong> pendiente de carga</li>
-          </ul>
+          <ul id="detalle-visual"></ul>
+        </div>
+        <div class="detail-block">
+          <h3>Slots</h3>
+          <ul id="detalle-slots"></ul>
         </div>
       </div>
     </aside>
@@ -83,5 +82,6 @@
 <footer class="foot">
   <small>Suite Tienda - Detalle de inspeccion - MVP</small>
 </footer>
+<script type="module" src="/src/pages/inspeccion_detalle.ts"></script>
 </body>
 </html>

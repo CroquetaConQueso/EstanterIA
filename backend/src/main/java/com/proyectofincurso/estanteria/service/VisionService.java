@@ -22,6 +22,7 @@ public class VisionService {
 
     private final VisionResultadoProvider visionResultadoProvider;
     private final InspeccionService inspeccionService;
+    private final AlertaOperativaService alertaOperativaService;
 
     public VisionInspeccionarResponse inspeccionarConVision(String estanteriaCodigo, VisionInspeccionarRequest request) {
         validarPeticion(estanteriaCodigo, request);
@@ -38,6 +39,7 @@ public class VisionService {
                 resultadoVisual,
                 request.getNotas()
         );
+        alertaOperativaService.evaluarInspeccionVisual(inspeccion.getId());
 
         return new VisionInspeccionarResponse(
                 "VISION_INSPECCION_OK",

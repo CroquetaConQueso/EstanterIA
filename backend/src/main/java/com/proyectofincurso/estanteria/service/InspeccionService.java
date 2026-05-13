@@ -210,7 +210,6 @@ public class InspeccionService {
                 ins.getCreatedAt()
         );
     }
-
     @Transactional
     public InspeccionDetalleResponse crearInspeccionVisual(ResultadoVisualResponse resultadoVisual, String notas) {
         if (resultadoVisual == null || resultadoVisual.getEstanteriaCodigo() == null

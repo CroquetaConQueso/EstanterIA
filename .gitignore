@@ -108,6 +108,8 @@ coverage/
 # Misc
 # =========================
 HELP.md
+backups/
+tmp-estanteria-issues/
 
 
 # =========================
@@ -151,3 +153,7 @@ vision/**/*.engine
 vision/data/raw/
 vision/data/dataset/images/
 vision/data/dataset/labels/
+vision/data/dataset/slot-classification-v1/
+
+# Pesos/modelos descargados o generados
+vision/**/*.pt

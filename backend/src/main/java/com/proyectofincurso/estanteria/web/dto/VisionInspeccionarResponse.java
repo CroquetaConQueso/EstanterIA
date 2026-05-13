@@ -17,4 +17,5 @@ public class VisionInspeccionarResponse {
     private Map<String, Integer> summary;
     private Instant createdAt;
     private boolean critical;
+    private ResultadoVisualResponse resultadoVisual;
 }

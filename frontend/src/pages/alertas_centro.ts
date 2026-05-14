@@ -99,10 +99,10 @@ let alertas: AlertaResponse[] = [];
 let selectedId: number | null = null;
 
 const tipoLabels: Record<string, string> = {
-  HUECO_VACIO: "Hueco vacio",
-  ANOMALIA_VISUAL: "Anomalia visual",
-  REVISION_MANUAL: "Revision manual",
-  PRODUCTO_PROXIMO_A_CADUCAR: "Producto proximo a caducar",
+  HUECO_VACIO: "Hueco vac\u00edo",
+  ANOMALIA_VISUAL: "Anomal\u00eda visual",
+  REVISION_MANUAL: "Revisi\u00f3n manual",
+  PRODUCTO_PROXIMO_A_CADUCAR: "Producto pr\u00f3ximo a caducar",
   PRESENCIA_TRAS_RETIRADA_PROGRAMADA: "Presencia tras retirada programada"
 };
 
@@ -173,12 +173,12 @@ function getEstanteria(alerta: AlertaResponse): string {
 function getSlot(alerta: AlertaResponse): string {
   if (!alerta.slot) return "Sin slot vinculado";
   const orden = alerta.slot.orden ? `Orden ${alerta.slot.orden}` : "Sin orden";
-  return `${textoSeguro(alerta.slot.slotId, "Sin slot vinculado")} · ${orden}`;
+  return `${textoSeguro(alerta.slot.slotId, "Sin slot vinculado")} - ${orden}`;
 }
 
 function getDetectadoEsperado(alerta: AlertaResponse): string {
   const slot = alerta.slot?.slotId ?? "Sin slot";
-  return `${etiquetaTipo(alerta.tipo)} · ${slot}`;
+  return `${etiquetaTipo(alerta.tipo)} - ${slot}`;
 }
 
 function getBlobBusqueda(alerta: AlertaResponse): string {
@@ -233,7 +233,7 @@ function updateMetrics(): void {
   }
 
   if (metricAssigned) {
-    metricAssigned.textContent = "0";
+    metricAssigned.textContent = String(alertas.filter((alerta) => alerta.prioridad === "ALTA").length);
   }
 }
 
@@ -269,7 +269,7 @@ function renderDetail(alerta: AlertaResponse): void {
     preview.innerHTML = `
       <span>
         ${etiquetaTipo(alerta.tipo)}<br>
-        ${getEstanteria(alerta)} · ${getSlot(alerta)}
+        ${getEstanteria(alerta)} - ${getSlot(alerta)}
       </span>
     `;
   }
@@ -280,12 +280,12 @@ function renderDetail(alerta: AlertaResponse): void {
   addDetailItem("Estado", etiquetaEstado(alerta.estado));
   addDetailItem("Fecha", formatFecha(alerta.createdAt));
   addDetailItem("Mensaje", alerta.mensaje || "Sin mensaje");
-  addDetailItem("Seccion", getSeccion(alerta));
-  addDetailItem("Estanteria", getEstanteria(alerta));
+  addDetailItem("Secci\u00f3n", getSeccion(alerta));
+  addDetailItem("Estanter\u00eda", getEstanteria(alerta));
   addDetailItem("Slot", getSlot(alerta));
   addDetailItem("Producto", getProducto(alerta));
-  addDetailItem("Proveedor", textoSeguro(alerta.asignacion?.proveedor?.nombre, "Sin asignacion asociada"));
-  addDetailItem("Clave proveedor", textoSeguro(alerta.asignacion?.claveProductoProveedor, "Sin asignacion asociada"));
+  addDetailItem("Proveedor", textoSeguro(alerta.asignacion?.proveedor?.nombre, "Sin asignaci\u00f3n asociada"));
+  addDetailItem("Clave proveedor", textoSeguro(alerta.asignacion?.claveProductoProveedor, "Sin asignaci\u00f3n asociada"));
   addDetailItem("Caducidad", textoSeguro(alerta.asignacion?.fechaCaducidad, "Sin fecha de caducidad"));
   addDetailItem("Retirada programada", textoSeguro(alerta.asignacion?.fechaRetiradaProgramada, "Sin retirada programada"));
 
@@ -405,7 +405,7 @@ async function cargarAlertas(): Promise<void> {
       const errorData = await parseErrorResponse(response);
       const mensaje = getBackendErrorMessage(errorData, response.status);
       setRowMessage(mensaje);
-      setDetalleMessage("No se pudo cargar el detalle porque el backend no respondio correctamente");
+      setDetalleMessage("No se pudo cargar el detalle porque el backend no respondi\u00f3 correctamente");
       alertas = [];
       updateMetrics();
       return;
@@ -426,7 +426,7 @@ async function cargarAlertas(): Promise<void> {
     alertas = [];
     updateMetrics();
     setRowMessage("No se pudo conectar con el servidor de alertas");
-    setDetalleMessage("Revisa que el backend este arrancado para consultar las alertas");
+    setDetalleMessage("Revisa que el backend est\u00e9 arrancado para consultar las alertas");
   }
 }
 

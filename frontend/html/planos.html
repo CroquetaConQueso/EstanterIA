@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Planos y estanterÃ­as Â· Suite Tienda</title>
+  <title>Plano visual de estanterÃ­as Â· Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/planos.css" rel="stylesheet" />
@@ -37,81 +37,63 @@
 <main class="page">
   <header class="page-head">
     <div>
-      <h1>Planos y estructura de estanterÃ­as</h1>
+      <h1>Plano visual de estanterÃ­as</h1>
       <p>
-        Esta pantalla muestra cÃ³mo podrÃ­a gestionarse la lista de planos, con
-        una vista previa bÃ¡sica y acceso al editor.
+        RepresentaciÃ³n operativa de la estanterÃ­a demo, conectada con la
+        configuraciÃ³n de slots, la Ãºltima inspecciÃ³n visual y las alertas abiertas.
       </p>
     </div>
     <div class="toolbar">
-      <button class="btn ghost" type="button" onclick="window.location.href='editor.html'">
-        Abrir editor de plano
+      <button class="btn ghost" type="button" onclick="window.location.href='inspecciones.html'">
+        Ver inspecciones
       </button>
     </div>
   </header>
 
   <section class="layout">
     <section class="col-list">
-      <h2>Planos disponibles</h2>
+      <h2>EstanterÃ­as representadas</h2>
       <p class="help">
-        Los elementos son mock. En una versiÃ³n real, se cargarÃ­an desde el backend
-        a partir de ficheros JSON con la estructura del plano.
+        Esta iteraciÃ³n se centra en EST-001 para mostrar el Ãºltimo estado visual
+        conocido y su contexto operativo real.
       </p>
 
       <ul class="plan-list" id="lista-planos">
-        <li class="plan-item is-active" data-id="almacen-central">
-          <div class="plan-title">AlmacÃ©n Central</div>
-          <div class="plan-meta">12 estanterÃ­as Â· 3 zonas</div>
-        </li>
-        <li class="plan-item" data-id="supermercado-seco">
-          <div class="plan-title">Supermercado â€” zona seca</div>
-          <div class="plan-meta">18 estanterÃ­as Â· 5 zonas</div>
-        </li>
-        <li class="plan-item" data-id="tienda-barrio">
-          <div class="plan-title">Tienda de barrio</div>
-          <div class="plan-meta">8 estanterÃ­as Â· 2 zonas</div>
-        </li>
-        <li class="plan-item" data-id="ferreteria-centro">
-          <div class="plan-title">FerreterÃ­a Centro</div>
-          <div class="plan-meta">10 estanterÃ­as Â· 4 pasillos</div>
+        <li class="plan-item is-active" data-codigo="EST-001">
+          <div class="plan-title">EST-001</div>
+          <div class="plan-meta">Cargando estado visual...</div>
         </li>
       </ul>
     </section>
 
     <section class="col-main">
       <div class="card preview-card">
-        <h2>Vista previa del plano</h2>
+        <h2>Estado visual de la estanterÃ­a</h2>
         <div class="preview-shell" id="preview-plano">
-          <span>Render 2D (mock) del plano seleccionado.</span>
+          <span>Cargando plano operativo...</span>
         </div>
       </div>
 
       <div class="card">
-        <h2>Detalle del plano y estanterÃ­as</h2>
+        <h2>Detalle operativo</h2>
         <div class="detail-grid">
           <div class="detail-block">
             <h3>Resumen</h3>
             <ul id="detalle-plano">
-              <li>Plano: AlmacÃ©n Central (mock)</li>
-              <li>EstanterÃ­as: 12</li>
-              <li>Zonas: 3 (RecepciÃ³n, Pasillo A, Pasillo B)</li>
+              <li>Cargando resumen...</li>
             </ul>
           </div>
           <div class="detail-block">
-            <h3>EstanterÃ­as principales</h3>
+            <h3>Slots visuales</h3>
             <ul id="detalle-estanterias">
-              <li>Est. A-01 â€” detergentes</li>
-              <li>Est. A-05 â€” suavizantes</li>
-              <li>Est. B-02 â€” papel / celulosa</li>
+              <li>Cargando slots...</li>
             </ul>
           </div>
           <div class="detail-block">
-            <h3>ConexiÃ³n con IA</h3>
-            <p class="help">
-              En la versiÃ³n conectada, cada estanterÃ­a de este plano se
-              mapearÃ­a a las cÃ¡maras/zonas que la IA utiliza para inspeccionar
-              productos y huecos.
-            </p>
+            <h3>Alertas y configuraciÃ³n</h3>
+            <ul id="detalle-alertas-plano">
+              <li>Cargando alertas...</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -120,10 +102,10 @@
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Planos & estanterÃ­as Â· Boceto</small>
+  <small>Suite Tienda Â· Plano visual de estanterÃ­as Â· Estado operativo</small>
 </footer>
 
-<script src="../js/planos.js"></script>
+<script type="module" src="/src/pages/planos.ts"></script>
 </body>
 </html>
 

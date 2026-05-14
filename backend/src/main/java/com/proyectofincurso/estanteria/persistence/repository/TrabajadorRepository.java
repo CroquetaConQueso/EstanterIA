@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
     List<Trabajador> findByEmpresaCodigoAndActivoTrueOrderByApellidosAscNombreAsc(String codigoEmpresa);
+
+    List<Trabajador> findByActivoTrueOrderByApellidosAscNombreAsc();
 }

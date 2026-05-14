@@ -1,4 +1,4 @@
-import { clearAuthSession, getAuthToken } from "../lib/api";
+import { authFetch, clearAuthSession, getAuthToken } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
 
 requireAuth();
@@ -125,9 +125,17 @@ function cargarPerfil(): void {
   setText(issuerEl, payload.iss);
 }
 
-logoutBtn?.addEventListener("click", () => {
-  clearAuthSession();
-  window.location.href = "/html/login.html";
+logoutBtn?.addEventListener("click", async () => {
+  logoutBtn.disabled = true;
+
+  try {
+    await authFetch("/api/logout", { method: "POST" });
+  } catch {
+    // El cierre local debe ocurrir aunque el backend no responda.
+  } finally {
+    clearAuthSession();
+    window.location.href = "/html/login.html";
+  }
 });
 
 cargarPerfil();

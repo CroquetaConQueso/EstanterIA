@@ -1,3 +1,5 @@
+import { authFetch } from "../lib/api";
+
 type PrioridadAlerta = "BAJA" | "MEDIA" | "ALTA" | "CRITICA" | string;
 type TipoAlerta =
   | "HUECO_VACIO"
@@ -122,7 +124,7 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
       "Accept": "application/json"

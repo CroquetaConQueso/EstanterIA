@@ -1,3 +1,5 @@
+import { authFetch } from "../lib/api";
+
 type EstadoInspeccion = "CREADA" | "ACTUALIZADA" | "LISTA" | string;
 type EstadoGeneralVisual = "OK" | "HUECOS_VACIOS" | "ANOMALIAS" | "MIXTO" | string;
 type EstadoVisualSlot = "OCUPADO" | "VACIO" | "ANOMALIA" | string;
@@ -209,7 +211,7 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
 }
 
 async function fetchInspeccionDetalle(id: number): Promise<InspeccionResponse> {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(String(id))}`, {
+    const res = await authFetch(`${API_URL}/${encodeURIComponent(String(id))}`, {
         method: "GET",
         headers: {
             "Accept": "application/json"
@@ -401,7 +403,7 @@ async function cargarInspecciones() {
     setError(null);
 
     try {
-        const res = await fetch(API_URL, {
+        const res = await authFetch(API_URL, {
             method: "GET",
             headers: {
                 "Accept": "application/json"

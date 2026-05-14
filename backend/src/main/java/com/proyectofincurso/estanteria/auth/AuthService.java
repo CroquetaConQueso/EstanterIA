@@ -39,7 +39,7 @@ public class AuthService {
             );
         }
 
-        return new AuthUser(user.getUsername(), user.getRole().name());
+        return new AuthUser(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
     }
 
     public void verificar(String username, String email, String password) {

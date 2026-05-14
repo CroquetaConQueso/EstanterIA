@@ -1,3 +1,5 @@
+import { authFetch } from "../lib/api";
+
 type EstadoGeneralVisual = "OK" | "HUECOS_VACIOS" | "ANOMALIAS" | "MIXTO" | string;
 type EstadoVisualSlot = "OCUPADO" | "VACIO" | "ANOMALIA" | string;
 
@@ -173,7 +175,7 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
       "Accept": "application/json"

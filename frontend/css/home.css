@@ -448,11 +448,13 @@ a {
 
 /* Summary */
 
+.shelf-status,
 .summary {
   border: var(--border-heavy);
   padding: 24px;
   background: var(--white);
   box-shadow: var(--shadow-block);
+  margin-bottom: 28px;
 }
 
 .summary-head {
@@ -477,6 +479,110 @@ a {
 
 .summary-table-shell {
   overflow-x: auto;
+}
+
+.shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.shelf-card {
+  border: var(--border-heavy);
+  background: var(--white);
+  box-shadow: var(--shadow-block);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shelf-card.rojo {
+  background: #ffebee;
+  border-color: var(--red);
+  box-shadow: 6px 6px 0 var(--red);
+}
+
+.shelf-card.ambar {
+  background: #fff8e1;
+  border-color: var(--gold);
+  box-shadow: 6px 6px 0 var(--gold);
+}
+
+.shelf-card.verde {
+  background: #e8f5e9;
+  border-color: var(--green);
+  box-shadow: 6px 6px 0 var(--green);
+}
+
+.shelf-card.neutro {
+  background: var(--paper);
+}
+
+.shelf-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.shelf-code,
+.shelf-state {
+  display: inline-flex;
+  border: var(--border-light);
+  box-shadow: 2px 2px 0 var(--black);
+  padding: 6px 10px;
+  background: var(--black);
+  color: var(--gold);
+  font-size: 0.78rem;
+}
+
+.shelf-state {
+  background: var(--white);
+  color: var(--black);
+  text-align: right;
+}
+
+.shelf-card h3 {
+  font-size: 1.4rem;
+  line-height: 1.1;
+}
+
+.shelf-card p {
+  color: var(--black);
+  text-transform: none;
+}
+
+.shelf-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.shelf-card dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+}
+
+.shelf-card dd {
+  margin: 4px 0 0;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  text-transform: none;
+}
+
+.shelf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.shelf-actions .btn {
+  height: 44px;
+  font-size: 0.82rem;
+  padding: 0 14px;
 }
 
 .summary-table {
@@ -575,11 +681,16 @@ a {
   .page-head,
   .slider-head,
   .card,
+  .shelf-status,
   .summary {
     padding: 20px;
   }
 
   .page-head h1 {
     font-size: 2rem;
+  }
+
+  .shelf-card dl {
+    grid-template-columns: 1fr;
   }
 }

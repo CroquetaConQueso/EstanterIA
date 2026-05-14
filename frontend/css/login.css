@@ -299,6 +299,25 @@ textarea {
   padding: 2px 4px;
 }
 
+.form-error,
+.form-success {
+  padding: 10px 12px;
+  border: var(--border-light);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  text-transform: none;
+}
+
+.form-error {
+  background: rgba(213, 43, 30, 0.14);
+  color: var(--red);
+}
+
+.form-success {
+  background: rgba(249, 160, 27, 0.2);
+  color: var(--black);
+}
+
 /* === Botón === */
 
 .btn {

@@ -46,6 +46,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/login", "/api/registro").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/forgot-password", "/api/reset-password").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reset-password/validate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/alertas/evaluar-caducidad")
                         .hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/**").authenticated()

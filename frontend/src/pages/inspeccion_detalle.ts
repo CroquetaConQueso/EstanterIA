@@ -120,7 +120,7 @@ async function parseErrorResponse(res: Response): Promise<ApiErrorResponse | nul
 
 function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): string {
     if (data?.message) return data.message;
-    if (status === 404) return "No se encontro la inspeccion solicitada";
+    if (status === 404) return "No se encontró la inspección solicitada";
     if (status >= 500) return "Error interno del servidor";
     return `Error HTTP ${status}`;
 }
@@ -150,7 +150,7 @@ function renderImagen(inspeccion: InspeccionDetalleResponse) {
     const texto = document.createElement("span");
     texto.textContent = imagen
         ? `Imagen asociada: ${imagen}`
-        : "Esta inspeccion no tiene imagen asociada";
+        : "Esta inspección no tiene imagen asociada";
 
     imagenEl.appendChild(texto);
 }
@@ -165,22 +165,22 @@ function renderDetalle(inspeccion: InspeccionDetalleResponse) {
     const slots = resultadoVisual?.slots ?? [];
 
     addListItem(resumenEl, "ID", String(inspeccion.id));
-    addListItem(resumenEl, "Codigo de estanteria", inspeccion.estanteriaCodigo);
+    addListItem(resumenEl, "Código de estantería", inspeccion.estanteriaCodigo);
     addListItem(resumenEl, "Estado backend", inspeccion.estado);
-    addListItem(resumenEl, "Fecha de creacion", formatFecha(inspeccion.createdAt));
+    addListItem(resumenEl, "Fecha de creación", formatFecha(inspeccion.createdAt));
     addListItem(resumenEl, "Notas", inspeccion.notas?.trim() ? inspeccion.notas : "Sin notas");
     addListItem(resumenEl, "Imagen", getImagenPath(inspeccion) ?? "Sin imagen");
 
     if (!resumen) {
-        addListItem(visualEl, "Resultado", "Sin analisis visual");
+        addListItem(visualEl, "Resultado", "Sin análisis visual");
     } else {
         addListItem(visualEl, "Estado general", resumen.estadoGeneralVisual);
         addListItem(visualEl, "Slots totales", String(resumen.slotsTotales));
         addListItem(visualEl, "Ocupados", String(resumen.ocupados));
-        addListItem(visualEl, "Vacios", String(resumen.vacios));
-        addListItem(visualEl, "Anomalias", String(resumen.anomalias));
-        addListItem(visualEl, "Huecos vacios", resumen.hayHuecosVacios ? "Si" : "No");
-        addListItem(visualEl, "Hay anomalias", resumen.hayAnomalias ? "Si" : "No");
+        addListItem(visualEl, "Vacíos", String(resumen.vacios));
+        addListItem(visualEl, "Anomalías", String(resumen.anomalias));
+        addListItem(visualEl, "Huecos vacíos", resumen.hayHuecosVacios ? "Sí" : "No");
+        addListItem(visualEl, "Hay anomalías", resumen.hayAnomalias ? "Sí" : "No");
         addListItem(visualEl, "Modelo", resultadoVisual?.modeloVersion ?? "Sin modelo");
         addListItem(visualEl, "Capturada en", formatFecha(resultadoVisual?.capturadaEn));
     }
@@ -209,14 +209,14 @@ async function init() {
     const id = params.get("id");
 
     if (!id) {
-        setEstadoCarga("Falta el identificador de inspeccion en la URL.");
-        setError("Abre esta pagina desde una inspeccion concreta o usa ?id=ID.");
+        setEstadoCarga("Falta el identificador de inspección en la URL.");
+        setError("Abre esta página desde una inspección concreta o usa ?id=ID.");
         return;
     }
 
     try {
         setError(null);
-        setEstadoCarga("Cargando detalle de inspeccion...");
+        setEstadoCarga("Cargando detalle de inspección...");
         const detalle = await fetchDetalle(id);
         renderDetalle(detalle);
     } catch (err) {

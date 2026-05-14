@@ -1,8 +1,8 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Inspecciones IA Â· Suite Tienda</title>
+  <title>Inspecciones IA · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/inspecciones.css" rel="stylesheet" />
@@ -18,7 +18,6 @@
         </span>
       </a>
 
-      <!-- NavegaciÃ³n consistente con home/editor/editar -->
             <nav class="nav" aria-label="Principal">
         <a class="nav-link" href="home.html">Inicio</a>
         <a class="nav-link" href="planos.html">Planos</a>
@@ -40,16 +39,17 @@
 <main class="page">
   <header class="page-head">
     <div>
-      <h1>Inspecciones con VisiÃ³n por Computador</h1>
+      <p class="eyebrow">Histórico visual</p>
+      <h1>Inspecciones por slots</h1>
       <p>
-        Listado y detalle de inspecciones visuales por slots. El resumen se toma del
-        resultado visual persistido en backend.
+        Histórico técnico-operativo de inspecciones visuales, con estado general,
+        vacíos, anomalías, modelo utilizado y acceso al detalle persistido.
       </p>
     </div>
 
     <div class="filters-inline">
       <label>
-        Buscar por estanterÃ­a o notas
+        Buscar por estantería o notas
         <input type="text" id="filtro-plano" placeholder="EST-001, notas, estado visual..." />
       </label>
 
@@ -68,7 +68,7 @@
       </button>
 
       <a class="btn primary" href="inspeccion_nueva.html" id="btn-nueva-inspeccion">
-        Nueva inspecciÃ³n
+        Nueva inspección
       </a>
     </div>
   </header>
@@ -81,19 +81,19 @@
     <section class="list-shell">
       <h2>Listado de inspecciones</h2>
       <p class="help">
-        Selecciona una inspecciÃ³n para ver el detalle. En el MVP, esto sale de la BD.
+        Selecciona una inspección para ver el detalle real persistido en backend.
       </p>
 
       <div class="table-shell">
         <table class="table">
           <thead>
             <tr>
-              <th>Fecha Â· hora</th>
-              <th>EstanterÃ­a</th>
+              <th>Fecha · hora</th>
+              <th>Estantería</th>
               <th>Estado visual</th>
               <th>Ocupados</th>
-              <th>VacÃ­os</th>
-              <th>AnomalÃ­as</th>
+              <th>Vacíos</th>
+              <th>Anomalías</th>
               <th>Modelo</th>
               <th>Acciones</th>
             </tr>
@@ -107,13 +107,13 @@
     </section>
 
     <aside class="detail-shell">
-      <h2>Detalle de la inspecciÃ³n</h2>
+      <h2>Detalle de la inspección</h2>
       <p class="help">
-        Al seleccionar una inspecciÃ³n se consultarÃ¡ su detalle real, con resumen visual y slots.
+        Al seleccionar una inspección se consultará su detalle real, con resumen visual y slots.
       </p>
 
       <div class="photo-placeholder" id="photo-placeholder">
-        <span>Vista de estanterÃ­a</span>
+        <span>Vista de estantería</span>
       </div>
 
       <div class="detail-grid">
@@ -143,7 +143,7 @@
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Inspecciones IA Â· MVP</small>
+  <small>Suite Tienda · Inspecciones IA · Histórico visual</small>
 </footer>
 
 <!-- Vite + TS -->

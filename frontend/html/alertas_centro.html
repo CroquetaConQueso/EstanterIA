@@ -1,8 +1,8 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Centro de alertas Â· Suite Tienda</title>
+  <title>Centro de alertas · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/alertas_centro.css" rel="stylesheet" />
@@ -35,17 +35,17 @@
 <main class="page">
   <header class="page-head">
     <div>
-      <p class="eyebrow">OperaciÃ³n</p>
+      <p class="eyebrow">Operación</p>
       <h1>Centro de alertas</h1>
       <p>
-        Bandeja de entrada de incidencias crÃ­ticas y avisos operativos. En el MVP, esta vista
-        prioriza quÃ© estanterÃ­as requieren atenciÃ³n inmediata y permite despachar o asignar cada alerta.
+        Bandeja de entrada de incidencias críticas y avisos operativos. Esta vista
+        prioriza qué estanterías requieren atención inmediata y muestra el contexto de cada alerta.
       </p>
     </div>
 
     <div class="summary-inline" id="summary-inline">
       <article class="metric danger">
-        <span class="metric-label">CrÃ­ticas</span>
+        <span class="metric-label">Críticas</span>
         <strong id="metric-critical">0</strong>
       </article>
       <article class="metric warn">
@@ -64,7 +64,7 @@
       Gravedad
       <select id="filtro-gravedad">
         <option value="">Todas</option>
-        <option value="CRITICA">CRÃTICA</option>
+        <option value="CRITICA">CRÍTICA</option>
         <option value="ALTA">ALTA</option>
         <option value="MEDIA">MEDIA</option>
         <option value="BAJA">BAJA</option>
@@ -83,7 +83,7 @@
 
     <label class="grow">
       Buscar
-      <input type="text" id="filtro-texto" placeholder="Producto, estanterÃ­a, zona, responsable..." />
+      <input type="text" id="filtro-texto" placeholder="Producto, estantería, zona, responsable..." />
     </label>
 
     <button class="btn ghost" id="btn-limpiar" type="button">Limpiar filtros</button>
@@ -94,7 +94,7 @@
       <div class="section-head">
         <h2>Alertas activas</h2>
         <p>
-          Esta vista puede nacer del estado CRÃTICO de las inspecciones y evolucionar a una bandeja de incidencias completa.
+          Datos persistidos de alertas operativas, con prioridad, contexto y estado actual.
         </p>
       </div>
 
@@ -104,7 +104,7 @@
             <tr>
               <th>Hora</th>
               <th>Gravedad</th>
-              <th>EstanterÃ­a</th>
+              <th>Estantería</th>
               <th>Producto</th>
               <th>Zona</th>
               <th>Detectado / esperado</th>
@@ -120,13 +120,13 @@
 
     <aside class="detail-shell">
       <h2>Detalle de alerta</h2>
-      <p class="help">Selecciona una alerta para ver el contexto operativo y las acciones rÃ¡pidas.</p>
+      <p class="help">Selecciona una alerta para ver el contexto operativo y las acciones rápidas.</p>
       <div class="photo-placeholder" id="alerta-preview">
-        <span>PrevisualizaciÃ³n de la incidencia</span>
+        <span>Previsualización de la incidencia</span>
       </div>
       <ul class="detail-list" id="detalle-alerta"></ul>
       <div class="actions-vertical">
-        <button class="btn primary" id="btn-asignar" type="button" disabled>Asignar alerta</button>
+        <button class="btn primary" id="btn-asignar" type="button" disabled>Ver contexto</button>
         <button class="btn ghost" id="btn-descartar" type="button" disabled>Descartar alerta</button>
         <button class="btn ghost" id="btn-plano" type="button" disabled>Ir al plano</button>
       </div>
@@ -135,7 +135,7 @@
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Centro de alertas Â· MVP operativo</small>
+  <small>Suite Tienda · Centro de alertas · Operación en curso</small>
 </footer>
 
 <script type="module" src="/src/pages/alertas_centro.ts"></script>

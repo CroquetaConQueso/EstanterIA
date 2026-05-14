@@ -107,10 +107,10 @@ let tareas: TareaOperativaResponse[] = [];
 let trabajadoresActivos: TrabajadorActivoResponse[] = [];
 
 const tipoLabels: Record<string, string> = {
-  REPOSICION: "Reposicion",
-  REVISION_VISUAL: "Revision visual",
-  VERIFICACION_MANUAL: "Verificacion manual",
-  REVISION_CADUCIDAD: "Revision de caducidad",
+  REPOSICION: "Reposición",
+  REVISION_VISUAL: "Revisión visual",
+  VERIFICACION_MANUAL: "Verificación manual",
+  REVISION_CADUCIDAD: "Revisión de caducidad",
   RETIRADA_PRODUCTO: "Retirada de producto"
 };
 
@@ -216,10 +216,10 @@ async function parseErrorResponse(response: Response): Promise<ApiErrorResponse 
 
 function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): string {
   if (data?.message) return data.message;
-  if (status === 401) return "Debes iniciar sesion para consultar tareas";
+  if (status === 401) return "Debes iniciar sesión para consultar tareas";
   if (status === 403) return "No tienes permisos para modificar esta tarea";
-  if (status === 404) return "No se encontro la tarea solicitada";
-  if (status === 409) return "El cambio solicitado no esta permitido";
+  if (status === 404) return "No se encontró la tarea solicitada";
+  if (status === 409) return "El cambio solicitado no está permitido";
   if (status >= 500) return "Error interno del servidor";
   return `Error HTTP ${status}`;
 }
@@ -340,9 +340,9 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
   const meta = document.createElement("div");
   meta.className = "task-meta";
 
-  addMeta(meta, "Accion", `${etiquetaTipo(tarea.tipoTarea)} / ${tarea.prioridad}`, true);
-  addMeta(meta, "Estanteria", estanteriaTarea(tarea));
-  addMeta(meta, "Seccion", seccionTarea(tarea));
+  addMeta(meta, "Acción", `${etiquetaTipo(tarea.tipoTarea)} / ${tarea.prioridad}`, true);
+  addMeta(meta, "Estantería", estanteriaTarea(tarea));
+  addMeta(meta, "Sección", seccionTarea(tarea));
   addMeta(meta, "Slot", slotTarea(tarea));
   addMeta(meta, "Producto", productoTarea(tarea));
   addMeta(meta, "Trabajador", nombreTrabajador(tarea.trabajadorAsignado), true);
@@ -350,7 +350,7 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
   addMeta(meta, "Asignada", formatFecha(tarea.assignedAt));
   addMeta(meta, "Resuelta", formatFecha(tarea.resueltaAt));
   addMeta(meta, "Proveedor", textoSeguro(tarea.asignacion?.proveedor?.nombre, "Sin proveedor"));
-  addMeta(meta, "Descripcion", tarea.descripcion || "Sin descripcion", true);
+  addMeta(meta, "Descripción", tarea.descripcion || "Sin descripción", true);
 
   body.appendChild(meta);
 

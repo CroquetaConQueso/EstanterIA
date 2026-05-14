@@ -37,8 +37,8 @@
       <header class="page-head">
         <h1>Dashboard operativo</h1>
         <p>
-          Resumen del estado actual de EstanterIA: alertas abiertas,
-          inspecciones visuales, estanter&iacute;as con incidencias y actividad reciente.
+          Lectura ejecutiva del estado actual de EstanterIA: alertas, tareas,
+          estanterías operativas e inspecciones recientes.
         </p>
       </header>
 
@@ -48,8 +48,7 @@
           <div>
             <h2>Estado operativo actual</h2>
             <p>
-              M&eacute;tricas calculadas desde alertas abiertas e inspecciones reales
-              del backend.
+              Métricas calculadas desde alertas, tareas, inspecciones y modelo operativo real.
             </p>
           </div>
           <div class="slider-legend">
@@ -87,8 +86,8 @@
                   alt="Resumen de alertas criticas"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">Alertas cr&iacute;ticas</div>
-                  <div class="caption-meta" id="metric-alertas-criticas">Cargando...</div>
+                  <div class="caption-title">Tareas pendientes</div>
+                  <div class="caption-meta" id="metric-tareas-pendientes">Cargando...</div>
                 </div>
               </article>
 
@@ -98,8 +97,8 @@
                   alt="Resumen de revisiones manuales"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">Revisiones manuales</div>
-                  <div class="caption-meta" id="metric-revisiones-manuales">Cargando...</div>
+                  <div class="caption-title">Tareas en progreso</div>
+                  <div class="caption-meta" id="metric-tareas-progreso">Cargando...</div>
                 </div>
               </article>
 
@@ -109,7 +108,7 @@
                   alt="Resumen de caducidades"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">Pr&oacute;ximos a caducar</div>
+                  <div class="caption-title">Próximos a caducar</div>
                   <div class="caption-meta" id="metric-caducidades">Cargando...</div>
                 </div>
               </article>
@@ -117,11 +116,11 @@
               <article class="slide">
                 <img
                   src="../img/almacenCentral.jpg"
-                  alt="Resumen de estanterias con incidencias"
+                  alt="Resumen de estanterías con acción necesaria"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">Estanter&iacute;as con incidencias</div>
-                  <div class="caption-meta" id="metric-estanterias-incidencias">Cargando...</div>
+                  <div class="caption-title">Estanterías con acción necesaria</div>
+                  <div class="caption-meta" id="metric-estanterias-accion">Cargando...</div>
                 </div>
               </article>
             </div>
@@ -144,12 +143,12 @@
         <article class="card">
           <h2>Planos y estado visual</h2>
           <p>
-            Consulta la representaci&oacute;n operativa de la estanter&iacute;a demo con
-            su &uacute;ltimo estado visual, slots y alertas asociadas.
+            Consulta la representación operativa de la estantería demo con
+            su último estado visual, slots y alertas asociadas.
           </p>
           <ul>
             <li>Lectura espacial de EST-001.</li>
-            <li>Resumen de ocupados, vac&iacute;os y anomal&iacute;as.</li>
+            <li>Resumen de ocupados, vacíos y anomalías.</li>
             <li>Acceso directo al plano operativo.</li>
           </ul>
           <button
@@ -161,14 +160,14 @@
         </article>
 
         <article class="card">
-          <h2>&Uacute;ltimas inspecciones</h2>
+          <h2>Últimas inspecciones</h2>
           <p>
-            Revisa el hist&oacute;rico de inspecciones visuales por slots y sus
+            Revisa el histórico de inspecciones visuales por slots y sus
             resultados persistidos en backend.
           </p>
           <ul>
             <li>Listado ordenado por fecha.</li>
-            <li>Estado general visual por estanter&iacute;a.</li>
+            <li>Estado general visual por estantería.</li>
             <li>Acceso directo al detalle de cada inspección.</li>
           </ul>
           <button
@@ -182,11 +181,11 @@
         <article class="card">
           <h2>Inventario operativo</h2>
           <p>
-            Consulta la configuraci&oacute;n real de slots, productos esperados,
+            Consulta la configuración real de slots, productos esperados,
             proveedores y asignaciones activas.
           </p>
           <ul>
-            <li>Slots configurados por estanter&iacute;a.</li>
+            <li>Slots configurados por estantería.</li>
             <li>Producto esperado y proveedor asociado.</li>
             <li>Fechas de caducidad y retirada.</li>
           </ul>
@@ -199,13 +198,29 @@
         </article>
       </section>
 
+      <section class="shelf-status">
+        <div class="summary-head">
+          <h2>Estado de estanterías</h2>
+          <p>
+            Semáforo operativo construido desde alertas abiertas, tareas activas,
+            inspecciones recientes y estanterías configuradas en EMP-DEMO.
+          </p>
+        </div>
+        <div class="shelf-grid" id="estado-estanterias">
+          <article class="shelf-card neutral">
+            <h3>Cargando estanterías...</h3>
+            <p>Consultando modelo operativo y actividad reciente.</p>
+          </article>
+        </div>
+      </section>
+
       <!-- Resumen de estado -->
       <section class="summary">
         <div class="summary-head">
           <h2>Actividad reciente</h2>
           <p>
-            &Uacute;ltimas inspecciones y alertas abiertas recientes, combinadas
-            para orientar la siguiente acci&oacute;n operativa.
+            Alertas, inspecciones y tareas ordenadas por fecha para orientar
+            la siguiente acción operativa.
           </p>
         </div>
 
@@ -215,7 +230,7 @@
               <tr>
                 <th>Tipo</th>
                 <th>Fecha</th>
-                <th>Estanter&iacute;a</th>
+                <th>Estantería</th>
                 <th>Resumen</th>
                 <th>Contexto</th>
                 <th>Estado</th>

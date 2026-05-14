@@ -3,9 +3,11 @@ package com.proyectofincurso.estanteria.web.dto;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoGeneralVisual;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class ResumenVisualResponse {
     private EstadoGeneralVisual estadoGeneralVisual;
     private Integer slotsTotales;

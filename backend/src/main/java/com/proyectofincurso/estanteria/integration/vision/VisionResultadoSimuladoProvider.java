@@ -5,6 +5,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import com.proyectofincurso.estanteria.persistence.entity.EstadoGeneralVisual;
@@ -15,6 +16,7 @@ import com.proyectofincurso.estanteria.web.dto.ResumenVisualResponse;
 import com.proyectofincurso.estanteria.web.dto.SlotVisualResponse;
 
 @Service
+@ConditionalOnProperty(name = "vision.provider", havingValue = "simulado")
 public class VisionResultadoSimuladoProvider implements VisionResultadoProvider {
 
     private static final String MODELO_VERSION = "slot-classifier-v1";

@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class VisionPredictRequest {
     private String imagePath;
+    private String estanteriaCodigo;
 }

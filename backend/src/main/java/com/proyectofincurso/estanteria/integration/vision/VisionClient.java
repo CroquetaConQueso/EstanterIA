@@ -7,7 +7,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.proyectofincurso.estanteria.integration.vision.dto.VisionCapturePredictRequest;
 import com.proyectofincurso.estanteria.integration.vision.dto.VisionPredictRequest;
-import com.proyectofincurso.estanteria.integration.vision.dto.VisionPredictResponse;
+import com.proyectofincurso.estanteria.web.dto.ResultadoVisualResponse;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 
 @Component
@@ -22,62 +22,66 @@ public class VisionClient {
         this.restTemplate = restTemplate;
     }
 
-    public VisionPredictResponse captureAndPredict(String estanteriaCodigo) {
+    public ResultadoVisualResponse captureAndPredict(String estanteriaCodigo) {
         String url = visionApiBaseUrl + "/capture-and-predict";
 
         VisionCapturePredictRequest request = new VisionCapturePredictRequest(estanteriaCodigo);
 
         try {
-            ResponseEntity<VisionPredictResponse> response = restTemplate.postForEntity(
+            ResponseEntity<ResultadoVisualResponse> response = restTemplate.postForEntity(
                     url,
                     request,
-                    VisionPredictResponse.class
+                    ResultadoVisualResponse.class
             );
 
-            VisionPredictResponse body = response.getBody();
+            ResultadoVisualResponse body = response.getBody();
 
             if (body == null) {
                 throw ApiException.badRequest(
                         "VISION_EMPTY_RESPONSE",
-                        "El servicio de visión devolvió una respuesta vacía"
+                        "El servicio de vision devolvio una respuesta vacia"
                 );
             }
 
             return body;
+        } catch (ApiException ex) {
+            throw ex;
         } catch (Exception ex) {
-            throw ApiException.badRequest(
+            throw ApiException.serviceUnavailable(
                     "VISION_SERVICE_ERROR",
-                    "No se pudo completar la captura y análisis con el servicio de visión"
+                    "No se pudo completar la captura y analisis con el servicio de vision"
             );
         }
     }
 
-    public VisionPredictResponse predictExisting(String imagePath) {
+    public ResultadoVisualResponse predictExisting(String estanteriaCodigo, String imagePath) {
         String url = visionApiBaseUrl + "/predict";
 
-        VisionPredictRequest request = new VisionPredictRequest(imagePath);
+        VisionPredictRequest request = new VisionPredictRequest(imagePath, estanteriaCodigo);
 
         try {
-            ResponseEntity<VisionPredictResponse> response = restTemplate.postForEntity(
+            ResponseEntity<ResultadoVisualResponse> response = restTemplate.postForEntity(
                     url,
                     request,
-                    VisionPredictResponse.class
+                    ResultadoVisualResponse.class
             );
 
-            VisionPredictResponse body = response.getBody();
+            ResultadoVisualResponse body = response.getBody();
 
             if (body == null) {
                 throw ApiException.badRequest(
                         "VISION_EMPTY_RESPONSE",
-                        "El servicio de visión devolvió una respuesta vacía"
+                        "El servicio de vision devolvio una respuesta vacia"
                 );
             }
 
             return body;
+        } catch (ApiException ex) {
+            throw ex;
         } catch (Exception ex) {
-            throw ApiException.badRequest(
+            throw ApiException.serviceUnavailable(
                     "VISION_SERVICE_ERROR",
-                    "No se pudo analizar la imagen con el servicio de visión"
+                    "No se pudo analizar la imagen con el servicio de vision"
             );
         }
     }

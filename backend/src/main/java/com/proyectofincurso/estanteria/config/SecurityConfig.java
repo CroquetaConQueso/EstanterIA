@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import com.proyectofincurso.estanteria.auth.AuthSessionJwtValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,9 +24,12 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
@@ -48,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/login", "/api/registro").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/forgot-password", "/api/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reset-password/validate").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/alertas/evaluar-caducidad")
                         .hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/**").authenticated()
@@ -96,10 +101,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder(SecretKey jwtSecretKey) {
-        return NimbusJwtDecoder.withSecretKey(jwtSecretKey)
+    public JwtDecoder jwtDecoder(
+            SecretKey jwtSecretKey,
+            @Value("${security.jwt.issuer}") String issuer,
+            AuthSessionJwtValidator authSessionJwtValidator
+    ) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
+
+        OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(issuer),
+                authSessionJwtValidator
+        );
+        decoder.setJwtValidator(validator);
+        return decoder;
     }
 
     private Collection<GrantedAuthority> extraerAutoridades(Jwt jwt) {

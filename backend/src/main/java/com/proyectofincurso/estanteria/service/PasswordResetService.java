@@ -1,5 +1,6 @@
 package com.proyectofincurso.estanteria.service;
 
+import com.proyectofincurso.estanteria.auth.AuthSessionService;
 import com.proyectofincurso.estanteria.persistence.entity.PasswordResetToken;
 import com.proyectofincurso.estanteria.persistence.entity.UserAccount;
 import com.proyectofincurso.estanteria.persistence.repository.PasswordResetTokenRepository;
@@ -29,6 +30,7 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordRecoveryMailService passwordRecoveryMailService;
     private final PasswordEncoder passwordEncoder;
+    private final AuthSessionService authSessionService;
 
     @Transactional
     public String solicitarRecuperacion(String email) {
@@ -85,6 +87,7 @@ public class PasswordResetService {
         resetToken.setUsedAt(now);
 
         invalidarOtrosTokensActivos(user, resetToken, now);
+        authSessionService.revocarSesionesActivas(user);
         userAccountRepository.save(user);
     }
 

@@ -1,4 +1,7 @@
 import { authFetch } from "../lib/api";
+import { requireAuth } from "../lib/auth-guard";
+
+requireAuth();
 
 type Prioridad = "BAJA" | "MEDIA" | "ALTA" | "CRITICA" | string;
 type EstadoTarea = "PENDIENTE" | "EN_PROGRESO" | "RESUELTA" | "CANCELADA" | string;

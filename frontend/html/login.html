@@ -1,8 +1,8 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Acceso Â· Suite Tienda</title>
+  <title>Acceso · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/login.css" rel="stylesheet" />
@@ -17,15 +17,11 @@
           Suite<span class="brand-accent">Tienda</span>
         </span>
       </a>
-            <nav class="nav" aria-label="Principal">
-        <a class="nav-link" href="home.html">Inicio</a>
-        <a class="nav-link" href="planos.html">Planos</a>
-        <a class="nav-link" href="inspecciones.html">Inspecciones</a>
-        <a class="nav-link" href="inventario.html">Inventario</a>
-        <a class="nav-link" href="alertas_centro.html">Alertas</a>
-        <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
-        <a class="nav-link" href="vision.html">Visión</a>
+      <nav class="nav" aria-label="Navegación pública">
+        <a class="nav-link" href="../index.html">Inicio</a>
         <a class="nav-link" href="about.html">Acerca de</a>
+        <a class="nav-link is-active" aria-current="page" href="login.html">Iniciar sesión</a>
+        <a class="nav-link" href="registro.html">Crear cuenta</a>
       </nav>
     </div>
   </div>
@@ -36,20 +32,20 @@
     <div class="intro">
       <h1>Acceso al panel</h1>
       <p>
-        Esta pantalla simula el acceso al panel de Suite Tienda. En una versiÃ³n
-        real, aquÃ­ habrÃ­a autenticaciÃ³n contra el backend (Spring Boot, base de datos).
+        Inicia sesión para entrar al panel operativo de Suite Tienda y consultar
+        alertas, tareas, inspecciones, inventario, planos y visión.
       </p>
       <ul>
-        <li>Credenciales de ejemplo, sin validaciÃ³n real.</li>
-        <li>Acceso a panel, planos, inspecciones e inventario.</li>
-        <li>Flujo pensado para jefes de zona y encargados.</li>
+        <li>Autenticación contra backend mediante JWT.</li>
+        <li>Acceso protegido a las páginas privadas del sistema.</li>
+        <li>Flujo pensado para responsables y personal operativo.</li>
       </ul>
     </div>
 
     <form class="login-card" id="form-login">
-      <h2>Iniciar sesiÃ³n</h2>
+      <h2>Iniciar sesión</h2>
       <label>
-        Correo electrÃ³nico
+        Correo electrónico
         <input
           type="email"
           id="login-email"
@@ -61,7 +57,7 @@
       </label>
 
       <label>
-        ContraseÃ±a
+        Contraseña
         <input
           type="password"
           id="login-password"
@@ -77,14 +73,14 @@
           <input type="checkbox" id="login-remember" />
           <span>Recordar en este dispositivo</span>
         </label>
-        <a href="#" class="link-muted">Â¿Has olvidado tu contraseÃ±a?</a>
+        <span class="link-muted">Recuperación de contraseña no disponible</span>
       </div>
 
-      <p class="form-error" id="login-error" role="alert" aria-live="login-error" hidden></p>
+      <p class="form-error" id="login-error" role="alert" aria-live="polite" hidden></p>
       <button class="btn primary" type="submit">Entrar</button>
-      
+
       <p class="small">
-        Â¿TodavÃ­a no tienes cuenta? <a href="registro.html">Crear cuenta</a>
+        ¿Todavía no tienes cuenta? <a href="registro.html">Crear cuenta</a>
       </p>
     </form>
     <pre id="out"></pre>
@@ -92,10 +88,9 @@
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Acceso simulado Â· Boceto</small>
+  <small>Suite Tienda · Acceso seguro · JWT</small>
 </footer>
 
 <script type="module" src="/src/pages/login.ts"></script>
 </body>
 </html>
-

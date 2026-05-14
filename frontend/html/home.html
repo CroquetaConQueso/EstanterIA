@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Panel Â· Suite Tienda</title>
+    <title>Dashboard operativo &middot; Suite Tienda</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
     <link href="../css/home.css" rel="stylesheet" />
@@ -35,27 +35,26 @@
     </header>
     <main class="page">
       <header class="page-head">
-        <h1>Panel general</h1>
+        <h1>Dashboard operativo</h1>
         <p>
-          Desde aquÃ­ accedes a los planos, las inspecciones IA y el inventario
-          con hotspots. Es la vista que verÃ­an encargados y jefes de secciÃ³n al
-          iniciar sesiÃ³n.
+          Resumen del estado actual de EstanterIA: alertas abiertas,
+          inspecciones visuales, estanter&iacute;as con incidencias y actividad reciente.
         </p>
       </header>
 
-      <!-- Slider de planos -->
+      <!-- Resumen operativo -->
       <section class="slider-section">
         <div class="slider-head">
           <div>
-            <h2>Recorridos por planos y estanterÃ­as</h2>
+            <h2>Estado operativo actual</h2>
             <p>
-              PequeÃ±a muestra de cÃ³mo se verÃ­a el flujo de trabajo cuando la
-              IA empieza a marcar huecos y productos directamente sobre plano.
+              M&eacute;tricas calculadas desde alertas abiertas e inspecciones reales
+              del backend.
             </p>
           </div>
           <div class="slider-legend">
-            <span class="legend-dot ok"></span> Correcto
-            <span class="legend-dot gap"></span> Huecos detectados
+            <span class="legend-dot ok"></span> Sin bloqueo
+            <span class="legend-dot gap"></span> Requiere atenci&oacute;n
           </div>
         </div>
 
@@ -74,55 +73,55 @@
               <article class="slide is-active">
                 <img
                   src="../img/almacenCentral.jpg"
-                  alt="Plano almacÃ©n central"
+                  alt="Resumen de alertas abiertas"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">AlmacÃ©n central</div>
-                  <div class="caption-meta">
-                    Est. A-12 Â· OK: palÃ©s detergente Â· Huecos: suavizante
-                    formato 3L
-                  </div>
+                  <div class="caption-title">Alertas abiertas</div>
+                  <div class="caption-meta" id="metric-alertas-abiertas">Cargando...</div>
                 </div>
               </article>
 
               <article class="slide">
                 <img
                   src="../img/planoTiendaBarrio.jpg"
-                  alt="Plano tienda de barrio"
+                  alt="Resumen de alertas criticas"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">Tienda de barrio</div>
-                  <div class="caption-meta">
-                    Est. B-05 Â· OK: snacks Â· Huecos: refrescos sin azÃºcar
-                  </div>
+                  <div class="caption-title">Alertas cr&iacute;ticas</div>
+                  <div class="caption-meta" id="metric-alertas-criticas">Cargando...</div>
                 </div>
               </article>
 
               <article class="slide">
                 <img
                   src="../img/planosSupermercado.png"
-                  alt="Plano supermercado"
+                  alt="Resumen de revisiones manuales"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">Supermercado â€” zona seca</div>
-                  <div class="caption-meta">
-                    Est. C-18 Â· OK: pasta y arroz Â· Huecos: legumbres premium
-                  </div>
+                  <div class="caption-title">Revisiones manuales</div>
+                  <div class="caption-meta" id="metric-revisiones-manuales">Cargando...</div>
                 </div>
               </article>
 
               <article class="slide">
                 <img
                   src="../img/planosFerreteria.jpg"
-                  alt="Plano ferreterÃ­a"
+                  alt="Resumen de caducidades"
                 />
                 <div class="slide-caption">
-                  <div class="caption-title">
-                    FerreterÃ­a â€” pasillo tornillerÃ­a
-                  </div>
-                  <div class="caption-meta">
-                    Est. F-03 Â· OK: tacos, brocas Â· Huecos: tornillos M6
-                  </div>
+                  <div class="caption-title">Pr&oacute;ximos a caducar</div>
+                  <div class="caption-meta" id="metric-caducidades">Cargando...</div>
+                </div>
+              </article>
+
+              <article class="slide">
+                <img
+                  src="../img/almacenCentral.jpg"
+                  alt="Resumen de estanterias con incidencias"
+                />
+                <div class="slide-caption">
+                  <div class="caption-title">Estanter&iacute;as con incidencias</div>
+                  <div class="caption-meta" id="metric-estanterias-incidencias">Cargando...</div>
                 </div>
               </article>
             </div>
@@ -143,16 +142,15 @@
       <!-- Tarjetas principales -->
       <section class="cards">
         <article class="card">
-          <h2>Planos y estanterÃ­as</h2>
+          <h2>Planos y estado visual</h2>
           <p>
-            Gestiona la estructura fÃ­sica de tu tienda: planos, estanterÃ­as y
-            zonas. Cada estanterÃ­a se convierte en un elemento que la IA puede
-            entender.
+            Consulta la representaci&oacute;n operativa de la estanter&iacute;a demo con
+            su &uacute;ltimo estado visual, slots y alertas asociadas.
           </p>
           <ul>
-            <li>DefiniciÃ³n de estanterÃ­as y posiciones.</li>
-            <li>Subzonas por departamento o responsable.</li>
-            <li>Acceso directo al editor de plano.</li>
+            <li>Lectura espacial de EST-001.</li>
+            <li>Resumen de ocupados, vac&iacute;os y anomal&iacute;as.</li>
+            <li>Acceso directo al plano operativo.</li>
           </ul>
           <button
             class="btn primary"
@@ -163,14 +161,14 @@
         </article>
 
         <article class="card">
-          <h2>Ãšltimas inspecciones IA</h2>
+          <h2>&Uacute;ltimas inspecciones</h2>
           <p>
-            Consulta quÃ© vieron las cÃ¡maras en cada estanterÃ­a: productos
-            presentes, huecos y posibles errores frente al stock teÃ³rico.
+            Revisa el hist&oacute;rico de inspecciones visuales por slots y sus
+            resultados persistidos en backend.
           </p>
           <ul>
-            <li>Listado de inspecciones ordenadas por fecha.</li>
-            <li>RelaciÃ³n entre estanterÃ­as y zonas de tienda.</li>
+            <li>Listado ordenado por fecha.</li>
+            <li>Estado general visual por estanter&iacute;a.</li>
             <li>Acceso directo al detalle de cada inspecciÃ³n.</li>
           </ul>
           <button
@@ -182,15 +180,15 @@
         </article>
 
         <article class="card">
-          <h2>Inventario & hotspots</h2>
+          <h2>Inventario operativo</h2>
           <p>
-            Visualiza el inventario desde el punto de vista de los huecos:
-            dÃ³nde faltan productos y quÃ© impacto tienen en ventas.
+            Consulta la configuraci&oacute;n real de slots, productos esperados,
+            proveedores y asignaciones activas.
           </p>
           <ul>
-            <li>Listado de estanterÃ­as con huecos detectados.</li>
-            <li>Vista rÃ¡pida de productos afectados.</li>
-            <li>Filtro por tienda, zona y estado.</li>
+            <li>Slots configurados por estanter&iacute;a.</li>
+            <li>Producto esperado y proveedor asociado.</li>
+            <li>Fechas de caducidad y retirada.</li>
           </ul>
           <button
             class="btn ghost"
@@ -204,10 +202,10 @@
       <!-- Resumen de estado -->
       <section class="summary">
         <div class="summary-head">
-          <h2>Resumen de estado por tienda</h2>
+          <h2>Actividad reciente</h2>
           <p>
-            Este mÃ³dulo serÃ­a el punto de entrada para responsables de zona,
-            mostrando el nivel de â€œsaludâ€ de cada tienda o almacÃ©n.
+            &Uacute;ltimas inspecciones y alertas abiertas recientes, combinadas
+            para orientar la siguiente acci&oacute;n operativa.
           </p>
         </div>
 
@@ -215,11 +213,11 @@
           <table class="summary-table">
             <thead>
               <tr>
-                <th>Tienda / AlmacÃ©n</th>
-                <th>EstanterÃ­as controladas</th>
-                <th>Ãšltima inspecciÃ³n</th>
-                <th>Huecos detectados</th>
-                <th>Responsable(s)</th>
+                <th>Tipo</th>
+                <th>Fecha</th>
+                <th>Estanter&iacute;a</th>
+                <th>Resumen</th>
+                <th>Contexto</th>
                 <th>Estado</th>
               </tr>
             </thead>
@@ -232,10 +230,10 @@
     </main>
 
     <footer class="foot">
-      <small>Suite Tienda Â· Panel principal Â· Boceto</small>
+      <small>Suite Tienda &middot; Dashboard operativo &middot; Estado actual</small>
     </footer>
 
-    <script src="../js/home.js"></script>
+    <script type="module" src="/src/pages/home.ts"></script>
   </body>
 </html>
 

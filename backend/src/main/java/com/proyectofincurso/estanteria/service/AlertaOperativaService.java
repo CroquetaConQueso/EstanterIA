@@ -61,6 +61,7 @@ public class AlertaOperativaService {
     private final SeccionEncargadoRepository seccionEncargadoRepository;
     private final AlertaRepository alertaRepository;
     private final AlertaTrabajadorRepository alertaTrabajadorRepository;
+    private final TareaOperativaService tareaOperativaService;
 
     @Value("${alertas.revision-manual.umbral-confianza:0.70}")
     private double umbralConfianzaRevisionManual;
@@ -309,8 +310,10 @@ public class AlertaOperativaService {
                 slotConfigurado.getId()
         );
         if (!existentes.isEmpty()) {
+            Alerta alertaExistente = existentes.get(0);
             contador.alertasExistentes++;
-            notificarDestinatarios(existentes.get(0), contador);
+            notificarDestinatarios(alertaExistente, contador);
+            tareaOperativaService.crearAutomaticaSiNoExiste(alertaExistente);
             return;
         }
 
@@ -319,6 +322,7 @@ public class AlertaOperativaService {
         alertaRepository.save(alerta);
         contador.alertasCreadas++;
         notificarDestinatarios(alerta, contador);
+        tareaOperativaService.crearAutomaticaSiNoExiste(alerta);
     }
 
     private void crearOReutilizarAlertaPorAsignacion(TipoAlerta tipo,
@@ -334,8 +338,10 @@ public class AlertaOperativaService {
                 asignacionActiva.getId()
         );
         if (!existentes.isEmpty()) {
+            Alerta alertaExistente = existentes.get(0);
             contador.alertasExistentes++;
-            notificarDestinatarios(existentes.get(0), contador);
+            notificarDestinatarios(alertaExistente, contador);
+            tareaOperativaService.crearAutomaticaSiNoExiste(alertaExistente);
             return;
         }
 
@@ -344,6 +350,7 @@ public class AlertaOperativaService {
         alertaRepository.save(alerta);
         contador.alertasCreadas++;
         notificarDestinatarios(alerta, contador);
+        tareaOperativaService.crearAutomaticaSiNoExiste(alerta);
     }
 
     private void crearOReutilizarAlertaPorAsignacionYSlot(TipoAlerta tipo,
@@ -362,8 +369,10 @@ public class AlertaOperativaService {
                 slotConfigurado.getId()
         );
         if (!existentes.isEmpty()) {
+            Alerta alertaExistente = existentes.get(0);
             contador.alertasExistentes++;
-            notificarDestinatarios(existentes.get(0), contador);
+            notificarDestinatarios(alertaExistente, contador);
+            tareaOperativaService.crearAutomaticaSiNoExiste(alertaExistente);
             return;
         }
 
@@ -372,6 +381,7 @@ public class AlertaOperativaService {
         alertaRepository.save(alerta);
         contador.alertasCreadas++;
         notificarDestinatarios(alerta, contador);
+        tareaOperativaService.crearAutomaticaSiNoExiste(alerta);
     }
 
     private Alerta construirAlerta(TipoAlerta tipo,

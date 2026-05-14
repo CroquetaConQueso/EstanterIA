@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-MODEL_PATH = os.getenv("MODEL_PATH", "yolo11n.pt")
+MODEL_PATH = os.getenv("MODEL_PATH", "models/entrenados/best.pt")
+MODEL_VERSION = os.getenv("MODEL_VERSION", "slot-classifier-v1")
 CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.25"))
 
 API_HOST = os.getenv("API_HOST", "127.0.0.1")
@@ -13,13 +14,24 @@ API_PORT = int(os.getenv("API_PORT", "8001"))
 
 CAMERA_SOURCE = os.getenv("CAMERA_SOURCE", "0")
 
-TARGET_CLASSES = ["lentejas", "arroz", "comida_gato"]
+SLOT_CLASS_MAP = {
+    "ocupado": "OCUPADO",
+    "occupied": "OCUPADO",
+    "full": "OCUPADO",
+    "vacio": "VACIO",
+    "vacío": "VACIO",
+    "empty": "VACIO",
+    "anomalia": "ANOMALIA",
+    "anomalía": "ANOMALIA",
+    "anomaly": "ANOMALIA",
+}
 
 DATA_DIR = BASE_DIR / "data"
 RAW_DIR = DATA_DIR / "raw"
 RESULTADOS_DIR = BASE_DIR / "resultados"
 RESULTADOS_JSON_DIR = RESULTADOS_DIR / "json"
 RESULTADOS_PREDICCIONES_DIR = RESULTADOS_DIR / "predicciones"
+CAPTURES_PUBLIC_PATH = os.getenv("CAPTURES_PUBLIC_PATH", "/captures")
 
 ROI_X = int(os.getenv("ROI_X", "0"))
 ROI_Y = int(os.getenv("ROI_Y", "0"))

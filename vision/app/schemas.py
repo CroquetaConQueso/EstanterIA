@@ -1,24 +1,42 @@
-from pydantic import BaseModel
-from typing import List, Dict, Optional
+from pydantic import AliasChoices, BaseModel, Field
+from typing import List, Optional
 
 
 class PredictionRequest(BaseModel):
-    image_path: str
+    image_path: str = Field(validation_alias=AliasChoices("imagePath", "image_path"))
+    estanteriaCodigo: Optional[str] = None
 
 
 class CapturePredictRequest(BaseModel):
     estanteriaCodigo: Optional[str] = None
 
 
-class DetectionItem(BaseModel):
-    class_name: str
-    confidence: float
-    bbox: List[float]
+class ImagenVisualResponse(BaseModel):
+    nombreArchivo: str
+    ruta: str
+
+
+class ResumenVisualResponse(BaseModel):
+    estadoGeneralVisual: str
+    slotsTotales: int
+    ocupados: int
+    vacios: int
+    anomalias: int
+    hayHuecosVacios: bool
+    hayAnomalias: bool
+
+
+class SlotVisualResponse(BaseModel):
+    slotId: str
+    orden: int
+    estadoVisual: str
+    confianza: float
 
 
 class PredictionResponse(BaseModel):
-    image_name: str
-    image_path: str
-    detections: List[DetectionItem]
-    summary: Dict[str, int]
-    critical: bool
+    estanteriaCodigo: str
+    modeloVersion: str
+    capturadaEn: str
+    imagen: ImagenVisualResponse
+    resumen: ResumenVisualResponse
+    slots: List[SlotVisualResponse]

@@ -155,7 +155,7 @@ function formatFecha(value: string | null | undefined): string {
 }
 
 function formatNullable(value: string | number | null | undefined): string {
-    if (value === null || value === undefined || value === "") return "Sin analisis visual";
+    if (value === null || value === undefined || value === "") return "Sin análisis visual";
     return String(value);
 }
 
@@ -200,10 +200,10 @@ async function parseErrorResponse(res: Response): Promise<ApiErrorResponse | nul
 function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): string {
     if (data?.message) return data.message;
 
-    if (status === 400) return "La peticion no es valida";
+    if (status === 400) return "La petición no es válida";
     if (status === 401) return "No autorizado";
-    if (status === 403) return "No tienes permisos para realizar esta accion";
-    if (status === 404) return "No se encontro la inspeccion solicitada";
+    if (status === 403) return "No tienes permisos para realizar esta acción";
+    if (status === 404) return "No se encontró la inspección solicitada";
     if (status === 409) return "Conflicto al recuperar los datos";
     if (status >= 500) return "Error interno del servidor";
 
@@ -235,7 +235,7 @@ function renderPhoto(ins: InspeccionResponse) {
     const imagen = getImagenPath(ins);
     texto.textContent = imagen
         ? `Imagen asociada: ${imagen}`
-        : "Esta inspeccion no tiene imagen asociada";
+        : "Esta inspección no tiene imagen asociada";
 
     photoPlaceholder.appendChild(texto);
 }
@@ -252,19 +252,19 @@ function renderDetalle(ins: InspeccionResponse) {
     const slots = resultadoVisual?.slots ?? [];
 
     addListItem(detalleResumen, "ID", String(ins.id));
-    addListItem(detalleResumen, "Codigo de estanteria", ins.estanteriaCodigo);
+    addListItem(detalleResumen, "Código de estantería", ins.estanteriaCodigo);
     addListItem(detalleResumen, "Estado backend", ins.estado);
-    addListItem(detalleResumen, "Fecha de creacion", formatFecha(ins.createdAt));
+    addListItem(detalleResumen, "Fecha de creación", formatFecha(ins.createdAt));
     addListItem(detalleResumen, "Notas", ins.notas?.trim() ? ins.notas : "Sin notas");
     addListItem(detalleResumen, "Imagen", getImagenPath(ins) ?? "Sin imagen");
 
     if (!resumen) {
-        addListItem(detalleVisual, "Resultado", "Sin analisis visual");
+        addListItem(detalleVisual, "Resultado", "Sin análisis visual");
     } else {
         addListItem(detalleVisual, "Estado general", resumen.estadoGeneralVisual);
         addListItem(detalleVisual, "Ocupados", String(resumen.ocupados));
-        addListItem(detalleVisual, "Vacios", String(resumen.vacios));
-        addListItem(detalleVisual, "Anomalias", String(resumen.anomalias));
+        addListItem(detalleVisual, "Vacíos", String(resumen.vacios));
+        addListItem(detalleVisual, "Anomalías", String(resumen.anomalias));
         addListItem(detalleVisual, "Modelo", resultadoVisual?.modeloVersion ?? ins.modeloVersion ?? "Sin modelo");
         addListItem(detalleVisual, "Capturada en", formatFecha(resultadoVisual?.capturadaEn ?? ins.capturadaEn));
     }
@@ -353,7 +353,7 @@ function renderTabla() {
         tdEstanteria.textContent = ins.estanteriaCodigo;
 
         const tdEstadoVisual = document.createElement("td");
-        tdEstadoVisual.textContent = resumen?.estadoGeneralVisual ?? "Sin analisis visual";
+        tdEstadoVisual.textContent = resumen?.estadoGeneralVisual ?? "Sin análisis visual";
 
         const tdOcupados = document.createElement("td");
         tdOcupados.textContent = formatNullable(resumen?.ocupados);
@@ -435,7 +435,7 @@ async function cargarInspecciones() {
             const creada = inspecciones.find(i => i.id === Number(nuevaInspeccionId));
             if (creada) {
                 await renderDetalleDesdeBackend(creada.id);
-                setSuccess(`Inspeccion ${creada.estanteriaCodigo} creada correctamente`);
+                setSuccess(`Inspección ${creada.estanteriaCodigo} creada correctamente`);
             }
             sessionStorage.removeItem("nuevaInspeccionId");
             return;

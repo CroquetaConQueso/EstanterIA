@@ -1,218 +1,202 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Paleta global Suite Tienda: negro + naranja/amarillo/rojo */
 :root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color-scheme: dark;
-
-  --bg: #050816;
-  --bg-elevated: #111827;
-  --bg-alt: #1f2937;
-
-  --border-soft: rgba(148, 163, 184, 0.4);
-
-  --text: #f9fafb;
-  --text-soft: #e5e7eb;
-
-  --accent: #f97316;
-  --accent-soft: rgba(249, 115, 22, 0.18);
+  --red: #d52b1e;
+  --gold: #f9a01b;
+  --black: #111111;
+  --white: #f4f0ec;
+  --paper: #e6dfd7;
+  --muted: #555555;
+  --border-heavy: 4px solid var(--black);
+  --border-light: 2px solid var(--black);
+  --shadow-block: 6px 6px 0 var(--black);
 }
 
-/* Fondo general: oscuro, sin degradado agresivo */
+* {
+  box-sizing: border-box;
+  border-radius: 0 !important;
+}
+
 body {
-  background-color: #020617;
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  margin: 0;
+  font-family: 'Arial Black', Impact, 'Franklin Gothic Heavy', sans-serif;
+  color: var(--black);
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.025) 0px, rgba(0,0,0,0.025) 2px, transparent 2px, transparent 10px);
+  text-transform: uppercase;
 }
 
-/* Topbar */
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
 .topbar {
-  border-bottom: 1px solid var(--border-soft);
-  background: rgba(3, 7, 18, 0.96);
-  backdrop-filter: blur(16px);
+  background: var(--red);
+  color: var(--gold);
+  border-bottom: var(--border-heavy);
+  box-shadow: 0 4px 0 var(--black);
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 100;
 }
 
 .inner {
-  max-width: 1120px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0.75rem 1.25rem;
+  padding: 0 24px;
+  min-height: 72px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 }
 
 .left {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 32px;
 }
-
-/* Marca */
 
 .brand {
-  text-decoration: none;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--text);
-  font-size: 1rem;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  gap: 12px;
+  color: var(--white);
+  font-size: 1.5rem;
+  letter-spacing: 3px;
+  text-shadow: 2px 2px 0 var(--black);
 }
 
-.brand-text {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.2rem;
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border: var(--border-light);
+  background: var(--gold);
+  filter: grayscale(100%) contrast(200%);
 }
 
 .brand-accent {
-  color: var(--accent);
+  color: var(--gold);
 }
-
-/* Icono de la marca */
-.brand-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 10px;
-  flex-shrink: 0;
-  margin-right: 0.55rem;
-}
-
-/* Navegación */
 
 .nav {
   display: flex;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  border-left: var(--border-heavy);
+  border-right: var(--border-heavy);
 }
 
 .nav-link {
-  text-decoration: none;
-  font-size: 0.85rem;
-  color: var(--text-soft);
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  padding: 24px 18px;
+  color: var(--white);
+  font-size: 0.82rem;
+  letter-spacing: 2px;
+  border-right: var(--border-light);
 }
 
-.nav-link:hover {
-  background: #020617;
-  color: var(--text);
+.nav-link:last-child {
+  border-right: none;
 }
 
-.nav-link.is-active,
-.nav-link[aria-current="page"] {
-  background: var(--accent-soft);
-  color: var(--accent);
+.nav-link:hover,
+.nav-link.is-active {
+  background: var(--gold);
+  color: var(--black);
 }
 
-.right .user {
-  text-decoration: none;
-  font-size: 0.85rem;
-  color: var(--text-soft);
+.user {
+  background: var(--gold);
+  color: var(--black);
+  border: var(--border-light);
+  box-shadow: 3px 3px 0 var(--black);
+  padding: 10px 18px;
+  font-size: 0.9rem;
 }
-
-/* Layout principal */
 
 .page {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 1.8rem 1.25rem 2.5rem;
-  flex: 1;
+  max-width: 1400px;
+  margin: 40px auto;
+  padding: 0 24px 80px;
+}
+
+.page-head,
+.card {
+  background: var(--white);
+  border: var(--border-heavy);
+  box-shadow: var(--shadow-block);
 }
 
 .page-head {
-  margin-bottom: 1.1rem;
+  padding: 32px;
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 4px 8px;
+  background: var(--black);
+  color: var(--white);
+  font-size: 0.8rem;
+  letter-spacing: 2px;
 }
 
 .page-head h1 {
-  font-size: 1.6rem;
-  margin-bottom: 0.3rem;
+  margin: 0 0 14px;
+  font-size: 3rem;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  text-shadow: 3px 3px 0 var(--gold);
 }
 
-.page-head p {
-  font-size: 0.9rem;
-  color: var(--text-soft);
-  max-width: 46rem;
+.page-head p,
+.card p,
+.card li {
+  color: var(--muted);
+  line-height: 1.45;
 }
-
-/* Grid de tarjetas */
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
 }
 
 .card {
-  border-radius: 1rem;
-  border: 1px solid var(--border-soft);
-  background: var(--bg-elevated);
-  padding: 1rem 1.1rem;
-  font-size: 0.9rem;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.7);
+  padding: 24px;
 }
 
 .card h2 {
-  font-size: 1.05rem;
-  margin-bottom: 0.3rem;
-}
-
-.card p {
-  font-size: 0.86rem;
-  color: var(--text-soft);
-  margin-bottom: 0.4rem;
+  margin: 0 0 12px;
+  font-size: 1.5rem;
 }
 
 .card ul {
-  list-style: disc;
-  padding-left: 1.1rem;
-  font-size: 0.86rem;
-  color: var(--text-soft);
-  margin-bottom: 0.4rem;
+  padding-left: 20px;
 }
 
-.card .note {
-  font-size: 0.8rem;
-  color: var(--text-soft);
-  border-left: 2px solid var(--accent);
-  padding-left: 0.5rem;
+.note {
+  border-left: var(--border-heavy);
+  padding-left: 14px;
+  color: var(--black) !important;
 }
-
-/* Footer */
 
 .foot {
-  border-top: 1px solid var(--border-soft);
-  padding: 0.75rem 1.25rem;
-  font-size: 0.8rem;
-  color: var(--text-soft);
   text-align: center;
+  padding: 32px;
+  border-top: var(--border-heavy);
+  background: var(--black);
+  color: var(--gold);
+  letter-spacing: 3px;
 }
 
-/* Responsive */
-
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .inner,
-  .page {
-    padding-inline: 0.75rem;
+  .left {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .inner {
-    gap: 0.75rem;
-  }
-
-  .nav {
-    gap: 0.5rem;
+  .grid {
+    grid-template-columns: 1fr;
   }
 }

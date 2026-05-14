@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Inventario operativo Â· Suite Tienda</title>
+    <title>Inventario operativo · Suite Tienda</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
     <link href="../css/inventario.css" rel="stylesheet" />
@@ -36,23 +36,24 @@
     <main class="page">
       <header class="page-head">
         <div>
+          <p class="eyebrow">Modelo operativo</p>
           <h1>Inventario operativo</h1>
           <p>
-            Consulta la empresa demo, sus secciones, estanterÃ­as y la configuraciÃ³n
+            Consulta la empresa demo, sus secciones, estanterías y la configuración
             real de slots con productos esperados y asignaciones activas.
           </p>
         </div>
         <div class="filters-inline">
           <label>
-            SecciÃ³n
+            Sección
             <select id="f-seccion">
               <option value="">Cargando secciones...</option>
             </select>
           </label>
           <label>
-            EstanterÃ­a
+            Estantería
             <select id="f-estanteria">
-              <option value="">Selecciona una secciÃ³n</option>
+              <option value="">Selecciona una sección</option>
             </select>
           </label>
           <label>
@@ -71,23 +72,23 @@
 
       <section class="layout">
         <section class="list-shell">
-          <h2>ConfiguraciÃ³n de slots</h2>
+          <h2>Configuración de slots</h2>
           <p class="help">
-            Cada fila representa un slot configurado de la estanterÃ­a seleccionada,
-            con su producto esperado y asignaciÃ³n activa si existe.
+            Cada fila representa un slot configurado de la estantería seleccionada,
+            con su producto esperado y asignación activa si existe.
           </p>
 
           <div class="table-shell">
             <table class="table">
               <thead>
                 <tr>
-                  <th>SecciÃ³n</th>
-                  <th>EstanterÃ­a</th>
+                  <th>Sección</th>
+                  <th>Estantería</th>
                   <th>Slot</th>
                   <th>Producto esperado</th>
                   <th>Proveedor</th>
                   <th>Fechas</th>
-                  <th>AsignaciÃ³n</th>
+                  <th>Asignación</th>
                   <th></th>
                 </tr>
               </thead>
@@ -99,17 +100,15 @@
         </section>
 
         <aside class="detail-shell">
-          <h2>Detalle de estanterÃ­a</h2>
+          <h2>Detalle de estantería</h2>
           <p class="help">
-            RevisiÃ³n de la estanterÃ­a seleccionada, sus slots configurados y los
-            datos temporales de la asignaciÃ³n activa.
+            Revisión de la estantería seleccionada, sus slots configurados y los
+            datos temporales de la asignación activa.
           </p>
 
           <div class="detail-block">
             <h3>Resumen</h3>
-            <ul id="detalle-inv-resumen">
-              <!-- mock -->
-            </ul>
+            <ul id="detalle-inv-resumen"></ul>
           </div>
 
           <div class="detail-grid">
@@ -120,7 +119,7 @@
               </ul>
             </div>
             <div class="detail-block">
-              <h3>AsignaciÃ³n activa</h3>
+              <h3>Asignación activa</h3>
               <ul id="detalle-inv-gaps">
                 <!-- Rellenado por /src/pages/inventario.ts -->
               </ul>
@@ -131,7 +130,7 @@
     </main>
 
     <footer class="foot">
-      <small>Suite Tienda Â· Inventario operativo Â· Modelo de slots</small>
+      <small>Suite Tienda · Inventario operativo · Modelo de slots</small>
     </footer>
 
     <script type="module" src="/src/pages/inventario.ts"></script>

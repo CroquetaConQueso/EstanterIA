@@ -53,8 +53,10 @@ button, input, select {
    TOPBAR
    ========================================================================== */
 .topbar {
-  background: var(--surface);
+  background: var(--alert);
+  color: var(--ok-bg);
   border-bottom: var(--border-heavy);
+  box-shadow: 0 4px 0 var(--ink);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -83,7 +85,8 @@ button, input, select {
   letter-spacing: 1px;
   text-transform: uppercase;
   padding: 0 24px;
-  border-right: var(--border-heavy);
+  color: var(--surface);
+  text-shadow: 2px 2px 0 var(--ink);
 }
 
 .brand-icon {
@@ -91,10 +94,12 @@ button, input, select {
   height: 32px;
   border: var(--border-main);
   padding: 2px;
+  background: var(--warn);
+  filter: grayscale(100%) contrast(200%);
 }
 
 .brand-accent {
-  color: var(--alert);
+  color: var(--warn);
 }
 
 .nav {
@@ -105,7 +110,7 @@ button, input, select {
   display: flex;
   align-items: center;
   padding: 0 24px;
-  color: var(--ink);
+  color: var(--surface);
   font-weight: 800;
   font-size: 0.85rem;
   letter-spacing: 1px;
@@ -115,19 +120,19 @@ button, input, select {
 }
 
 .nav-link:hover {
-  background: var(--highlight);
+  background: var(--ink);
+  color: var(--warn);
 }
 
 .nav-link.is-active {
-  background: var(--ink);
-  color: var(--surface);
+  background: var(--warn);
+  color: var(--ink);
 }
 
 .right {
   display: flex;
   align-items: center;
   padding: 0 24px;
-  border-left: var(--border-heavy);
 }
 
 .user {
@@ -135,7 +140,7 @@ button, input, select {
   font-weight: 800;
   text-transform: uppercase;
   color: var(--ink);
-  background: var(--surface);
+  background: var(--warn);
   padding: 8px 16px;
   border: var(--border-main);
   box-shadow: 2px 2px 0 var(--ink);

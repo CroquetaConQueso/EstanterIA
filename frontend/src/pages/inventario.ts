@@ -1,3 +1,5 @@
+import { authFetch } from "../lib/api";
+
 type EmpresaResponse = {
   id: number;
   codigo: string;
@@ -184,7 +186,7 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
       "Accept": "application/json"

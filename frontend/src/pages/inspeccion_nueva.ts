@@ -1,3 +1,5 @@
+import { authFetch } from "../lib/api";
+
 // ===============================
 // Tipos de datos
 // ===============================
@@ -78,10 +80,6 @@ function setSuccess(msg: string | null) {
 // ===============================
 // Auth helper
 // ===============================
-function getAuthToken(): string | null {
-    return localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
-}
-
 // ===============================
 // Validación frontend
 // ===============================
@@ -192,18 +190,12 @@ if (form && planoInput && estanteriaInput && estadoInput && notasInput) {
         if (submitBtn) submitBtn.disabled = true;
 
         try {
-            const token = getAuthToken();
-
             const headers: Record<string, string> = {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             };
 
-            if (token) {
-                headers["Authorization"] = `Bearer ${token}`;
-            }
-
-            const res = await fetch(API_URL, {
+            const res = await authFetch(API_URL, {
                 method: "POST",
                 headers,
                 body: JSON.stringify(payload)

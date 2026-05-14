@@ -2,7 +2,7 @@ package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.auth.AuthService;
 import com.proyectofincurso.estanteria.auth.AuthUser;
-import com.proyectofincurso.estanteria.auth.SessionService;
+import com.proyectofincurso.estanteria.auth.JwtTokenService;
 import com.proyectofincurso.estanteria.web.dto.LoginRequest;
 import com.proyectofincurso.estanteria.web.dto.LoginResponse;
 import com.proyectofincurso.estanteria.web.dto.RegistroResponse;
@@ -16,17 +16,17 @@ import org.springframework.web.bind.annotation.*;
 public class LoginController {
 
     private final AuthService authService;
-    private final SessionService sessionService;
+    private final JwtTokenService jwtTokenService;
 
-    public LoginController(AuthService authService, SessionService sessionService) {
+    public LoginController(AuthService authService, JwtTokenService jwtTokenService) {
         this.authService = authService;
-        this.sessionService = sessionService;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public LoginResponse login(@Valid @RequestBody LoginRequest req) {
         AuthUser user = authService.authenticate(req.getEmail(), req.getPassword());
-        String token = sessionService.createSession(user);
+        String token = jwtTokenService.emitirToken(user);
         return new LoginResponse("LOGIN_OK", user.userName(), user.role(), token);
     }
 

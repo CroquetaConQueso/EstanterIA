@@ -1,3 +1,5 @@
+import { authFetch } from "./lib/api";
+
 type PersonalRequest = { userName: string; userAge: number };
 
 const form = document.querySelector<HTMLFormElement>("#personForm")!;
@@ -32,7 +34,7 @@ form.addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch("/api/person", {
+    const res = await authFetch("/api/person", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

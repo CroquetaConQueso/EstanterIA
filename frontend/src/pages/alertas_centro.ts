@@ -1,3 +1,5 @@
+import { authFetch } from "../lib/api";
+
 type TipoAlerta =
   | "HUECO_VACIO"
   | "ANOMALIA_VISUAL"
@@ -394,7 +396,7 @@ async function cargarAlertas(): Promise<void> {
   setDetalleMessage("Cargando detalle de alertas...");
 
   try {
-    const response = await fetch(API_ALERTAS_ABIERTAS, {
+    const response = await authFetch(API_ALERTAS_ABIERTAS, {
       method: "GET",
       headers: {
         "Accept": "application/json"

@@ -1,3 +1,5 @@
+import { authFetch } from "../lib/api";
+
 type VisionModo = 'capture-and-predict' | 'predict-existing';
 
 type VisionRequest = {
@@ -243,7 +245,7 @@ function buildPayload(): VisionRequest {
 }
 
 async function runVision(payload: VisionRequest): Promise<VisionResponse> {
-  const response = await fetch(`/api/vision/inspeccionar/${encodeURIComponent(payload.estanteriaCodigo)}`, {
+  const response = await authFetch(`/api/vision/inspeccionar/${encodeURIComponent(payload.estanteriaCodigo)}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

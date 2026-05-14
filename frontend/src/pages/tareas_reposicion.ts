@@ -90,6 +90,7 @@ type ApiErrorResponse = {
   message?: string;
   error?: string;
   status?: number;
+  fieldErrors?: Record<string, string>;
 };
 
 const API_TAREAS = "/api/tareas";
@@ -101,6 +102,7 @@ const filtroPrioridad = document.querySelector<HTMLSelectElement>("#filtro-prior
 const filtroTexto = document.querySelector<HTMLInputElement>("#filtro-texto");
 const trabajadorSelect = document.querySelector<HTMLSelectElement>("#trabajador-select");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar");
+const tasksFeedback = document.querySelector<HTMLElement>("#tasks-feedback");
 
 const metricPendientes = document.querySelector<HTMLElement>("#metric-pendientes");
 const metricCurso = document.querySelector<HTMLElement>("#metric-curso");
@@ -218,7 +220,11 @@ async function parseErrorResponse(response: Response): Promise<ApiErrorResponse 
 }
 
 function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): string {
+  if (data?.fieldErrors && Object.keys(data.fieldErrors).length > 0) {
+    return Object.values(data.fieldErrors).join(" ");
+  }
   if (data?.message) return data.message;
+  if (status === 400) return "Revisa los datos de la tarea";
   if (status === 401) return "Debes iniciar sesión para consultar tareas";
   if (status === 403) return "No tienes permisos para modificar esta tarea";
   if (status === 404) return "No se encontró la tarea solicitada";
@@ -258,6 +264,18 @@ function setGridMessage(message: string): void {
   div.style.textTransform = "uppercase";
   div.textContent = message;
   tasksGrid.appendChild(div);
+}
+
+function setTaskFeedback(message: string | null): void {
+  if (!tasksFeedback) return;
+  if (!message) {
+    tasksFeedback.textContent = "";
+    tasksFeedback.setAttribute("hidden", "");
+    return;
+  }
+
+  tasksFeedback.textContent = message;
+  tasksFeedback.removeAttribute("hidden");
 }
 
 function actualizarMetricas(): void {
@@ -396,6 +414,7 @@ function renderTareas(): void {
 }
 
 async function cargarTareas(): Promise<void> {
+  setTaskFeedback(null);
   setGridMessage("Cargando tareas operativas...");
 
   try {
@@ -443,6 +462,7 @@ async function cargarTrabajadoresActivos(): Promise<void> {
 }
 
 async function cambiarEstado(id: number, estado: EstadoTareaOperativa): Promise<void> {
+  setTaskFeedback(null);
   await fetchJson<TareaOperativaResponse>(`${API_TAREAS}/${encodeURIComponent(String(id))}/estado`, {
     method: "PATCH",
     headers: {
@@ -454,10 +474,10 @@ async function cambiarEstado(id: number, estado: EstadoTareaOperativa): Promise<
 }
 
 async function asignarTarea(id: number): Promise<void> {
+  setTaskFeedback(null);
   const trabajadorId = Number(trabajadorSelect?.value);
   if (!Number.isInteger(trabajadorId) || trabajadorId <= 0) {
-    setGridMessage("Selecciona un trabajador activo antes de asignar");
-    return;
+    throw new Error("Selecciona un trabajador activo antes de asignar la tarea");
   }
 
   await fetchJson<TareaOperativaResponse>(`${API_TAREAS}/${encodeURIComponent(String(id))}/asignar`, {
@@ -488,7 +508,8 @@ tasksGrid?.addEventListener("click", (event) => {
     : cambiarEstado(id, action as EstadoTareaOperativa);
 
   void operation.catch((err: unknown) => {
-    setGridMessage(err instanceof Error ? err.message : "No se pudo actualizar la tarea");
+    setTaskFeedback(err instanceof Error ? err.message : "No se pudo actualizar la tarea");
+    renderTareas();
   });
 });
 
@@ -497,6 +518,7 @@ filtroPrioridad?.addEventListener("change", renderTareas);
 filtroTexto?.addEventListener("input", renderTareas);
 
 btnLimpiar?.addEventListener("click", () => {
+  setTaskFeedback(null);
   if (filtroEstado) filtroEstado.value = "";
   if (filtroPrioridad) filtroPrioridad.value = "";
   if (filtroTexto) filtroTexto.value = "";

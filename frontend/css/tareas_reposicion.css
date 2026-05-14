@@ -292,6 +292,17 @@ button, input, select {
   box-shadow: 3px 3px 0 var(--ink);
 }
 
+.task-feedback {
+  margin: 0 0 20px;
+  padding: 16px;
+  border: var(--border-heavy);
+  background: var(--danger);
+  color: var(--surface);
+  font-weight: 900;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-block);
+}
+
 .grow {
   flex: 1;
   min-width: 200px;

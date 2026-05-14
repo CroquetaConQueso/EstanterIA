@@ -1,11 +1,10 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Nueva inspecciÃ³n Â· Suite Tienda</title>
+  <title>Nueva inspección · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
-  <!-- CSS exclusivo para esta pÃ¡gina -->
   <link href="../css/inspeccion_nueva.css" rel="stylesheet" />
 </head>
 
@@ -20,8 +19,7 @@
         </span>
       </a>
 
-      <!-- NavegaciÃ³n consistente con home/editor/editar -->
-            <nav class="nav" aria-label="Principal">
+      <nav class="nav" aria-label="Principal">
         <a class="nav-link" href="home.html">Inicio</a>
         <a class="nav-link" href="planos.html">Planos</a>
         <a class="nav-link is-active" aria-current="page" href="inspecciones.html">Inspecciones</a>
@@ -42,45 +40,37 @@
 <main class="page">
   <header class="page-head">
     <p class="eyebrow">Flujo de trabajo</p>
-    <h1>Nueva inspecciÃ³n</h1>
+    <h1>Nueva inspección</h1>
     <p class="page-desc">
-      Crea una inspecciÃ³n base (sin IA). La imagen y el anÃ¡lisis se enganchan despuÃ©s sin romper el flujo.
+      Crea una inspección base con los campos que persiste el backend.
+      El análisis visual se puede lanzar desde el módulo de Visión.
     </p>
   </header>
 
   <section class="layout">
     <section class="panel form-panel">
       <div class="panel-head">
-        <h2>Datos de la inspecciÃ³n</h2>
+        <h2>Datos de la inspección</h2>
         <p class="hint">
-          MVP: plano + cÃ³digo de estanterÃ­a + notas. El estado inicial se marca como CREADA.
+          Indica la estantería, una ruta de imagen si ya existe y notas operativas opcionales.
         </p>
       </div>
 
       <form id="form-inspeccion-nueva" class="form">
         <div class="fields">
           <div class="field">
-            <label for="insp-plano">Plano</label>
-            <input type="text" id="insp-plano" name="plano" placeholder="Ej: AlmacÃ©n - Zona seca" required />
+            <label for="insp-estanteria">Código de estantería</label>
+            <input type="text" id="insp-estanteria" name="estanteriaCodigo" placeholder="Ej: EST-001" minlength="5" maxlength="50" required />
           </div>
 
           <div class="field">
-            <label for="insp-estanteria">CÃ³digo de estanterÃ­a</label>
-            <input type="text" id="insp-estanteria" name="estanteriaCodigo" placeholder="Ej: S-01" required />
-          </div>
-
-          <div class="field">
-            <label for="insp-estado">Estado</label>
-            <select id="insp-estado" name="estado">
-              <option value="CREADA" selected>CREADA</option>
-              <option value="ACTUALIZADA">ACTUALIZADA</option>
-              <option value="LISTA">LISTA</option>
-            </select>
+            <label for="insp-imagen">Ruta de imagen (opcional)</label>
+            <input type="text" id="insp-imagen" name="imagenPath" placeholder="/captures/capture_000012.png" maxlength="500" />
           </div>
 
           <div class="field">
             <label for="insp-notas">Notas (opcional)</label>
-            <textarea id="insp-notas" name="notas" rows="4" placeholder="Observaciones rÃ¡pidas..."></textarea>
+            <textarea id="insp-notas" name="notas" rows="4" maxlength="1000" placeholder="Observaciones rápidas..."></textarea>
           </div>
         </div>
 
@@ -88,42 +78,37 @@
         <p class="form-success" id="insp-success" hidden></p>
 
         <div class="actions">
-          <button class="btn primary" type="submit">Crear inspecciÃ³n</button>
+          <button class="btn primary" type="submit">Crear inspección</button>
           <a class="btn ghost" href="inspecciones.html">Volver</a>
         </div>
 
         <p class="micro">
-          Tras crear, se vuelve al listado y se selecciona la inspecciÃ³n nueva.
+          Tras crear, se vuelve al listado y se selecciona la inspección nueva.
         </p>
       </form>
     </section>
 
     <aside class="panel side-panel">
-      <h2>QuÃ© se crea exactamente</h2>
+      <h2>Qué se crea exactamente</h2>
       <ul class="bullets">
-        <li><strong>InspecciÃ³n</strong> con fecha, plano y estanterÃ­a.</li>
-        <li><strong>Estado</strong> inicial (CREADA) para el flujo.</li>
+        <li><strong>Inspección</strong> con fecha y código de estantería.</li>
+        <li><strong>Imagen</strong> asociada solo si se informa una ruta.</li>
         <li><strong>Notas</strong> para contexto humano.</li>
       </ul>
 
       <div class="divider"></div>
 
-      <h3>Encaje con IA</h3>
+      <h3>Encaje con Visión</h3>
       <p class="hint">
-        Cuando metas YOLO, esta inspecciÃ³n serÃ¡ el â€œcontenedorâ€:
+        Esta página mantiene el alta manual básica. Para capturar y clasificar slots,
+        usa la pantalla de Visión.
       </p>
-      <ol class="steps">
-        <li>Subir imagen asociada</li>
-        <li>Lanzar anÃ¡lisis</li>
-        <li>Guardar resultado</li>
-        <li>Actualizar estado</li>
-      </ol>
     </aside>
   </section>
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Nueva inspecciÃ³n Â· MVP</small>
+  <small>Suite Tienda · Nueva inspección · Alta básica</small>
 </footer>
 
 <script type="module" src="/src/pages/inspeccion_nueva.ts"></script>

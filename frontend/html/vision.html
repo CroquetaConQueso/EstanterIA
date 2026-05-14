@@ -94,7 +94,7 @@
 
               <label class="field">
                 <span>Modo</span>
-                <select id="vision-modo" name="modo">
+                <select id="vision-modo" name="modo" required>
                   <option value="capture-and-predict">
                     Capturar e inspeccionar
                   </option>
@@ -112,6 +112,7 @@
                   type="text"
                   placeholder="data/raw/capture_000012.png"
                   autocomplete="off"
+                  maxlength="500"
                 />
               </label>
 
@@ -121,6 +122,7 @@
                   id="vision-notas"
                   name="notas"
                   rows="4"
+                  maxlength="1000"
                   placeholder="Comentario breve si aplica"
                 ></textarea>
               </label>
@@ -270,7 +272,6 @@
       <small>EstanterIA · Módulo de Visión Computacional</small>
     </footer>
 
-    <script type="module" src="/src/lib/private-page.ts"></script>
-    <script src="../js/vision.js"></script>
+    <script type="module" src="/src/pages/vision.ts"></script>
   </body>
 </html>

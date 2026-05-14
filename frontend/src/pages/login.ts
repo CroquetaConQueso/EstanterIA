@@ -1,17 +1,17 @@
 type LoginRequest = { email: string; password: string };
 type LoginResponse = { message: string; userName: string; role: string; token: string };
+type ApiErrorResponse = {
+  message?: string;
+  error?: string;
+  status?: number;
+  fieldErrors?: Record<string, string>;
+};
 
 const form = document.querySelector<HTMLFormElement>("#form-login");
-const useremailInput = document.querySelector<HTMLInputElement>("#login-email");
-const userpasswordInput = document.querySelector<HTMLInputElement>("#login-password");
+const emailInput = document.querySelector<HTMLInputElement>("#login-email");
+const passwordInput = document.querySelector<HTMLInputElement>("#login-password");
 const rememberInput = document.querySelector<HTMLInputElement>("#login-remember");
 const errorEl = document.querySelector<HTMLElement>("#login-error");
-const out = document.querySelector<HTMLPreElement>("#out");
-
-function show(obj: unknown): void {
-  if (!out) return;
-  out.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
-}
 
 function setError(msg: string | null): void {
   if (!errorEl) return;
@@ -25,30 +25,55 @@ function setError(msg: string | null): void {
   errorEl.removeAttribute("hidden");
 }
 
+function emailValido(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function validateClient(email: string, password: string): Record<string, string> {
   const errors: Record<string, string> = {};
   if (!email.trim()) errors.email = "El email es obligatorio";
+  else if (!emailValido(email)) errors.email = "El email no tiene un formato válido";
+  else if (email.length > 120) errors.email = "El email no puede superar 120 caracteres";
   if (!password) errors.password = "La contraseña es obligatoria";
   return errors;
 }
 
-if (form && useremailInput && userpasswordInput) {
-  useremailInput.addEventListener("input", () => setError(null));
-  userpasswordInput.addEventListener("input", () => setError(null));
+async function parseErrorResponse(res: Response): Promise<ApiErrorResponse | null> {
+  try {
+    const text = await res.text();
+    return text ? JSON.parse(text) as ApiErrorResponse : null;
+  } catch {
+    return null;
+  }
+}
+
+function getLoginErrorMessage(data: ApiErrorResponse | null, status: number): string {
+  if (data?.fieldErrors && Object.keys(data.fieldErrors).length > 0) {
+    return Object.values(data.fieldErrors).join(" ");
+  }
+  if (status === 400) return data?.message ?? "Revisa los datos del formulario";
+  if (status === 401) return "Credenciales inválidas";
+  if (status === 403) return data?.message ?? "No tienes permisos para acceder";
+  if (status >= 500) return "Error interno del servidor";
+  return data?.message ?? `Error HTTP ${status}`;
+}
+
+if (form && emailInput && passwordInput) {
+  emailInput.addEventListener("input", () => setError(null));
+  passwordInput.addEventListener("input", () => setError(null));
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     setError(null);
 
     const payload: LoginRequest = {
-      email: useremailInput.value.trim(),
-      password: userpasswordInput.value
+      email: emailInput.value.trim(),
+      password: passwordInput.value
     };
 
     const clienteErrores = validateClient(payload.email, payload.password);
     if (Object.keys(clienteErrores).length > 0) {
       setError(Object.values(clienteErrores).join(" "));
-      show({ error: "CLIENTE_VALIDACION_ERROR", fieldErrors: clienteErrores });
       return;
     }
 
@@ -62,28 +87,21 @@ if (form && useremailInput && userpasswordInput) {
         body: JSON.stringify(payload)
       });
 
-      const text = await res.text();
-      const data = text ? JSON.parse(text) : null;
-
       if (!res.ok) {
-        show(data ?? { error: "HTTP_ERROR", status: res.status });
-
-        const msg = data?.message ?? (res.status === 401 ? "Credenciales inválidas." : "Error al iniciar sesión");
-        setError(msg);
+        const errorData = await parseErrorResponse(res);
+        setError(getLoginErrorMessage(errorData, res.status));
         return;
       }
 
-      const login = data as LoginResponse;
+      const data = await res.json() as LoginResponse;
       const storage = rememberInput?.checked ? localStorage : sessionStorage;
-      storage.setItem("auth_token", login.token);
-      storage.setItem("auth_user", login.userName);
-      storage.setItem("auth_role", login.role);
+      storage.setItem("auth_token", data.token);
+      storage.setItem("auth_user", data.userName);
+      storage.setItem("auth_role", data.role);
 
-      show(login);
       window.location.href = "/html/home.html";
     } catch {
       setError("No se pudo conectar con el servidor.");
-      show({ error: "NETWORK_ERROR" });
     } finally {
       if (submitBtn) submitBtn.disabled = false;
     }

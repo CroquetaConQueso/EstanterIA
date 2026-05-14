@@ -18,7 +18,7 @@ public class AuthService {
     private final PasswordEncoder encoder;
 
     public AuthUser authenticate(String email, String rawPassword) {
-        UserAccount user = repo.findByEmailIgnoreCase(email)
+        UserAccount user = repo.findByEmailIgnoreCase(email.trim())
                 .orElseThrow(() -> ApiException.unauthorized(
                         "INVALID_CREDENTIALS",
                         "Credenciales inválidas"
@@ -43,14 +43,17 @@ public class AuthService {
     }
 
     public void verificar(String username, String email, String password) {
-        if (repo.existsByUsernameIgnoreCase(username)) {
+        String usernameNormalizado = username.trim();
+        String emailNormalizado = email.trim();
+
+        if (repo.existsByUsernameIgnoreCase(usernameNormalizado)) {
             throw ApiException.conflict(
                     "USERNAME_ALREADY_EXISTS",
                     "Ya existe un usuario con ese nombre"
             );
         }
 
-        if (repo.existsByEmailIgnoreCase(email)) {
+        if (repo.existsByEmailIgnoreCase(emailNormalizado)) {
             throw ApiException.conflict(
                     "EMAIL_ALREADY_EXISTS",
                     "Ya existe un usuario con ese email"
@@ -58,8 +61,8 @@ public class AuthService {
         }
 
         UserAccount user = new UserAccount();
-        user.setUsername(username);
-        user.setEmail(email);
+        user.setUsername(usernameNormalizado);
+        user.setEmail(emailNormalizado);
         user.setPasswordHash(encoder.encode(password));
         user.setRole(UserRole.WORKER);
         user.setEnabled(true);

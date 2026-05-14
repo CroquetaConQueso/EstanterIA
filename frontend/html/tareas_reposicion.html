@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Tareas de reposiciÃ³n Â· Suite Tienda</title>
+  <title>Tareas operativas Â· Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/tareas_reposicion.css" rel="stylesheet" />
@@ -35,11 +35,11 @@
 <main class="page">
   <header class="page-head propaganda-banner">
     <div>
-      <p class="eyebrow">Brigada de reposiciÃ³n</p>
-      <h1>Frente de tareas materiales</h1>
+      <p class="eyebrow">Operativa de tareas</p>
+      <h1>Centro de tareas operativas</h1>
       <p>
-        AquÃ­ la incidencia deja de ser informe y se convierte en trabajo. Cada tarjeta ordena una acciÃ³n fÃ­sica concreta:
-        reponer, justificar falta de almacÃ©n o corregir una detecciÃ³n errÃ³nea.
+        Las alertas operativas se convierten aquÃ­ en trabajo trazable. Cada tarjeta representa una acciÃ³n real asociada a
+        estanterÃ­a, slot, producto, prioridad y responsable cuando existe asignaciÃ³n.
       </p>
     </div>
 
@@ -49,11 +49,11 @@
         <strong id="metric-pendientes">0</strong>
       </article>
       <article class="metric progress">
-        <span>En curso</span>
+        <span>En progreso</span>
         <strong id="metric-curso">0</strong>
       </article>
       <article class="metric done">
-        <span>Completadas</span>
+        <span>Resueltas</span>
         <strong id="metric-completadas">0</strong>
       </article>
     </div>
@@ -65,27 +65,33 @@
       <select id="filtro-estado">
         <option value="">Todos</option>
         <option value="PENDIENTE">PENDIENTE</option>
-        <option value="EN_CURSO">EN CURSO</option>
-        <option value="COMPLETADA">COMPLETADA</option>
-        <option value="SIN_STOCK">SIN STOCK</option>
-        <option value="FALSO_POSITIVO">FALSO POSITIVO</option>
+        <option value="EN_PROGRESO">EN PROGRESO</option>
+        <option value="RESUELTA">RESUELTA</option>
+        <option value="CANCELADA">CANCELADA</option>
       </select>
     </label>
 
     <label>
-      Zona
-      <select id="filtro-zona">
+      Prioridad
+      <select id="filtro-prioridad">
         <option value="">Todas</option>
-        <option value="Zona seca">Zona seca</option>
-        <option value="Mascotas">Mascotas</option>
-        <option value="Pasillo 2">Pasillo 2</option>
-        <option value="Conservas">Conservas</option>
+        <option value="CRITICA">CRITICA</option>
+        <option value="ALTA">ALTA</option>
+        <option value="MEDIA">MEDIA</option>
+        <option value="BAJA">BAJA</option>
       </select>
     </label>
 
     <label class="grow">
       Buscar
-      <input type="text" id="filtro-texto" placeholder="Producto, estanterÃ­a, responsable..." />
+      <input type="text" id="filtro-texto" placeholder="TÃ­tulo, producto, estanterÃ­a, slot..." />
+    </label>
+
+    <label>
+      Trabajador
+      <select id="trabajador-select">
+        <option value="">Cargando trabajadores...</option>
+      </select>
     </label>
 
     <button class="btn ghost" id="btn-limpiar" type="button">Reiniciar filtros</button>
@@ -95,10 +101,10 @@
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Brigada de reposiciÃ³n Â· AcciÃ³n fÃ­sica coordinada</small>
+  <small>Suite Tienda Â· Tareas operativas Â· Trabajo trazable</small>
 </footer>
 
-<script src="../js/tareas_reposicion.js"></script>
+<script type="module" src="/src/pages/tareas_reposicion.ts"></script>
 </body>
 </html>
 

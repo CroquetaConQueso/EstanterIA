@@ -1,4 +1,7 @@
 import { authFetch } from "../lib/api";
+import { requireAuth } from "../lib/auth-guard";
+
+requireAuth();
 
 type TipoAlerta =
   | "HUECO_VACIO"

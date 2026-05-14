@@ -1,4 +1,7 @@
 import { authFetch } from "../lib/api";
+import { requireAuth } from "../lib/auth-guard";
+
+requireAuth();
 
 type EstadoTareaOperativa = "PENDIENTE" | "EN_PROGRESO" | "RESUELTA" | "CANCELADA" | string;
 type TipoTareaOperativa =

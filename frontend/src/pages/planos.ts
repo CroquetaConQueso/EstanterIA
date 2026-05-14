@@ -1,4 +1,7 @@
 import { authFetch } from "../lib/api";
+import { requireAuth } from "../lib/auth-guard";
+
+requireAuth();
 
 type EstadoGeneralVisual = "OK" | "HUECOS_VACIOS" | "ANOMALIAS" | "MIXTO" | string;
 type EstadoVisualSlot = "OCUPADO" | "VACIO" | "ANOMALIA" | string;

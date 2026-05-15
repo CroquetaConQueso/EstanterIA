@@ -19,6 +19,9 @@ import com.proyectofincurso.estanteria.persistence.repository.ProductoRepository
 import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionRepository;
 import com.proyectofincurso.estanteria.web.dto.AsignacionActivaSlotResponse;
+import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaRequest;
+import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaSlotRequest;
+import com.proyectofincurso.estanteria.web.dto.ActualizarSeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaSlotRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearSeccionRequest;
@@ -109,6 +112,31 @@ public class ModeloOperativoService {
         return toSeccionResponse(seccionRepository.save(seccion));
     }
 
+    @Transactional
+    public SeccionResponse actualizarSeccion(Long seccionId, ActualizarSeccionRequest request) {
+        Seccion seccion = seccionRepository.findByIdAndActivaTrue(seccionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SECCION_NOT_FOUND",
+                        "No existe una seccion activa con el identificador indicado"
+                ));
+
+        String codigo = normalizar(request.codigo());
+        if (seccionRepository.existsByEmpresaIdAndCodigoIgnoreCaseAndIdNot(
+                seccion.getEmpresa().getId(), codigo, seccion.getId())) {
+            throw ApiException.conflict(
+                    "SECCION_CODIGO_DUPLICADO",
+                    "Ya existe una seccion con ese codigo en la empresa"
+            );
+        }
+
+        seccion.setCodigo(codigo);
+        seccion.setNombre(normalizar(request.nombre()));
+        seccion.setDescripcion(normalizarNullable(request.descripcion()));
+        seccion.setUpdatedAt(Instant.now());
+
+        return toSeccionResponse(seccionRepository.save(seccion));
+    }
+
     @Transactional(readOnly = true)
     public List<EstanteriaResumenResponse> obtenerEstanteriasDeSeccion(Long seccionId) {
         if (!seccionRepository.existsById(seccionId)) {
@@ -187,6 +215,76 @@ public class ModeloOperativoService {
         return obtenerConfiguracionDeEstanteria(estanteriaGuardada.getCodigo());
     }
 
+    @Transactional
+    public EstanteriaConfiguracionResponse actualizarEstanteria(String codigo, ActualizarEstanteriaRequest request) {
+        Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoAndActivaTrue(codigo)
+                .orElseThrow(() -> ApiException.notFound(
+                        "ESTANTERIA_NOT_FOUND",
+                        "No existe una estanteria activa con el codigo indicado"
+                ));
+
+        List<ActualizarEstanteriaSlotRequest> slotsRequest = request.slots() == null ? List.of() : request.slots();
+        validarSlotsActualizacion(slotsRequest);
+
+        Map<Long, Producto> productos = productoRepository.findAllById(
+                        slotsRequest.stream().map(ActualizarEstanteriaSlotRequest::productoId).toList()
+                ).stream()
+                .filter(producto -> Boolean.TRUE.equals(producto.getActivo()))
+                .collect(Collectors.toMap(Producto::getId, Function.identity()));
+
+        for (ActualizarEstanteriaSlotRequest slotRequest : slotsRequest) {
+            if (!productos.containsKey(slotRequest.productoId())) {
+                throw ApiException.notFound(
+                        "PRODUCTO_NOT_FOUND",
+                        "No existe un producto activo con el identificador indicado"
+                );
+            }
+        }
+
+        Instant ahora = Instant.now();
+        estanteria.setNombre(normalizar(request.nombre()));
+        estanteria.setDescripcion(normalizarNullable(request.descripcion()));
+        estanteria.setUpdatedAt(ahora);
+        estanteriaRepository.save(estanteria);
+
+        Map<String, EstanteriaSlotConfiguracion> slotsExistentes = slotConfiguracionRepository
+                .findByEstanteriaId(estanteria.getId()).stream()
+                .collect(Collectors.toMap(
+                        slot -> slot.getSlotId().toLowerCase(),
+                        Function.identity(),
+                        (actual, duplicado) -> actual
+                ));
+
+        Set<String> slotsRecibidos = new HashSet<>();
+        for (ActualizarEstanteriaSlotRequest slotRequest : slotsRequest) {
+            String slotId = normalizar(slotRequest.slotId());
+            slotsRecibidos.add(slotId.toLowerCase());
+            EstanteriaSlotConfiguracion slot = slotsExistentes.get(slotId.toLowerCase());
+            if (slot == null) {
+                slot = new EstanteriaSlotConfiguracion();
+                slot.setEstanteria(estanteria);
+                slot.setCreatedAt(ahora);
+            }
+            slot.setSlotId(slotId);
+            slot.setOrden(slotRequest.orden());
+            slot.setProducto(productos.get(slotRequest.productoId()));
+            slot.setCantidadObjetivo(slotRequest.cantidadObjetivo());
+            slot.setActivo(slotRequest.activo() == null || slotRequest.activo());
+            slot.setUpdatedAt(ahora);
+            slotConfiguracionRepository.save(slot);
+        }
+
+        slotsExistentes.forEach((slotId, slot) -> {
+            if (!slotsRecibidos.contains(slotId) && Boolean.TRUE.equals(slot.getActivo())) {
+                slot.setActivo(false);
+                slot.setUpdatedAt(ahora);
+                slotConfiguracionRepository.save(slot);
+            }
+        });
+
+        return obtenerConfiguracionDeEstanteria(estanteria.getCodigo());
+    }
+
     @Transactional(readOnly = true)
     public List<ProductoResumenResponse> obtenerProductosActivos() {
         return productoRepository.findByActivoTrueOrderByNombreAsc().stream()
@@ -252,6 +350,52 @@ public class ModeloOperativoService {
         Set<Integer> ordenes = new HashSet<>();
 
         for (CrearEstanteriaSlotRequest slotRequest : slotsRequest) {
+            String slotId = normalizar(slotRequest.slotId());
+            if (slotId == null || slotId.isBlank()) {
+                throw ApiException.badRequest(
+                        "SLOT_ID_OBLIGATORIO",
+                        "El identificador de slot es obligatorio"
+                );
+            }
+            if (!slotIds.add(slotId.toLowerCase())) {
+                throw ApiException.badRequest(
+                        "SLOT_ID_DUPLICADO",
+                        "No puede haber dos slots con el mismo identificador"
+                );
+            }
+            if (slotRequest.orden() == null || slotRequest.orden() <= 0) {
+                throw ApiException.badRequest(
+                        "SLOT_ORDEN_INVALIDO",
+                        "El orden del slot debe ser mayor que cero"
+                );
+            }
+            if (!ordenes.add(slotRequest.orden())) {
+                throw ApiException.badRequest(
+                        "SLOT_ORDEN_DUPLICADO",
+                        "No puede haber dos slots con el mismo orden"
+                );
+            }
+            if (slotRequest.cantidadObjetivo() == null || slotRequest.cantidadObjetivo() < 0) {
+                throw ApiException.badRequest(
+                        "SLOT_CANTIDAD_INVALIDA",
+                        "La cantidad objetivo no puede ser negativa"
+                );
+            }
+        }
+    }
+
+    private void validarSlotsActualizacion(List<ActualizarEstanteriaSlotRequest> slotsRequest) {
+        if (slotsRequest.isEmpty()) {
+            throw ApiException.badRequest(
+                    "ESTANTERIA_SLOTS_OBLIGATORIOS",
+                    "La estanteria debe tener al menos un slot configurado"
+            );
+        }
+
+        Set<String> slotIds = new HashSet<>();
+        Set<Integer> ordenes = new HashSet<>();
+
+        for (ActualizarEstanteriaSlotRequest slotRequest : slotsRequest) {
             String slotId = normalizar(slotRequest.slotId());
             if (slotId == null || slotId.isBlank()) {
                 throw ApiException.badRequest(

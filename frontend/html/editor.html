@@ -190,6 +190,20 @@
         </div>
 
         <form id="form-elemento" class="form element-form">
+          <div class="field-grid element-metadata">
+            <div class="field">
+              <label for="element-code">Código</label>
+              <input id="element-code" type="text" disabled />
+            </div>
+            <div class="field">
+              <label for="element-name">Nombre</label>
+              <input id="element-name" type="text" maxlength="150" />
+            </div>
+          </div>
+          <div class="field element-metadata">
+            <label for="element-description">Descripción</label>
+            <textarea id="element-description" rows="2"></textarea>
+          </div>
           <div class="field-grid">
             <div class="field">
               <label for="element-x">X</label>
@@ -215,6 +229,11 @@
               <option value="VERTICAL">Vertical</option>
             </select>
           </div>
+          <div class="field" id="element-slots-field">
+            <label>Slots configurados</label>
+            <div class="slot-editor" id="element-slots-container"></div>
+          </div>
+          <p class="hint inline-status" id="element-edit-status"></p>
           <div class="form-actions">
             <button class="btn primary" id="btn-apply-element" type="button">Aplicar cambios</button>
             <button class="btn danger" id="btn-delete-element" type="button">Eliminar elemento</button>

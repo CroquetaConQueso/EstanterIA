@@ -19,6 +19,8 @@ public interface EstanteriaSlotConfiguracionRepository extends JpaRepository<Est
             """)
     List<EstanteriaSlotConfiguracion> findActivosByEstanteriaIdOrdenados(@Param("estanteriaId") Long estanteriaId);
 
+    List<EstanteriaSlotConfiguracion> findByEstanteriaId(Long estanteriaId);
+
     @Query("""
             select slot
             from EstanteriaSlotConfiguracion slot

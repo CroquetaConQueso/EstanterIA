@@ -185,6 +185,32 @@ textarea {
   box-shadow: 3px 3px 0 var(--black);
 }
 
+.inline-status:not(:empty) {
+  margin: 10px 0 0;
+  padding: 10px;
+  border: var(--border-light);
+  background: var(--paper);
+  color: var(--black);
+  box-shadow: 3px 3px 0 var(--black);
+}
+
+.inline-status[data-kind="ok"],
+.status[data-kind="ok"] {
+  background: rgba(42, 145, 75, 0.18);
+}
+
+.inline-status[data-kind="error"],
+.status[data-kind="error"] {
+  background: rgba(181, 18, 18, 0.16);
+  color: var(--danger);
+}
+
+.warning {
+  border: var(--border-light);
+  background: rgba(249, 160, 27, 0.2);
+  padding: 10px;
+}
+
 .toolbar,
 .form-actions,
 .tool-buttons {
@@ -274,6 +300,7 @@ textarea {
 }
 
 .btn.primary,
+.btn.secondary,
 .tool.is-active {
   background: var(--gold);
 }
@@ -385,6 +412,12 @@ textarea {
   outline-offset: 2px;
 }
 
+.zone-node.is-dragging,
+.rack-node.is-dragging {
+  cursor: grabbing;
+  opacity: 0.86;
+}
+
 .draft-node {
   z-index: 4;
   border: 3px solid var(--red);
@@ -429,6 +462,31 @@ textarea {
   background: var(--gold);
 }
 
+.slot-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.slot-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) 80px minmax(150px, 1.5fr) 100px;
+  gap: 8px;
+  border: var(--border-light);
+  background: var(--paper);
+  padding: 10px;
+}
+
+.slot-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.72rem;
+}
+
+.slot-field span {
+  line-height: 1.2;
+}
+
 .foot {
   text-align: center;
   padding: 32px;
@@ -450,6 +508,10 @@ textarea {
   .layout {
     grid-template-columns: 1fr;
   }
+
+  .slot-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
@@ -463,5 +525,10 @@ textarea {
 
   .editor-canvas {
     min-width: 620px;
+  }
+
+  .slot-row,
+  .field-grid {
+    grid-template-columns: 1fr;
   }
 }

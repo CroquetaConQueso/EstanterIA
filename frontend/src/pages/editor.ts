@@ -11,6 +11,7 @@ type ApiErrorResponse = {
   message?: string;
   error?: string;
   status?: number;
+  fieldErrors?: Record<string, string>;
 };
 
 type SeccionResponse = {
@@ -27,6 +28,23 @@ type EstanteriaResumenResponse = {
   nombre: string;
   descripcion: string | null;
   activa: boolean | null;
+};
+
+type ProductoResumenResponse = {
+  id: number;
+  productoUuid?: string | null;
+  codigoInterno: string | null;
+  nombre: string | null;
+  descripcion: string | null;
+};
+
+type EstanteriaConfiguracionResponse = {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+  activa: boolean | null;
+  seccion: SeccionResponse;
 };
 
 type PlanoZonaResponse = {
@@ -112,6 +130,45 @@ type PlanoPayload = {
   }>;
 };
 
+type CrearSeccionPayload = {
+  empresaCodigo: string;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+};
+
+type CrearEstanteriaPayload = {
+  seccionId: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+  slots: Array<{
+    slotId: string;
+    orden: number;
+    productoId: number;
+    cantidadObjetivo: number;
+  }>;
+};
+
+type DragState =
+  | {
+      type: "zone";
+      uid: string;
+      startX: number;
+      startY: number;
+      originalZone: Pick<LocalZone, "x" | "y" | "width" | "height">;
+      originalRacks: Array<{ uid: string; x: number; y: number }>;
+      hasMoved: boolean;
+    }
+  | {
+      type: "rack";
+      uid: string;
+      startX: number;
+      startY: number;
+      originalRack: Pick<LocalRack, "x" | "y" | "width" | "height">;
+      hasMoved: boolean;
+    };
+
 const params = new URLSearchParams(window.location.search);
 const codigoInicial = params.get("codigo");
 const isEditMode = Boolean(codigoInicial);
@@ -146,6 +203,21 @@ const elementOrientation = document.querySelector<HTMLSelectElement>("#element-o
 const btnApplyElement = document.querySelector<HTMLButtonElement>("#btn-apply-element");
 const btnDeleteElement = document.querySelector<HTMLButtonElement>("#btn-delete-element");
 const toolFeedback = document.querySelector<HTMLElement>("#tool-feedback");
+const formInlineSeccion = document.querySelector<HTMLFormElement>("#form-inline-seccion");
+const newSeccionCodigoInput = document.querySelector<HTMLInputElement>("#new-seccion-codigo");
+const newSeccionNombreInput = document.querySelector<HTMLInputElement>("#new-seccion-nombre");
+const newSeccionDescripcionInput = document.querySelector<HTMLTextAreaElement>("#new-seccion-descripcion");
+const sectionCreateStatus = document.querySelector<HTMLElement>("#section-create-status");
+const btnCreateSection = document.querySelector<HTMLButtonElement>("#btn-create-section");
+const formInlineRack = document.querySelector<HTMLFormElement>("#form-inline-rack");
+const newRackCodigoInput = document.querySelector<HTMLInputElement>("#new-rack-codigo");
+const newRackNombreInput = document.querySelector<HTMLInputElement>("#new-rack-nombre");
+const newRackDescripcionInput = document.querySelector<HTMLTextAreaElement>("#new-rack-descripcion");
+const newRackSlotCountInput = document.querySelector<HTMLInputElement>("#new-rack-slot-count");
+const inlineSlotsContainer = document.querySelector<HTMLElement>("#inline-slots-container");
+const productsStatus = document.querySelector<HTMLElement>("#products-status");
+const rackCreateStatus = document.querySelector<HTMLElement>("#rack-create-status");
+const btnCreateRack = document.querySelector<HTMLButtonElement>("#btn-create-rack");
 
 let mode: EditorMode = "select";
 let selected: SelectedElement = null;
@@ -153,8 +225,13 @@ let zones: LocalZone[] = [];
 let racks: LocalRack[] = [];
 let secciones: SeccionResponse[] = [];
 let estanteriasSeccion: EstanteriaResumenResponse[] = [];
+let productos: ProductoResumenResponse[] = [];
 let saving = false;
+let creatingSection = false;
+let creatingRack = false;
 let drawing: { startX: number; startY: number; draft: HTMLElement } | null = null;
+let dragging: DragState | null = null;
+let suppressNextCanvasClick = false;
 
 function setText(element: HTMLElement | null, text: string): void {
   if (element) element.textContent = text;
@@ -164,6 +241,21 @@ function setStatus(message: string, kind: "info" | "ok" | "error" = "info"): voi
   if (!editorStatus) return;
   editorStatus.textContent = message;
   editorStatus.dataset.kind = kind;
+}
+
+function setInlineStatus(element: HTMLElement | null, message: string, kind: "info" | "ok" | "error" = "info"): void {
+  if (!element) return;
+  element.textContent = message;
+  element.dataset.kind = kind;
+}
+
+function textValue(input: HTMLInputElement | HTMLTextAreaElement | null): string {
+  return input?.value.trim() ?? "";
+}
+
+function nullableText(input: HTMLTextAreaElement | null): string | null {
+  const value = textValue(input);
+  return value || null;
 }
 
 function numberValue(input: HTMLInputElement | null, fallback = 0): number {
@@ -316,13 +408,15 @@ function renderCanvas(): void {
   zones.forEach((zone) => {
     const node = document.createElement("button");
     node.type = "button";
-    node.className = `zone-node${selected?.type === "zone" && selected.uid === zone.uid ? " is-selected" : ""}`;
+    node.className = `zone-node${selected?.type === "zone" && selected.uid === zone.uid ? " is-selected" : ""}${dragging?.type === "zone" && dragging.uid === zone.uid ? " is-dragging" : ""}`;
+    node.dataset.uid = zone.uid;
     node.addEventListener("click", (event) => {
       event.stopPropagation();
       selected = { type: "zone", uid: zone.uid };
       setMode("select");
       render();
     });
+    node.addEventListener("pointerdown", (event) => startZoneDrag(event, zone));
     positionElement(node, zone);
 
     const label = document.createElement("span");
@@ -335,7 +429,8 @@ function renderCanvas(): void {
   racks.forEach((rack) => {
     const node = document.createElement("button");
     node.type = "button";
-    node.className = `rack-node ${rack.orientacion.toLowerCase()}${selected?.type === "rack" && selected.uid === rack.uid ? " is-selected" : ""}`;
+    node.className = `rack-node ${rack.orientacion.toLowerCase()}${selected?.type === "rack" && selected.uid === rack.uid ? " is-selected" : ""}${dragging?.type === "rack" && dragging.uid === rack.uid ? " is-dragging" : ""}`;
+    node.dataset.uid = rack.uid;
     node.textContent = rack.estanteriaCodigo;
     node.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -343,6 +438,7 @@ function renderCanvas(): void {
       setMode("select");
       render();
     });
+    node.addEventListener("pointerdown", (event) => startRackDrag(event, rack));
     positionElement(node, rack);
     canvas.appendChild(node);
   });
@@ -431,8 +527,11 @@ async function parseErrorResponse(response: Response): Promise<ApiErrorResponse 
 }
 
 function backendErrorMessage(data: ApiErrorResponse | null, status: number): string {
+  const fieldMessage = data?.fieldErrors ? Object.values(data.fieldErrors)[0] : null;
+  if (fieldMessage) return fieldMessage;
   if (data?.message) return data.message;
   if (status === 401) return "La sesión no es válida o ha caducado.";
+  if (status === 403) return "No tienes permisos para realizar esta acción.";
   if (status === 404) return "No se encontró el recurso solicitado.";
   if (status === 409) return "Ya existe un recurso con esos datos.";
   if (status >= 500) return "Error interno del servidor.";
@@ -457,9 +556,10 @@ async function fetchJson<T>(url: string, init: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function cargarSecciones(): Promise<void> {
+async function cargarSecciones(selectedId?: number): Promise<void> {
   secciones = await fetchJson<SeccionResponse[]>("/api/empresas/EMP-DEMO/secciones");
   if (seccionSelect) {
+    const previousValue = selectedId ? String(selectedId) : seccionSelect.value;
     seccionSelect.innerHTML = "";
     if (secciones.length === 0) {
       seccionSelect.appendChild(option("", "No hay secciones disponibles"));
@@ -467,18 +567,30 @@ async function cargarSecciones(): Promise<void> {
       secciones.forEach((seccion) => {
         seccionSelect.appendChild(option(String(seccion.id), `${seccion.nombre} · ${seccion.codigo}`));
       });
+      if (previousValue && secciones.some((seccion) => String(seccion.id) === previousValue)) {
+        seccionSelect.value = previousValue;
+      }
     }
   }
   await cargarEstanteriasDeSeccion();
 }
 
-async function cargarEstanteriasDeSeccion(): Promise<void> {
+async function cargarProductos(): Promise<void> {
+  productos = await fetchJson<ProductoResumenResponse[]>("/api/productos");
+  setText(productsStatus, productos.length === 0
+    ? "No hay productos activos disponibles."
+    : `${productos.length} productos activos disponibles.`);
+  renderInlineSlots();
+}
+
+async function cargarEstanteriasDeSeccion(selectedCodigo?: string): Promise<void> {
   const seccionId = Number(seccionSelect?.value);
   estanteriasSeccion = Number.isFinite(seccionId) && seccionId > 0
     ? await fetchJson<EstanteriaResumenResponse[]>(`/api/secciones/${seccionId}/estanterias`)
     : [];
 
   if (estanteriaSelect) {
+    const previousValue = selectedCodigo ?? estanteriaSelect.value;
     estanteriaSelect.innerHTML = "";
     if (estanteriasSeccion.length === 0) {
       estanteriaSelect.appendChild(option("", "No hay estanterías disponibles"));
@@ -486,6 +598,9 @@ async function cargarEstanteriasDeSeccion(): Promise<void> {
       estanteriasSeccion.forEach((estanteria) => {
         estanteriaSelect.appendChild(option(estanteria.codigo, `${estanteria.codigo} · ${estanteria.nombre}`));
       });
+      if (previousValue && estanteriasSeccion.some((estanteria) => estanteria.codigo === previousValue)) {
+        estanteriaSelect.value = previousValue;
+      }
     }
   }
   updateToolFeedback();
@@ -496,6 +611,72 @@ function option(value: string, text: string): HTMLOptionElement {
   node.value = value;
   node.textContent = text;
   return node;
+}
+
+function productoLabel(producto: ProductoResumenResponse): string {
+  const codigo = producto.codigoInterno ? `${producto.codigoInterno} · ` : "";
+  return `${codigo}${producto.nombre ?? "Producto sin nombre"}`;
+}
+
+function renderInlineSlots(): void {
+  if (!inlineSlotsContainer) return;
+  const count = Math.max(1, Math.min(24, Number(newRackSlotCountInput?.value) || 4));
+  if (newRackSlotCountInput) newRackSlotCountInput.value = String(count);
+  inlineSlotsContainer.innerHTML = "";
+
+  for (let index = 1; index <= count; index += 1) {
+    const row = document.createElement("div");
+    row.className = "slot-row";
+
+    const slotId = document.createElement("input");
+    slotId.type = "text";
+    slotId.value = `slot_${index}`;
+    slotId.maxLength = 50;
+    slotId.dataset.field = "slotId";
+    slotId.setAttribute("aria-label", `Slot ${index}`);
+
+    const orden = document.createElement("input");
+    orden.type = "number";
+    orden.value = String(index);
+    orden.min = "1";
+    orden.step = "1";
+    orden.dataset.field = "orden";
+    orden.setAttribute("aria-label", `Orden ${index}`);
+
+    const producto = document.createElement("select");
+    producto.dataset.field = "productoId";
+    producto.setAttribute("aria-label", `Producto esperado ${index}`);
+    if (productos.length === 0) {
+      producto.appendChild(option("", "No hay productos activos"));
+    } else {
+      productos.forEach((item) => producto.appendChild(option(String(item.id), productoLabel(item))));
+    }
+
+    const cantidad = document.createElement("input");
+    cantidad.type = "number";
+    cantidad.value = "8";
+    cantidad.min = "0";
+    cantidad.step = "1";
+    cantidad.dataset.field = "cantidadObjetivo";
+    cantidad.setAttribute("aria-label", `Cantidad objetivo ${index}`);
+
+    row.append(
+      labeledSlotField("Slot", slotId),
+      labeledSlotField("Orden", orden),
+      labeledSlotField("Producto esperado", producto),
+      labeledSlotField("Cantidad", cantidad)
+    );
+    inlineSlotsContainer.appendChild(row);
+  }
+}
+
+function labeledSlotField(labelText: string, control: HTMLElement): HTMLElement {
+  const wrap = document.createElement("label");
+  wrap.className = "slot-field";
+  const label = document.createElement("span");
+  label.textContent = labelText;
+  wrap.append(label, control);
+  return wrap;
 }
 
 async function cargarPlano(codigo: string): Promise<void> {
@@ -607,6 +788,133 @@ function buildPayload(): PlanoPayload {
     codigo: codigoInput?.value.trim() ?? "",
     ...base
   };
+}
+
+function buildSeccionPayload(): CrearSeccionPayload | string {
+  const empresaCodigo = empresaInput?.value.trim() || "EMP-DEMO";
+  const codigo = textValue(newSeccionCodigoInput);
+  const nombre = textValue(newSeccionNombreInput);
+  if (!empresaCodigo) return "El código de empresa es obligatorio.";
+  if (!codigo) return "El código de sección es obligatorio.";
+  if (!nombre) return "El nombre de sección es obligatorio.";
+
+  return {
+    empresaCodigo,
+    codigo,
+    nombre,
+    descripcion: nullableText(newSeccionDescripcionInput)
+  };
+}
+
+function buildEstanteriaPayload(): CrearEstanteriaPayload | string {
+  const seccionId = selectedSeccionId();
+  const codigo = textValue(newRackCodigoInput);
+  const nombre = textValue(newRackNombreInput);
+
+  if (!seccionId) return "Selecciona una sección válida antes de crear la estantería.";
+  if (!codigo) return "El código de estantería es obligatorio.";
+  if (!nombre) return "El nombre de estantería es obligatorio.";
+  if (productos.length === 0) return "No hay productos activos para asignar a los slots.";
+
+  const rows = Array.from(inlineSlotsContainer?.querySelectorAll<HTMLElement>(".slot-row") ?? []);
+  if (rows.length === 0) return "La estantería debe tener al menos un slot.";
+
+  const slots = rows.map((row) => {
+    const slotId = row.querySelector<HTMLInputElement>("[data-field='slotId']")?.value.trim() ?? "";
+    const orden = Number(row.querySelector<HTMLInputElement>("[data-field='orden']")?.value);
+    const productoId = Number(row.querySelector<HTMLSelectElement>("[data-field='productoId']")?.value);
+    const cantidadObjetivo = Number(row.querySelector<HTMLInputElement>("[data-field='cantidadObjetivo']")?.value);
+    return { slotId, orden, productoId, cantidadObjetivo };
+  });
+
+  if (slots.some((slot) => !slot.slotId)) return "Todos los slots deben tener identificador.";
+  if (slots.some((slot) => !Number.isFinite(slot.orden) || slot.orden <= 0)) return "Todos los slots deben tener orden mayor que cero.";
+  if (slots.some((slot) => !Number.isFinite(slot.productoId) || slot.productoId <= 0)) return "Todos los slots deben tener producto esperado.";
+  if (slots.some((slot) => !Number.isFinite(slot.cantidadObjetivo) || slot.cantidadObjetivo < 0)) return "La cantidad objetivo no puede ser negativa.";
+
+  const slotIds = new Set<string>();
+  const ordenes = new Set<number>();
+  for (const slot of slots) {
+    const normalizedSlotId = slot.slotId.toLowerCase();
+    if (slotIds.has(normalizedSlotId)) return "No puedes repetir identificadores de slot.";
+    if (ordenes.has(slot.orden)) return "No puedes repetir órdenes de slot.";
+    slotIds.add(normalizedSlotId);
+    ordenes.add(slot.orden);
+  }
+
+  return {
+    seccionId,
+    codigo,
+    nombre,
+    descripcion: nullableText(newRackDescripcionInput),
+    slots
+  };
+}
+
+async function crearSeccionInline(event: SubmitEvent): Promise<void> {
+  event.preventDefault();
+  if (creatingSection) return;
+
+  const payload = buildSeccionPayload();
+  if (typeof payload === "string") {
+    setInlineStatus(sectionCreateStatus, payload, "error");
+    return;
+  }
+
+  creatingSection = true;
+  if (btnCreateSection) btnCreateSection.disabled = true;
+  setInlineStatus(sectionCreateStatus, "Creando sección...", "info");
+
+  try {
+    const created = await fetchJson<SeccionResponse>("/api/secciones", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    formInlineSeccion?.reset();
+    await cargarSecciones(created.id);
+    setMode("zone");
+    setInlineStatus(sectionCreateStatus, "Sección creada y seleccionada. Dibuja su zona en el lienzo.", "ok");
+    setStatus("Sección creada. Arrastra en el lienzo para añadir la zona.", "ok");
+  } catch (err) {
+    setInlineStatus(sectionCreateStatus, err instanceof Error ? err.message : "No se pudo crear la sección.", "error");
+  } finally {
+    creatingSection = false;
+    if (btnCreateSection) btnCreateSection.disabled = false;
+  }
+}
+
+async function crearEstanteriaInline(event: SubmitEvent): Promise<void> {
+  event.preventDefault();
+  if (creatingRack) return;
+
+  const payload = buildEstanteriaPayload();
+  if (typeof payload === "string") {
+    setInlineStatus(rackCreateStatus, payload, "error");
+    return;
+  }
+
+  creatingRack = true;
+  if (btnCreateRack) btnCreateRack.disabled = true;
+  setInlineStatus(rackCreateStatus, "Creando estantería...", "info");
+
+  try {
+    const created = await fetchJson<EstanteriaConfiguracionResponse>("/api/estanterias", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    formInlineRack?.reset();
+    if (newRackSlotCountInput) newRackSlotCountInput.value = "4";
+    renderInlineSlots();
+    await cargarEstanteriasDeSeccion(created.codigo);
+    setMode("rack");
+    setInlineStatus(rackCreateStatus, "Estantería creada y seleccionada. Dibújala dentro de su zona.", "ok");
+    setStatus("Estantería creada. Arrastra dentro de su zona para colocarla.", "ok");
+  } catch (err) {
+    setInlineStatus(rackCreateStatus, err instanceof Error ? err.message : "No se pudo crear la estantería.", "error");
+  } finally {
+    creatingRack = false;
+    if (btnCreateRack) btnCreateRack.disabled = false;
+  }
 }
 
 async function guardarPlano(): Promise<void> {
@@ -805,6 +1113,136 @@ function deleteSelectedElement(): void {
   }
 }
 
+function startZoneDrag(event: PointerEvent, zone: LocalZone): void {
+  if (mode !== "select") return;
+  event.stopPropagation();
+  const start = getPointerCoords(event);
+  selected = { type: "zone", uid: zone.uid };
+  dragging = {
+    type: "zone",
+    uid: zone.uid,
+    startX: start.x,
+    startY: start.y,
+    originalZone: {
+      x: zone.x,
+      y: zone.y,
+      width: zone.width,
+      height: zone.height
+    },
+    originalRacks: racks
+      .filter((rack) => rack.zonaUid === zone.uid)
+      .map((rack) => ({ uid: rack.uid, x: rack.x, y: rack.y })),
+    hasMoved: false
+  };
+  render();
+}
+
+function startRackDrag(event: PointerEvent, rack: LocalRack): void {
+  if (mode !== "select") return;
+  event.stopPropagation();
+  const start = getPointerCoords(event);
+  selected = { type: "rack", uid: rack.uid };
+  dragging = {
+    type: "rack",
+    uid: rack.uid,
+    startX: start.x,
+    startY: start.y,
+    originalRack: {
+      x: rack.x,
+      y: rack.y,
+      width: rack.width,
+      height: rack.height
+    },
+    hasMoved: false
+  };
+  render();
+}
+
+function moveDraggingElement(event: PointerEvent): void {
+  if (!dragging) return;
+  const current = getPointerCoords(event);
+  const deltaX = current.x - dragging.startX;
+  const deltaY = current.y - dragging.startY;
+  if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return;
+  dragging.hasMoved = true;
+
+  if (dragging.type === "zone") {
+    const activeDrag = dragging;
+    const zone = zones.find((item) => item.uid === activeDrag.uid);
+    if (!zone) return;
+    zone.x = activeDrag.originalZone.x + deltaX;
+    zone.y = activeDrag.originalZone.y + deltaY;
+    activeDrag.originalRacks.forEach((originalRack) => {
+      const rack = racks.find((item) => item.uid === originalRack.uid);
+      if (!rack) return;
+      rack.x = originalRack.x + deltaX;
+      rack.y = originalRack.y + deltaY;
+    });
+    render();
+    return;
+  }
+
+  const activeDrag = dragging;
+  const rack = racks.find((item) => item.uid === activeDrag.uid);
+  if (!rack) return;
+  rack.x = activeDrag.originalRack.x + deltaX;
+  rack.y = activeDrag.originalRack.y + deltaY;
+  render();
+}
+
+function finishDraggingElement(): void {
+  if (!dragging) return;
+  const activeDrag = dragging;
+  dragging = null;
+
+  if (!activeDrag.hasMoved) {
+    render();
+    return;
+  }
+
+  suppressNextCanvasClick = true;
+
+  if (activeDrag.type === "zone") {
+    const zone = zones.find((item) => item.uid === activeDrag.uid);
+    if (!zone) return;
+    const boxError = validateBox(zone);
+    const hasRacksOutside = racks.some((rack) => rack.zonaUid === zone.uid && !rackInsideZone(rack, zone));
+    if (boxError || hasRacksOutside) {
+      zone.x = activeDrag.originalZone.x;
+      zone.y = activeDrag.originalZone.y;
+      zone.width = activeDrag.originalZone.width;
+      zone.height = activeDrag.originalZone.height;
+      activeDrag.originalRacks.forEach((originalRack) => {
+        const rack = racks.find((item) => item.uid === originalRack.uid);
+        if (!rack) return;
+        rack.x = originalRack.x;
+        rack.y = originalRack.y;
+      });
+      setStatus(boxError ?? "No puedes mover la zona dejando estanterías fuera.", "error");
+      render();
+      return;
+    }
+    setStatus("Zona movida. Las estanterías asociadas se desplazaron con ella.", "ok");
+    render();
+    return;
+  }
+
+  const rack = racks.find((item) => item.uid === activeDrag.uid);
+  if (!rack) return;
+  const zone = findZoneForRack(rack);
+  if (!zone || !rackInsideZone(rack, zone)) {
+    rack.x = activeDrag.originalRack.x;
+    rack.y = activeDrag.originalRack.y;
+    rack.width = activeDrag.originalRack.width;
+    rack.height = activeDrag.originalRack.height;
+    setStatus("La estantería debe permanecer dentro de su zona.", "error");
+    render();
+    return;
+  }
+  setStatus("Estantería movida.", "ok");
+  render();
+}
+
 function setupDrawing(): void {
   canvas?.addEventListener("pointerdown", (event) => {
     if (mode === "select") return;
@@ -843,6 +1281,14 @@ function bindEvents(): void {
     void cargarEstanteriasDeSeccion();
   });
   estanteriaSelect?.addEventListener("change", updateToolFeedback);
+  formInlineSeccion?.addEventListener("submit", (event) => {
+    void crearSeccionInline(event);
+  });
+  formInlineRack?.addEventListener("submit", (event) => {
+    void crearEstanteriaInline(event);
+  });
+  newRackSlotCountInput?.addEventListener("input", renderInlineSlots);
+  newRackSlotCountInput?.addEventListener("change", renderInlineSlots);
   btnSave?.addEventListener("click", () => {
     void guardarPlano();
   });
@@ -851,11 +1297,17 @@ function bindEvents(): void {
   anchoInput?.addEventListener("change", render);
   altoInput?.addEventListener("change", render);
   canvas?.addEventListener("click", () => {
+    if (suppressNextCanvasClick) {
+      suppressNextCanvasClick = false;
+      return;
+    }
     if (mode === "select") {
       selected = null;
       render();
     }
   });
+  window.addEventListener("pointermove", moveDraggingElement);
+  window.addEventListener("pointerup", finishDraggingElement);
   setupDrawing();
 }
 
@@ -867,7 +1319,7 @@ async function init(): Promise<void> {
 
   bindEvents();
   try {
-    await cargarSecciones();
+    await Promise.all([cargarSecciones(), cargarProductos()]);
     if (isEditMode && codigoInicial) {
       await cargarPlano(codigoInicial);
       setStatus("Plano cargado correctamente.", "ok");

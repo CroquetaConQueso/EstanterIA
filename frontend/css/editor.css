@@ -579,10 +579,9 @@ textarea {
 }
 
 #element-slots-container {
-  max-height: clamp(180px, 28vh, 320px);
-  overflow-y: auto;
-  padding-right: 4px;
-  overscroll-behavior: contain;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .slot-row {

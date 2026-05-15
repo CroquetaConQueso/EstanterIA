@@ -16,6 +16,8 @@ import com.proyectofincurso.estanteria.persistence.repository.EmpresaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConfiguracionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.ProductoRepository;
+import com.proyectofincurso.estanteria.persistence.repository.ProductoProveedorRepository;
+import com.proyectofincurso.estanteria.persistence.repository.ProveedorRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.TrabajadorRepository;
@@ -25,11 +27,13 @@ import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaSlotRequest;
 import com.proyectofincurso.estanteria.web.dto.ActualizarSeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaSlotRequest;
+import com.proyectofincurso.estanteria.web.dto.CrearProductoRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearSeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.EmpresaResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaConfiguracionResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoResponsableResponse;
+import com.proyectofincurso.estanteria.web.dto.ProductoCreadoResponse;
 import com.proyectofincurso.estanteria.web.dto.ProductoResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.ProveedorResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.SeccionResponse;
@@ -41,10 +45,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -59,6 +65,8 @@ public class ModeloOperativoService {
     private final AsignacionProductoSlotRepository asignacionProductoSlotRepository;
     private final SeccionEncargadoRepository seccionEncargadoRepository;
     private final ProductoRepository productoRepository;
+    private final ProductoProveedorRepository productoProveedorRepository;
+    private final ProveedorRepository proveedorRepository;
     private final TrabajadorRepository trabajadorRepository;
 
     @Transactional(readOnly = true)
@@ -339,6 +347,48 @@ public class ModeloOperativoService {
                 .toList();
     }
 
+    @Transactional
+    public ProductoCreadoResponse crearProducto(CrearProductoRequest request) {
+        String codigoInterno = normalizar(request.codigoInterno());
+        if (productoRepository.existsByCodigoInternoIgnoreCase(codigoInterno)) {
+            throw ApiException.conflict(
+                    "PRODUCTO_CODIGO_DUPLICADO",
+                    "Ya existe un producto con ese codigo interno"
+            );
+        }
+
+        Instant ahora = Instant.now();
+        Producto producto = new Producto();
+        producto.setProductoUuid(UUID.randomUUID());
+        producto.setCodigoInterno(codigoInterno);
+        producto.setNombre(normalizar(request.nombre()));
+        producto.setDescripcion(normalizarNullable(request.descripcion()));
+        producto.setActivo(true);
+        producto.setCreatedAt(ahora);
+        producto.setUpdatedAt(ahora);
+
+        Producto productoGuardado = productoRepository.save(producto);
+        ProductoProveedor productoProveedor = null;
+
+        boolean vincularProveedorDemo = request.vincularProveedorDemo() == null || request.vincularProveedorDemo();
+        if (vincularProveedorDemo) {
+            Optional<Proveedor> proveedorDemo = proveedorRepository.findByCodigoAndActivoTrue("PROV-DEMO");
+            if (proveedorDemo.isPresent()) {
+                productoProveedor = new ProductoProveedor();
+                productoProveedor.setProducto(productoGuardado);
+                productoProveedor.setProveedor(proveedorDemo.get());
+                productoProveedor.setClaveProductoProveedor("PROV-DEMO-" + codigoInterno);
+                productoProveedor.setStockDisponible(request.stockDisponible() == null || request.stockDisponible());
+                productoProveedor.setActivo(true);
+                productoProveedor.setCreatedAt(ahora);
+                productoProveedor.setUpdatedAt(ahora);
+                productoProveedorRepository.save(productoProveedor);
+            }
+        }
+
+        return toProductoCreadoResponse(productoGuardado, productoProveedor);
+    }
+
     @Transactional(readOnly = true)
     public EstanteriaConfiguracionResponse obtenerConfiguracionDeEstanteria(String codigo) {
         Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoAndActivaTrue(codigo)
@@ -552,7 +602,22 @@ public class ModeloOperativoService {
                 producto.getProductoUuid(),
                 producto.getCodigoInterno(),
                 producto.getNombre(),
-                producto.getDescripcion()
+                producto.getDescripcion(),
+                producto.getActivo()
+        );
+    }
+
+    private ProductoCreadoResponse toProductoCreadoResponse(Producto producto, ProductoProveedor productoProveedor) {
+        return new ProductoCreadoResponse(
+                producto.getId(),
+                producto.getProductoUuid(),
+                producto.getCodigoInterno(),
+                producto.getNombre(),
+                producto.getDescripcion(),
+                producto.getActivo(),
+                productoProveedor != null ? toProveedorResumenResponse(productoProveedor.getProveedor()) : null,
+                productoProveedor != null ? productoProveedor.getStockDisponible() : null,
+                productoProveedor != null ? stockMensaje(productoProveedor.getStockDisponible()) : "Producto creado sin proveedor demo vinculado"
         );
     }
 

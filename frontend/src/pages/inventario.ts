@@ -1,4 +1,4 @@
-import { authFetch } from "../lib/api";
+import { authFetch, isStructuralAdmin } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
 
 requireAuth();
@@ -89,6 +89,16 @@ type ApiErrorResponse = {
   message?: string;
   error?: string;
   status?: number;
+  fieldErrors?: Record<string, string>;
+};
+
+type ProductoCreadoResponse = {
+  id: number;
+  codigoInterno: string;
+  nombre: string;
+  proveedor?: ProveedorResumenResponse | null;
+  stockDisponible?: boolean | null;
+  stockMensaje?: string | null;
 };
 
 const CODIGO_EMPRESA_DEMO = "EMP-DEMO";
@@ -97,6 +107,16 @@ const seccionSelect = document.querySelector<HTMLSelectElement>("#f-seccion");
 const estanteriaSelect = document.querySelector<HTMLSelectElement>("#f-estanteria");
 const busquedaInput = document.querySelector<HTMLInputElement>("#f-busqueda");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar-inv");
+const btnOpenProductDialog = document.querySelector<HTMLButtonElement>("#btn-open-product-dialog");
+const productDialog = document.querySelector<HTMLDialogElement>("#product-dialog");
+const btnCloseProductDialog = document.querySelector<HTMLButtonElement>("#btn-close-product-dialog");
+const productForm = document.querySelector<HTMLFormElement>("#product-form");
+const productCodeInput = document.querySelector<HTMLInputElement>("#product-code");
+const productNameInput = document.querySelector<HTMLInputElement>("#product-name");
+const productDescriptionInput = document.querySelector<HTMLTextAreaElement>("#product-description");
+const productLinkDemoProviderInput = document.querySelector<HTMLInputElement>("#product-link-demo-provider");
+const productStockSelect = document.querySelector<HTMLSelectElement>("#product-stock");
+const productFormStatus = document.querySelector<HTMLElement>("#product-form-status");
 
 const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-inventario");
 const detalleResumen = document.querySelector<HTMLUListElement>("#detalle-inv-resumen");
@@ -108,6 +128,11 @@ let secciones: SeccionResponse[] = [];
 let estanterias: EstanteriaResumenResponse[] = [];
 let configuracionActual: EstanteriaConfiguracionResponse | null = null;
 let selectedSlotId: number | null = null;
+const puedeCrearProductos = isStructuralAdmin();
+
+if (!puedeCrearProductos && btnOpenProductDialog) {
+  btnOpenProductDialog.hidden = true;
+}
 
 function textoSeguro(value: string | number | boolean | null | undefined, fallback = "No disponible"): string {
   if (value === null || value === undefined || value === "") return fallback;
@@ -194,8 +219,14 @@ async function parseErrorResponse(response: Response): Promise<ApiErrorResponse 
 }
 
 function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): string {
+  if (data?.fieldErrors && Object.keys(data.fieldErrors).length > 0) {
+    return Object.values(data.fieldErrors).join(" ");
+  }
   if (data?.message) return data.message;
+  if (status === 400) return "Revisa los datos del producto";
+  if (status === 403) return "Solo un administrador puede crear productos";
   if (status === 404) return "No se encontraron datos operativos";
+  if (status === 409) return "Ya existe un producto con ese codigo interno";
   if (status >= 500) return "Error interno del servidor";
   return `Error HTTP ${status}`;
 }
@@ -206,6 +237,24 @@ async function fetchJson<T>(url: string): Promise<T> {
     headers: {
       "Accept": "application/json"
     }
+  });
+
+  if (!response.ok) {
+    const errorData = await parseErrorResponse(response);
+    throw new Error(getBackendErrorMessage(errorData, response.status));
+  }
+
+  return response.json() as Promise<T>;
+}
+
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const response = await authFetch(url, {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
   });
 
   if (!response.ok) {
@@ -247,6 +296,12 @@ function setDetalleMessage(message: string): void {
   clearList(detalleSlots);
   clearList(detalleAsignacion);
   addListItem(detalleResumen, "Estado", message);
+}
+
+function setProductFormStatus(message = "", type: "info" | "success" | "error" = "info"): void {
+  if (!productFormStatus) return;
+  productFormStatus.textContent = message;
+  productFormStatus.dataset.type = type;
 }
 
 function renderSecciones(): void {
@@ -458,6 +513,60 @@ async function cargarConfiguracion(codigoEstanteria: string): Promise<void> {
   renderDetalle(configuracionActual.slots[0]);
 }
 
+function abrirDialogoProducto(): void {
+  if (!puedeCrearProductos) {
+    setDetalleMessage("Solo un administrador puede crear productos");
+    return;
+  }
+  productForm?.reset();
+  if (productLinkDemoProviderInput) productLinkDemoProviderInput.checked = true;
+  if (productStockSelect) productStockSelect.value = "true";
+  setProductFormStatus();
+  productDialog?.showModal();
+}
+
+function cerrarDialogoProducto(): void {
+  productDialog?.close();
+}
+
+async function crearProductoDesdeFormulario(): Promise<void> {
+  if (!puedeCrearProductos) {
+    setProductFormStatus("Solo un administrador puede crear productos", "error");
+    return;
+  }
+
+  const codigoInterno = productCodeInput?.value.trim() ?? "";
+  const nombre = productNameInput?.value.trim() ?? "";
+  const descripcion = productDescriptionInput?.value.trim() ?? "";
+
+  if (!codigoInterno || !nombre) {
+    setProductFormStatus("Código interno y nombre son obligatorios.", "error");
+    return;
+  }
+
+  setProductFormStatus("Creando producto...", "info");
+
+  const producto = await postJson<ProductoCreadoResponse>("/api/productos", {
+    codigoInterno,
+    nombre,
+    descripcion: descripcion || null,
+    vincularProveedorDemo: productLinkDemoProviderInput?.checked ?? true,
+    stockDisponible: productStockSelect?.value !== "false"
+  });
+
+  const stock = producto.stockMensaje ?? "Producto creado sin proveedor demo vinculado";
+  setProductFormStatus(`${producto.codigoInterno} creado. ${stock}. Ya puede usarse en el editor.`, "success");
+
+  const codigoEstanteria = estanteriaSelect?.value ?? "";
+  if (codigoEstanteria) {
+    await cargarConfiguracion(codigoEstanteria);
+  }
+
+  window.setTimeout(() => {
+    cerrarDialogoProducto();
+  }, 900);
+}
+
 async function cargarEstanteriasDeSeccion(seccionId: number): Promise<void> {
   setRowMessage("Cargando estanter\u00edas...");
   setDetalleMessage("Cargando estanter\u00edas de la secci\u00f3n...");
@@ -535,6 +644,15 @@ busquedaInput?.addEventListener("input", () => {
 btnLimpiar?.addEventListener("click", () => {
   if (busquedaInput) busquedaInput.value = "";
   renderTabla();
+});
+
+btnOpenProductDialog?.addEventListener("click", abrirDialogoProducto);
+btnCloseProductDialog?.addEventListener("click", cerrarDialogoProducto);
+productForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  void crearProductoDesdeFormulario().catch((err: unknown) => {
+    setProductFormStatus(err instanceof Error ? err.message : "No se pudo crear el producto", "error");
+  });
 });
 
 tbody?.addEventListener("click", (event) => {

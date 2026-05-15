@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -34,12 +35,14 @@ public class SeccionController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public SeccionResponse crearSeccion(@Valid @RequestBody CrearSeccionRequest request) {
         return modeloOperativoService.crearSeccion(request);
     }
 
     @PatchMapping(value = "/{seccionId}", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public SeccionResponse actualizarSeccion(@PathVariable Long seccionId,
                                              @Valid @RequestBody ActualizarSeccionRequest request) {
         return modeloOperativoService.actualizarSeccion(seccionId, request);
@@ -47,6 +50,7 @@ public class SeccionController {
 
     @PatchMapping(value = "/{seccionId}/responsable-principal", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public PlanoResponsableResponse asignarResponsablePrincipal(@PathVariable Long seccionId,
                                                                 @Valid @RequestBody AsignarResponsablePrincipalRequest request) {
         return modeloOperativoService.asignarResponsablePrincipal(seccionId, request.trabajadorId());

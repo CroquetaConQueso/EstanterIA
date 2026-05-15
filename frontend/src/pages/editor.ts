@@ -1,5 +1,6 @@
 ﻿import { authFetch } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
+import { isStructuralAdmin } from "../lib/api";
 
 requireAuth();
 
@@ -223,6 +224,7 @@ type DragState =
 const params = new URLSearchParams(window.location.search);
 const codigoInicial = params.get("codigo");
 const isEditMode = Boolean(codigoInicial);
+const puedeConfigurarEstructura = isStructuralAdmin();
 
 const editorModeLabel = document.querySelector<HTMLElement>("#editor-mode-label");
 const editorTitle = document.querySelector<HTMLElement>("#editor-title");
@@ -313,6 +315,33 @@ function setStatus(message: string, kind: "info" | "ok" | "error" = "info"): voi
   if (!editorStatus) return;
   editorStatus.textContent = message;
   editorStatus.dataset.kind = kind;
+}
+
+function structuralPermissionMessage(): string {
+  return "Solo un administrador puede modificar la configuración estructural.";
+}
+
+function requireStructuralAdmin(): boolean {
+  if (puedeConfigurarEstructura) return true;
+  setStatus(structuralPermissionMessage(), "error");
+  setInlineStatus(elementEditStatus, structuralPermissionMessage(), "error");
+  return false;
+}
+
+function applyStructuralPermissions(): void {
+  if (puedeConfigurarEstructura) return;
+
+  setStatus("Solo un administrador puede crear o editar planos.", "error");
+  btnSave?.setAttribute("disabled", "true");
+  btnOpenSectionDialog?.setAttribute("disabled", "true");
+  btnOpenRackDialog?.setAttribute("disabled", "true");
+  btnCreateSection?.setAttribute("disabled", "true");
+  btnCreateRack?.setAttribute("disabled", "true");
+  btnApplyElement?.setAttribute("disabled", "true");
+  btnDeleteElement?.setAttribute("disabled", "true");
+  document.querySelectorAll<HTMLButtonElement>(".tool").forEach((button) => {
+    if (button.dataset.mode !== "select") button.disabled = true;
+  });
 }
 
 function setInlineStatus(element: HTMLElement | null, message: string, kind: "info" | "ok" | "error" = "info"): void {
@@ -648,7 +677,7 @@ function backendErrorMessage(data: ApiErrorResponse | null, status: number): str
   if (fieldMessage) return fieldMessage;
   if (data?.message) return data.message;
   if (status === 401) return "La sesión no es válida o ha caducado.";
-  if (status === 403) return "No tienes permisos para realizar esta acción.";
+  if (status === 403) return structuralPermissionMessage();
   if (status === 404) return "No se encontró el recurso solicitado.";
   if (status === 409) return "Ya existe un recurso con esos datos.";
   if (status >= 500) return "Error interno del servidor.";
@@ -775,6 +804,9 @@ function renderTrabajadorOptions(select: HTMLSelectElement | null, selectedId?: 
 }
 
 async function asignarResponsablePrincipal(seccionId: number, trabajadorId: number): Promise<PlanoResponsableResponse> {
+  if (!puedeConfigurarEstructura) {
+    throw new Error(structuralPermissionMessage());
+  }
   const responsable = await fetchJson<PlanoResponsableResponse>(`/api/secciones/${seccionId}/responsable-principal`, {
     method: "PATCH",
     body: JSON.stringify({ trabajadorId })
@@ -1143,6 +1175,7 @@ function buildActualizarEstanteriaPayload(): ActualizarEstanteriaPayload | strin
 
 async function crearSeccionInline(event: SubmitEvent): Promise<void> {
   event.preventDefault();
+  if (!requireStructuralAdmin()) return;
   if (creatingSection) return;
 
   const payload = buildSeccionPayload();
@@ -1181,6 +1214,7 @@ async function crearSeccionInline(event: SubmitEvent): Promise<void> {
 
 async function crearEstanteriaInline(event: SubmitEvent): Promise<void> {
   event.preventDefault();
+  if (!requireStructuralAdmin()) return;
   if (creatingRack) return;
 
   const payload = buildEstanteriaPayload();
@@ -1216,6 +1250,7 @@ async function crearEstanteriaInline(event: SubmitEvent): Promise<void> {
 }
 
 async function guardarPlano(): Promise<void> {
+  if (!requireStructuralAdmin()) return;
   if (saving) return;
 
   const error = validateMetadata();
@@ -1262,6 +1297,7 @@ function createBoxFromDrag(startX: number, startY: number, endX: number, endY: n
 }
 
 function addZone(box: { x: number; y: number; width: number; height: number }): void {
+  if (!requireStructuralAdmin()) return;
   const seccionId = Number(seccionSelect?.value);
   const seccion = secciones.find((item) => item.id === seccionId);
   if (!seccion) {
@@ -1293,6 +1329,7 @@ function addZone(box: { x: number; y: number; width: number; height: number }): 
 }
 
 function addRack(box: { x: number; y: number; width: number; height: number }): void {
+  if (!requireStructuralAdmin()) return;
   const seccionId = Number(seccionSelect?.value);
   const estanteriaCodigo = estanteriaSelect?.value ?? "";
   const estanteria = estanteriasSeccion.find((item) => item.codigo === estanteriaCodigo);
@@ -1328,6 +1365,7 @@ function addRack(box: { x: number; y: number; width: number; height: number }): 
 }
 
 function applySelectedElement(): void {
+  if (!requireStructuralAdmin()) return;
   const box = {
     x: numberValue(elementX),
     y: numberValue(elementY),
@@ -1455,6 +1493,7 @@ async function persistirEstanteria(rack: LocalRack): Promise<void> {
 }
 
 function deleteSelectedElement(): void {
+  if (!requireStructuralAdmin()) return;
   const zone = selectedZone();
   if (zone) {
     if (racks.some((rack) => rack.zonaUid === zone.uid)) {
@@ -1479,6 +1518,10 @@ function deleteSelectedElement(): void {
 
 function startZoneDrag(event: PointerEvent, zone: LocalZone): void {
   if (mode !== "select") return;
+  if (!puedeConfigurarEstructura) {
+    setStatus(structuralPermissionMessage(), "error");
+    return;
+  }
   event.stopPropagation();
   const start = getPointerCoords(event);
   selected = { type: "zone", uid: zone.uid };
@@ -1503,6 +1546,10 @@ function startZoneDrag(event: PointerEvent, zone: LocalZone): void {
 
 function startRackDrag(event: PointerEvent, rack: LocalRack): void {
   if (mode !== "select") return;
+  if (!puedeConfigurarEstructura) {
+    setStatus(structuralPermissionMessage(), "error");
+    return;
+  }
   event.stopPropagation();
   const start = getPointerCoords(event);
   selected = { type: "rack", uid: rack.uid };
@@ -1610,6 +1657,7 @@ function finishDraggingElement(): void {
 function setupDrawing(): void {
   canvas?.addEventListener("pointerdown", (event) => {
     if (mode === "select") return;
+    if (!requireStructuralAdmin()) return;
     const start = getPointerCoords(event);
     const draft = document.createElement("div");
     draft.className = "draft-node";
@@ -1695,6 +1743,7 @@ async function init(): Promise<void> {
   if (empresaInput) empresaInput.value = "EMP-DEMO";
 
   bindEvents();
+  applyStructuralPermissions();
   try {
     await Promise.all([cargarSecciones(), cargarProductos(), cargarTrabajadoresActivos()]);
     if (isEditMode && codigoInicial) {
@@ -1704,9 +1753,11 @@ async function init(): Promise<void> {
       setStatus("Editor listo para crear un plano nuevo.", "ok");
     }
     render();
+    applyStructuralPermissions();
   } catch (err) {
     setStatus(err instanceof Error ? err.message : "No se pudo inicializar el editor.", "error");
     render();
+    applyStructuralPermissions();
   }
 }
 

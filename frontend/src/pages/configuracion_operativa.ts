@@ -1,4 +1,4 @@
-import { authFetch } from "../lib/api";
+import { authFetch, isStructuralAdmin } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
 
 requireAuth();
@@ -54,6 +54,7 @@ type CrearEstanteriaPayload = {
 };
 
 const EMPRESA_CODIGO = "EMP-DEMO";
+const puedeConfigurarEstructura = isStructuralAdmin();
 
 const formSeccion = document.querySelector<HTMLFormElement>("#form-seccion");
 const seccionCodigoInput = document.querySelector<HTMLInputElement>("#seccion-codigo");
@@ -84,6 +85,27 @@ function setStatus(element: HTMLElement | null, text: string, kind: "info" | "ok
   if (!element) return;
   element.textContent = text;
   element.dataset.kind = kind;
+}
+
+function structuralPermissionMessage(): string {
+  return "Solo un administrador puede modificar la configuración estructural.";
+}
+
+function disableForm(form: HTMLFormElement | null): void {
+  if (!form) return;
+  Array.from(form.elements).forEach((element) => {
+    if ("disabled" in element) {
+      (element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement).disabled = true;
+    }
+  });
+}
+
+function applyStructuralPermissions(): void {
+  if (puedeConfigurarEstructura) return;
+  disableForm(formSeccion);
+  disableForm(formEstanteria);
+  setStatus(seccionStatus, structuralPermissionMessage(), "error");
+  setStatus(estanteriaStatus, structuralPermissionMessage(), "error");
 }
 
 function option(value: string, text: string): HTMLOptionElement {
@@ -117,7 +139,7 @@ function backendErrorMessage(data: ApiErrorResponse | null, status: number): str
   if (data?.message) return data.message;
   if (status === 400) return "Revisa los datos del formulario.";
   if (status === 401) return "La sesion no es valida o ha caducado.";
-  if (status === 403) return "No tienes permisos para realizar esta accion.";
+  if (status === 403) return structuralPermissionMessage();
   if (status === 404) return "No se encontro el recurso solicitado.";
   if (status === 409) return "Ya existe un recurso con esos datos.";
   if (status >= 500) return "El servidor no pudo completar la operacion.";
@@ -339,6 +361,10 @@ function buildEstanteriaPayload(): CrearEstanteriaPayload | string {
 
 async function crearSeccion(event: SubmitEvent): Promise<void> {
   event.preventDefault();
+  if (!puedeConfigurarEstructura) {
+    setStatus(seccionStatus, structuralPermissionMessage(), "error");
+    return;
+  }
   if (savingSeccion) return;
 
   const payload = buildSeccionPayload();
@@ -366,6 +392,10 @@ async function crearSeccion(event: SubmitEvent): Promise<void> {
 
 async function crearEstanteria(event: SubmitEvent): Promise<void> {
   event.preventDefault();
+  if (!puedeConfigurarEstructura) {
+    setStatus(estanteriaStatus, structuralPermissionMessage(), "error");
+    return;
+  }
   if (savingEstanteria) return;
 
   const payload = buildEstanteriaPayload();
@@ -413,15 +443,21 @@ function bindEvents(): void {
 
 async function init(): Promise<void> {
   bindEvents();
+  applyStructuralPermissions();
   try {
     await Promise.all([cargarSecciones(), cargarProductos()]);
-    setStatus(seccionStatus, "Secciones cargadas.", "ok");
-    setStatus(estanteriaStatus, "Configuracion lista.", "ok");
+    if (puedeConfigurarEstructura) {
+      setStatus(seccionStatus, "Secciones cargadas.", "ok");
+      setStatus(estanteriaStatus, "Configuracion lista.", "ok");
+    } else {
+      applyStructuralPermissions();
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "No se pudo cargar la configuracion operativa.";
     setStatus(seccionStatus, message, "error");
     setStatus(estanteriaStatus, message, "error");
     renderSlots();
+    applyStructuralPermissions();
   }
 }
 

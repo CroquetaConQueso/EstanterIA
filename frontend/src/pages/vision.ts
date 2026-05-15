@@ -60,7 +60,6 @@ const notasInput = document.querySelector<HTMLTextAreaElement>("#vision-notas");
 
 const errorEl = document.querySelector<HTMLElement>("#vision-error");
 const successEl = document.querySelector<HTMLElement>("#vision-success");
-const out = document.querySelector<HTMLPreElement>("#vision-out");
 
 const previewBox = document.querySelector<HTMLElement>("#preview-box");
 const previewShelf = document.querySelector<HTMLElement>("#preview-shelf");
@@ -85,11 +84,6 @@ const btnReset = document.querySelector<HTMLButtonElement>("#btn-reset");
 
 const visionStatusText = document.querySelector<HTMLElement>("#vision-status-text");
 const visionStatusChip = document.querySelector<HTMLElement>("#vision-status-chip");
-
-function show(obj: unknown): void {
-  if (!out) return;
-  out.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
-}
 
 function setError(msg: string | null): void {
   if (!errorEl) return;
@@ -327,7 +321,6 @@ async function runVision(payload: VisionRequest): Promise<VisionResponse> {
 function resetView(): void {
   setError(null);
   setSuccess(null);
-  show("Sin actividad todavía.");
   setPreview({ estanteriaCodigo: "", imagePath: "" });
   setSummary(null);
   setResultMeta({ id: undefined, createdAt: null, resultadoVisual: null });
@@ -370,10 +363,6 @@ form?.addEventListener("submit", async (e: SubmitEvent) => {
 
   try {
     setOperationalStatus("running", "La inspección visual está en ejecución.");
-    show({
-      endpoint: `/api/vision/inspeccionar/${payload.estanteriaCodigo}`,
-      body: payload
-    });
 
     const result = await runVision(payload);
     const revisable = isResultadoRevisable(result);
@@ -383,7 +372,6 @@ form?.addEventListener("submit", async (e: SubmitEvent) => {
     setSummary(result.resultadoVisual);
     setResultMeta(result);
     toggleNextLinks(true, revisable, result.id);
-    show(result);
 
     if (result.id) sessionStorage.setItem("nuevaInspeccionId", String(result.id));
 
@@ -395,10 +383,6 @@ form?.addEventListener("submit", async (e: SubmitEvent) => {
   } catch (err) {
     setError(err instanceof Error ? err.message : "No se pudo completar la inspección visual");
     setOperationalStatus("error", "Se produjo un error durante la ejecución del flujo de visión.");
-    show({
-      error: "VISION_EXECUTION_ERROR",
-      detail: err instanceof Error ? err.message : "Error desconocido"
-    });
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;

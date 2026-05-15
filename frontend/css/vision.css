@@ -452,25 +452,6 @@ button, input, select, textarea {
   gap: 16px;
 }
 
-.debug-shell {
-  background: var(--black);
-  color: var(--white);
-  box-shadow: var(--shadow-red);
-}
-
-.debug-box {
-  margin: 0;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.9rem;
-  color: var(--gold);
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  background: rgba(0,0,0,0.5);
-  padding: 16px;
-  border: var(--border-light);
-  border-color: var(--muted);
-}
-
 .foot {
   text-align: center;
   padding: 40px;
@@ -496,17 +477,8 @@ button, input, select, textarea {
   pointer-events: none;
 }
 
-.debug-box,
-.debug-box * {
-  text-transform: none !important;
-}
-
 input::placeholder,
 textarea::placeholder {
-  text-transform: none;
-}
-
-#vision-out {
   text-transform: none;
 }
 

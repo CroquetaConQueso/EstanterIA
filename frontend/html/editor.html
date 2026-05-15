@@ -38,8 +38,8 @@
       <p class="eyebrow" id="editor-mode-label">Editor persistente</p>
       <h1 id="editor-title">Crear plano 2D</h1>
       <p>
-        Crea secciones y estanterías, dibuja el layout 2D y guarda el resultado
-        persistido para verlo después en Planos.
+        Configura el plano, dibuja zonas y estanterías, ajusta el elemento seleccionado
+        y guarda el layout para verlo en Planos.
       </p>
     </div>
     <div class="toolbar">
@@ -50,7 +50,7 @@
 
   <div class="status" id="editor-status" role="status">Preparando editor...</div>
 
-  <section class="layout">
+  <section class="editor-grid">
     <aside class="panel side-panel">
       <section class="side-block">
         <h2>Datos del plano</h2>
@@ -167,8 +167,7 @@
       </section>
     </aside>
 
-    <section class="main-panel">
-      <section class="panel canvas-panel">
+    <section class="panel canvas-panel">
         <div class="canvas-head">
           <div>
             <h2>Lienzo del plano</h2>
@@ -181,9 +180,9 @@
             <span class="empty-canvas">Sin elementos dibujados</span>
           </div>
         </div>
-      </section>
+    </section>
 
-      <section class="panel detail-panel">
+    <aside class="panel detail-panel">
         <div>
           <h2>Elemento seleccionado</h2>
           <p id="selection-summary">No hay ningún elemento seleccionado.</p>
@@ -239,9 +238,9 @@
             <button class="btn danger" id="btn-delete-element" type="button">Eliminar elemento</button>
           </div>
         </form>
-      </section>
+    </aside>
 
-      <section class="panel lists-panel">
+    <section class="panel lists-panel">
         <div>
           <h2>Zonas</h2>
           <ul id="zone-list" class="entity-list"></ul>
@@ -250,7 +249,6 @@
           <h2>Estanterías colocadas</h2>
           <ul id="rack-list" class="entity-list"></ul>
         </div>
-      </section>
     </section>
   </section>
 </main>

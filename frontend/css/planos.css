@@ -182,25 +182,6 @@ button {
   flex-wrap: wrap;
 }
 
-.toolbar-select {
-  display: grid;
-  gap: 6px;
-  color: var(--black);
-  font-size: 0.78rem;
-  letter-spacing: 1px;
-}
-
-.toolbar-select select {
-  min-height: 48px;
-  min-width: 260px;
-  border: var(--border-heavy);
-  background: var(--white);
-  color: var(--black);
-  box-shadow: 4px 4px 0 var(--black);
-  padding: 0 14px;
-  font: inherit;
-}
-
 .layout {
   display: grid;
   grid-template-columns: 330px minmax(0, 1fr);
@@ -305,6 +286,42 @@ button {
   gap: 18px;
   align-items: flex-start;
   margin-bottom: 18px;
+}
+
+.current-plan {
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: end;
+  width: 100%;
+}
+
+.plan-selector {
+  display: grid;
+  gap: 8px;
+  color: var(--black);
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+}
+
+.plan-selector span {
+  display: inline-flex;
+  width: max-content;
+  background: var(--black);
+  color: var(--gold);
+  border: var(--border-light);
+  padding: 4px 8px;
+}
+
+.plan-selector select {
+  min-height: 52px;
+  width: 100%;
+  border: var(--border-heavy);
+  background: var(--gold);
+  color: var(--black);
+  box-shadow: 4px 4px 0 var(--black);
+  padding: 0 14px;
+  font: inherit;
 }
 
 .status-pill {
@@ -551,9 +568,14 @@ button {
   .inner,
   .left,
   .page-head,
-  .card-head {
+  .card-head,
+  .current-plan {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .current-plan {
+    display: flex;
   }
 
   .layout,

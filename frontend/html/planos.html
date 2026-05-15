@@ -38,17 +38,11 @@
       <p class="eyebrow">Lectura espacial</p>
       <h1>Plano operativo 2D</h1>
       <p>
-        Vista persistida de zonas y estanterías, enriquecida con la última inspección visual,
-        slots configurados y alertas abiertas.
+        Selecciona un plano persistido, revisa sus zonas y estanterías, y consulta el estado visual
+        de sus slots con alertas abiertas.
       </p>
     </div>
     <div class="toolbar">
-      <label class="toolbar-select">
-        Plano
-        <select id="plano-select">
-          <option value="">Cargando planos...</option>
-        </select>
-      </label>
       <a class="btn primary" id="btn-crear-plano" href="editor.html">Crear plano</a>
       <a class="btn ghost" id="btn-editar-plano" href="editor.html?codigo=PLANO-DEMO">Editar plano</a>
       <a class="btn" href="inspecciones.html">Ver inspecciones</a>
@@ -80,9 +74,17 @@
     <section class="col-main">
       <div class="card canvas-card">
         <div class="card-head">
-          <div>
-            <h2 id="titulo-plano">PLANO-DEMO</h2>
-            <p id="subtitulo-plano">Cargando plano operativo...</p>
+          <div class="current-plan">
+            <label class="plan-selector" for="plano-select">
+              <span>Plano actual</span>
+              <select id="plano-select">
+                <option value="">Cargando planos...</option>
+              </select>
+            </label>
+            <div>
+              <h2 id="titulo-plano">PLANO-DEMO</h2>
+              <p id="subtitulo-plano">Cargando plano operativo...</p>
+            </div>
           </div>
           <span class="status-pill" id="estado-carga">Cargando</span>
         </div>

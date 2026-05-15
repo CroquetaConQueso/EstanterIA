@@ -336,7 +336,7 @@ textarea {
 
 .editor-workspace {
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(240px, 260px) minmax(640px, 1fr) minmax(360px, 400px);
   gap: 18px;
   align-items: start;
 }
@@ -366,6 +366,10 @@ textarea {
   margin-top: 16px;
 }
 
+.tool-config .btn {
+  padding-inline: 10px;
+}
+
 .tool-feedback:not(:empty) {
   margin: 12px 0 0;
   padding: 12px;
@@ -379,6 +383,7 @@ textarea {
   min-width: 0;
   padding: 18px;
   align-self: start;
+  min-height: calc(100vh - 112px);
 }
 
 .canvas-head {
@@ -404,13 +409,14 @@ textarea {
   padding: 16px;
   box-shadow: var(--shadow-red);
   overflow: auto;
+  min-height: 640px;
 }
 
 .editor-canvas {
   position: relative;
-  min-width: 760px;
+  min-width: 720px;
   width: 100%;
-  min-height: 560px;
+  min-height: 600px;
   background:
     linear-gradient(rgba(244,240,236,0.88), rgba(244,240,236,0.88)),
     repeating-linear-gradient(0deg, transparent 0, transparent 34px, rgba(17,17,17,0.12) 34px, rgba(17,17,17,0.12) 36px),
@@ -500,6 +506,7 @@ textarea {
   display: grid;
   gap: 14px;
   min-height: 0;
+  align-content: start;
 }
 
 .element-form {
@@ -511,7 +518,7 @@ textarea {
 }
 
 .geometry-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .inline-status:not(:empty) {
@@ -526,19 +533,24 @@ textarea {
 .lists-panel {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 12px;
   margin-top: 18px;
   padding-top: 16px;
   border-top: var(--border-light);
 }
 
+.lists-panel h2 {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
 .entity-list {
   list-style: none;
   display: grid;
-  gap: 10px;
+  gap: 8px;
   padding: 0;
   margin: 0;
-  max-height: 180px;
+  max-height: clamp(120px, 18vh, 190px);
   overflow-y: auto;
   padding-right: 4px;
   overscroll-behavior: contain;
@@ -547,12 +559,14 @@ textarea {
 .entity-list li {
   border: var(--border-light);
   background: var(--paper);
-  padding: 12px;
+  padding: 10px;
   box-shadow: 3px 3px 0 var(--black);
   cursor: pointer;
   font-family: 'Courier New', Courier, monospace;
   font-weight: 800;
   text-transform: none;
+  font-size: 0.82rem;
+  line-height: 1.25;
 }
 
 .entity-list li.is-active {
@@ -565,7 +579,7 @@ textarea {
 }
 
 #element-slots-container {
-  max-height: clamp(180px, 30vh, 360px);
+  max-height: clamp(180px, 28vh, 320px);
   overflow-y: auto;
   padding-right: 4px;
   overscroll-behavior: contain;
@@ -573,7 +587,7 @@ textarea {
 
 .slot-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   border: var(--border-light);
   background: var(--paper);
@@ -656,11 +670,7 @@ textarea {
 
 @media (max-width: 1280px) {
   .editor-workspace {
-    grid-template-columns: 220px minmax(0, 1fr) 320px;
-  }
-
-  .geometry-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(230px, 250px) minmax(600px, 1fr) minmax(340px, 380px);
   }
 }
 
@@ -692,6 +702,11 @@ textarea {
     overflow: visible;
   }
 
+  .canvas-panel,
+  .canvas-shell {
+    min-height: 0;
+  }
+
   .tool-buttons {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -720,5 +735,9 @@ textarea {
   .editor-canvas {
     min-width: 620px;
     min-height: 460px;
+  }
+
+  .slot-row {
+    grid-template-columns: 1fr;
   }
 }

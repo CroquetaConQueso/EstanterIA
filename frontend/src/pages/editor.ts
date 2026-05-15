@@ -256,6 +256,7 @@ const elementOrientationField = document.querySelector<HTMLElement>("#element-or
 const elementOrientation = document.querySelector<HTMLSelectElement>("#element-orientation");
 const elementResponsibleField = document.querySelector<HTMLElement>("#element-responsible-field");
 const elementResponsible = document.querySelector<HTMLSelectElement>("#element-responsible");
+const elementResponsibleNote = document.querySelector<HTMLElement>("#element-responsible-note");
 const elementSlotsField = document.querySelector<HTMLElement>("#element-slots-field");
 const elementSlotsContainer = document.querySelector<HTMLElement>("#element-slots-container");
 const elementEditStatus = document.querySelector<HTMLElement>("#element-edit-status");
@@ -580,6 +581,7 @@ function renderSelectionPanel(): void {
     setText(selectionSummary, "No hay ningún elemento seleccionado.");
     formElemento?.classList.remove("is-visible");
     if (elementResponsibleField) elementResponsibleField.style.display = "none";
+    setText(elementResponsibleNote, "");
     if (elementEditStatus) elementEditStatus.textContent = "";
     return;
   }
@@ -597,13 +599,18 @@ function renderSelectionPanel(): void {
     if (elementOrientationField) elementOrientationField.style.display = "none";
     if (elementResponsibleField) elementResponsibleField.style.display = "grid";
     renderTrabajadorOptions(elementResponsible, responsablePrincipalPorSeccionId.get(zone.seccionId) ?? null);
+    setText(elementResponsibleNote, trabajadoresActivos.length === 0
+      ? "No hay trabajadores activos disponibles; puedes guardar la zona sin responsable."
+      : "El responsable se guarda en la sección/zona, no en las estanterías.");
     if (elementSlotsField) elementSlotsField.style.display = "none";
     if (elementSlotsContainer) elementSlotsContainer.innerHTML = "";
     return;
   }
 
   if (rack) {
-    setText(selectionSummary, `Estantería: ${rack.estanteriaCodigo} · ${rack.estanteriaNombre}`);
+    const zoneForRack = findZoneForRack(rack);
+    const responsable = zoneForRack ? responsableLabelForSeccion(zoneForRack.seccionId) : "Sin responsable asignado";
+    setText(selectionSummary, `Estantería: ${rack.estanteriaCodigo} · Responsable de zona: ${responsable}`);
     if (elementCode) elementCode.value = rack.estanteriaCodigo;
     if (elementName) elementName.value = rack.estanteriaNombre;
     const config = rackConfigurations.get(rack.estanteriaCodigo);
@@ -612,6 +619,7 @@ function renderSelectionPanel(): void {
     if (elementOrientationField) elementOrientationField.style.display = "grid";
     if (elementOrientation) elementOrientation.value = rack.orientacion;
     if (elementResponsibleField) elementResponsibleField.style.display = "none";
+    setText(elementResponsibleNote, "");
     renderTrabajadorOptions(elementResponsible);
     if (elementSlotsField) elementSlotsField.style.display = "grid";
     renderElementSlots(config?.slots ?? []);
@@ -738,6 +746,13 @@ function option(value: string, text: string): HTMLOptionElement {
 function productoLabel(producto: ProductoResumenResponse): string {
   const codigo = producto.codigoInterno ? `${producto.codigoInterno} · ` : "";
   return `${codigo}${producto.nombre ?? "Producto sin nombre"}`;
+}
+
+function responsableLabelForSeccion(seccionId: number): string {
+  const responsableId = responsablePrincipalPorSeccionId.get(seccionId);
+  if (!responsableId) return "Sin responsable asignado";
+  const trabajador = trabajadoresActivos.find((item) => item.id === responsableId);
+  return trabajador ? trabajadorLabel(trabajador) : `Responsable #${responsableId}`;
 }
 
 function trabajadorLabel(trabajador: TrabajadorActivoResponse | PlanoResponsableResponse): string {

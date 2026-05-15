@@ -1,8 +1,8 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Editor de plano Â· Suite Tienda</title>
+  <title>Editor de planos · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/editor.css" rel="stylesheet" />
@@ -13,11 +13,9 @@
     <div class="left">
       <a class="brand" href="../index.html">
         <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
-        <span class="brand-text">
-          Suite<span class="brand-accent">Tienda</span>
-        </span>
+        <span class="brand-text">Suite<span class="brand-accent">Tienda</span></span>
       </a>
-            <nav class="nav" aria-label="Principal">
+      <nav class="nav" aria-label="Principal">
         <a class="nav-link" href="home.html">Inicio</a>
         <a class="nav-link is-active" aria-current="page" href="planos.html">Planos</a>
         <a class="nav-link" href="inspecciones.html">Inspecciones</a>
@@ -36,113 +34,156 @@
 
 <main class="page">
   <header class="page-head">
-    <p class="eyebrow">Boceto de editor</p>
-    <h1>Editor rÃ¡pido de estanterÃ­as</h1>
-    <p>
-      Esta pantalla simula cÃ³mo podrÃ­as dibujar y anotar estanterÃ­as sobre un plano
-      2D. Todo ocurre en el navegador: al hacer clic sobre el lienzo se crean
-      â€œestanterÃ­asâ€ de ejemplo y se muestran en la lista de la derecha.
-    </p>
+    <div>
+      <p class="eyebrow" id="editor-mode-label">Editor persistente</p>
+      <h1 id="editor-title">Crear plano 2D</h1>
+      <p>
+        Dibuja zonas vinculadas a secciones reales y coloca estanterías existentes
+        para guardar el layout en backend.
+      </p>
+    </div>
+    <div class="toolbar">
+      <a class="btn ghost" href="planos.html">Ver plano operativo</a>
+      <button class="btn primary" id="btn-save" type="button">Guardar plano</button>
+    </div>
   </header>
 
+  <div class="status" id="editor-status" role="status">Preparando editor...</div>
+
   <section class="layout">
-    <section class="panel panel-canvas">
-      <div class="canvas-frame">
-        <canvas id="plan-canvas" width="800" height="460"></canvas>
-      </div>
-      <p id="coord-info" class="coord-info">
-        Haz clic en el lienzo para crear o seleccionar estanterÃ­as. Las
-        coordenadas seleccionadas se muestran aquÃ­.
-      </p>
-      <div class="canvas-actions">
-        <button type="button" id="btn-clear" class="btn ghost">
-          Limpiar boceto
-        </button>
-        <button type="button" id="btn-export" class="btn primary">
-          Exportar JSON (mock)
-        </button>
-      </div>
-    </section>
-
-    <aside class="panel panel-side">
+    <aside class="panel side-panel">
       <section class="side-block">
-        <h2>EstanterÃ­as en el plano</h2>
-        <p id="no-shelf-msg" class="empty-msg">
-          AÃºn no hay estanterÃ­as en este boceto. Haz clic en el lienzo para crear
-          una zona rectangular y verÃ¡s aquÃ­ su ficha.
-        </p>
-        <ul id="shelf-list" class="shelf-list">
-          <!-- Rellenado desde editor.js -->
-        </ul>
-      </section>
-
-      <section class="side-block">
-        <h2>Ficha de estanterÃ­a seleccionada</h2>
-        <form id="shelf-form" class="form">
-          <div id="form-fields" class="fields">
+        <h2>Datos del plano</h2>
+        <form id="form-plano" class="form">
+          <div class="field">
+            <label for="empresa-codigo">Empresa</label>
+            <input id="empresa-codigo" name="empresaCodigo" type="text" value="EMP-DEMO" />
+          </div>
+          <div class="field">
+            <label for="plano-codigo">Código</label>
+            <input id="plano-codigo" name="codigo" type="text" placeholder="PLANO-DEMO" />
+          </div>
+          <div class="field">
+            <label for="plano-nombre">Nombre</label>
+            <input id="plano-nombre" name="nombre" type="text" placeholder="Plano demo" />
+          </div>
+          <div class="field">
+            <label for="plano-descripcion">Descripción</label>
+            <textarea id="plano-descripcion" name="descripcion" rows="3"></textarea>
+          </div>
+          <div class="field-grid">
             <div class="field">
-              <label for="f-name">Nombre</label>
-              <input type="text" id="f-name" name="f-name" />
+              <label for="plano-ancho">Ancho</label>
+              <input id="plano-ancho" name="ancho" type="number" min="1" step="1" value="1200" />
             </div>
-
             <div class="field">
-              <label for="f-zone">Zona / secciÃ³n</label>
-              <input
-                type="text"
-                id="f-zone"
-                name="f-zone"
-                placeholder="FrÃ­o, Snacks, Limpieza..."
-              />
-            </div>
-
-            <div class="field">
-              <label for="f-owner">Responsable</label>
-              <input
-                type="text"
-                id="f-owner"
-                name="f-owner"
-                placeholder="Nombre o rol del responsable"
-              />
-            </div>
-
-            <div class="field">
-              <label for="f-notes">Notas internas</label>
-              <textarea id="f-notes" name="f-notes" rows="3"></textarea>
-            </div>
-
-            <div class="form-actions">
-              <button type="button" id="btn-delete" class="btn danger">
-                Eliminar estanterÃ­a
-              </button>
-              <button type="submit" class="btn primary">
-                Guardar cambios (mock)
-              </button>
+              <label for="plano-alto">Alto</label>
+              <input id="plano-alto" name="alto" type="number" min="1" step="1" value="700" />
             </div>
           </div>
         </form>
       </section>
-    </aside>
-  </section>
 
-  <section class="panel panel-notes">
-    <h2>CÃ³mo encaja este editor en el flujo</h2>
-    <p>
-      La idea es que este editor genere un JSON con la definiciÃ³n de estanterÃ­as,
-      zonas y responsables. Ese JSON se enviarÃ­a al backend de Spring Boot para:
-    </p>
-    <ul>
-      <li>Relacionar cada estanterÃ­a con su zona fÃ­sica del plano.</li>
-      <li>Asociar inspecciones de IA a las coordenadas correspondientes.</li>
-      <li>Vincular tareas e incidencias a responsables concretos.</li>
-    </ul>
+      <section class="side-block">
+        <h2>Herramientas</h2>
+        <div class="tool-buttons" role="group" aria-label="Modo de edición">
+          <button class="tool is-active" id="mode-select" type="button" data-mode="select">Seleccionar</button>
+          <button class="tool" id="mode-zone" type="button" data-mode="zone">Añadir zona</button>
+          <button class="tool" id="mode-rack" type="button" data-mode="rack">Añadir estantería</button>
+        </div>
+
+        <div class="field">
+          <label for="seccion-select">Sección</label>
+          <select id="seccion-select"></select>
+        </div>
+        <div class="field">
+          <label for="estanteria-select">Estantería</label>
+          <select id="estanteria-select"></select>
+        </div>
+        <div class="field">
+          <label for="orientacion-select">Orientación</label>
+          <select id="orientacion-select">
+            <option value="HORIZONTAL">Horizontal</option>
+            <option value="VERTICAL">Vertical</option>
+          </select>
+        </div>
+        <p class="hint">Dibuja arrastrando sobre el lienzo. Las estanterías deben quedar dentro de su zona.</p>
+      </section>
+    </aside>
+
+    <section class="main-panel">
+      <section class="panel canvas-panel">
+        <div class="canvas-head">
+          <div>
+            <h2>Lienzo del plano</h2>
+            <p id="canvas-help">Selecciona una herramienta y arrastra para crear elementos.</p>
+          </div>
+          <span id="canvas-size">1200 x 700</span>
+        </div>
+        <div class="canvas-shell">
+          <div id="editor-canvas" class="editor-canvas" aria-label="Editor visual de plano">
+            <span class="empty-canvas">Sin elementos dibujados</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel detail-panel">
+        <div>
+          <h2>Elemento seleccionado</h2>
+          <p id="selection-summary">No hay ningún elemento seleccionado.</p>
+        </div>
+
+        <form id="form-elemento" class="form element-form">
+          <div class="field-grid">
+            <div class="field">
+              <label for="element-x">X</label>
+              <input id="element-x" type="number" min="0" step="1" />
+            </div>
+            <div class="field">
+              <label for="element-y">Y</label>
+              <input id="element-y" type="number" min="0" step="1" />
+            </div>
+            <div class="field">
+              <label for="element-width">Ancho</label>
+              <input id="element-width" type="number" min="1" step="1" />
+            </div>
+            <div class="field">
+              <label for="element-height">Alto</label>
+              <input id="element-height" type="number" min="1" step="1" />
+            </div>
+          </div>
+          <div class="field" id="element-orientation-field">
+            <label for="element-orientation">Orientación</label>
+            <select id="element-orientation">
+              <option value="HORIZONTAL">Horizontal</option>
+              <option value="VERTICAL">Vertical</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" id="btn-apply-element" type="button">Aplicar cambios</button>
+            <button class="btn danger" id="btn-delete-element" type="button">Eliminar elemento</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel lists-panel">
+        <div>
+          <h2>Zonas</h2>
+          <ul id="zone-list" class="entity-list"></ul>
+        </div>
+        <div>
+          <h2>Estanterías colocadas</h2>
+          <ul id="rack-list" class="entity-list"></ul>
+        </div>
+      </section>
+    </section>
   </section>
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda Â· Editor de plano Â· Boceto</small>
+  <small>Suite Tienda · Editor de planos persistente</small>
 </footer>
 
-<script src="../js/editor.js"></script>
+<script type="module" src="/src/pages/editor.ts"></script>
 </body>
 </html>
-

@@ -675,13 +675,31 @@ function applySelectedElement(): void {
 
   const zone = selectedZone();
   if (zone) {
-    const hasRacks = racks.some((rack) => rack.zonaUid === zone.uid && !rackInsideZone(rack, { ...zone, ...box }));
-    if (hasRacks) {
-      setStatus("No puedes reducir la zona dejando estanterías fuera.", "error");
+    const deltaX = box.x - zone.x;
+    const deltaY = box.y - zone.y;
+    const nextZone = { ...zone, ...box };
+    const movedRacks = racks
+      .filter((rack) => rack.zonaUid === zone.uid)
+      .map((rack) => ({
+        rack,
+        next: {
+          ...rack,
+          x: rack.x + deltaX,
+          y: rack.y + deltaY
+        }
+      }));
+
+    if (movedRacks.some(({ next }) => !rackInsideZone(next, nextZone))) {
+      setStatus("No puedes modificar la zona dejando estanterias fuera.", "error");
       return;
     }
+
     Object.assign(zone, box);
-    setStatus("Zona actualizada.", "ok");
+    movedRacks.forEach(({ rack, next }) => {
+      rack.x = next.x;
+      rack.y = next.y;
+    });
+    setStatus(deltaX !== 0 || deltaY !== 0 ? "Zona actualizada y estanterias desplazadas." : "Zona actualizada.", "ok");
     render();
     return;
   }

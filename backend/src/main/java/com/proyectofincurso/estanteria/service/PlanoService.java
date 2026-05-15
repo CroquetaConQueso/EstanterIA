@@ -109,7 +109,9 @@ public class PlanoService {
         plano.setUpdatedAt(ahora);
 
         planoEstanteriaLayoutRepository.deleteByPlanoId(plano.getId());
+        planoEstanteriaLayoutRepository.flush();
         planoZonaRepository.deleteByPlanoId(plano.getId());
+        planoZonaRepository.flush();
         recrearContenido(plano, zonas(request.zonas()), estanterias(request.estanterias()), ahora);
 
         return toPlanoResponse(plano);

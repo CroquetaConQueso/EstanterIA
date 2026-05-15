@@ -43,8 +43,14 @@
       </p>
     </div>
     <div class="toolbar">
-      <a class="btn" href="configuracion_operativa.html">Configurar secciones y estanterias</a>
-      <a class="btn ghost" href="editor.html?codigo=PLANO-DEMO">Editar plano</a>
+      <label class="toolbar-select">
+        Plano
+        <select id="plano-select">
+          <option value="">Cargando planos...</option>
+        </select>
+      </label>
+      <a class="btn primary" id="btn-crear-plano" href="editor.html">Crear plano</a>
+      <a class="btn ghost" id="btn-editar-plano" href="editor.html?codigo=PLANO-DEMO">Editar plano</a>
       <a class="btn" href="inspecciones.html">Ver inspecciones</a>
     </div>
   </header>
@@ -52,7 +58,7 @@
   <section class="layout">
     <aside class="col-list">
       <h2>Plano cargado</h2>
-      <p class="help" id="plano-meta">Cargando PLANO-DEMO...</p>
+      <p class="help" id="plano-meta">Cargando planos disponibles...</p>
 
       <section class="legend" aria-label="Leyenda del plano">
         <h3>Leyenda</h3>

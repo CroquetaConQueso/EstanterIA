@@ -176,6 +176,15 @@ textarea {
   text-transform: none;
 }
 
+.tool-feedback:not(:empty) {
+  margin: 12px 0 0;
+  padding: 12px;
+  border: var(--border-light);
+  background: rgba(249, 160, 27, 0.25);
+  color: var(--black);
+  box-shadow: 3px 3px 0 var(--black);
+}
+
 .toolbar,
 .form-actions,
 .tool-buttons {

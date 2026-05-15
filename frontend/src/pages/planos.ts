@@ -117,9 +117,22 @@ type PlanoOperativoResponse = {
   estanterias: PlanoEstanteriaOperativaResponse[];
 };
 
-const CODIGO_PLANO = "PLANO-DEMO";
+type PlanoResumenResponse = {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+  ancho: number;
+  alto: number;
+  activo: boolean | null;
+};
+
+const EMPRESA_DEMO = "EMP-DEMO";
+const CODIGO_PLANO_DEMO = "PLANO-DEMO";
 
 const planoMeta = document.querySelector<HTMLElement>("#plano-meta");
+const planoSelect = document.querySelector<HTMLSelectElement>("#plano-select");
+const btnEditarPlano = document.querySelector<HTMLAnchorElement>("#btn-editar-plano");
 const listaEstanterias = document.querySelector<HTMLUListElement>("#lista-estanterias");
 const tituloPlano = document.querySelector<HTMLElement>("#titulo-plano");
 const subtituloPlano = document.querySelector<HTMLElement>("#subtitulo-plano");
@@ -130,6 +143,7 @@ const detalleSlot = document.querySelector<HTMLElement>("#detalle-slot");
 const detalleAlertas = document.querySelector<HTMLElement>("#detalle-alertas");
 
 let planoActual: PlanoOperativoResponse | null = null;
+let planosDisponibles: PlanoResumenResponse[] = [];
 let estanteriaSeleccionada: PlanoEstanteriaOperativaResponse | null = null;
 let slotSeleccionado: PlanoSlotOperativoResponse | null = null;
 
@@ -240,6 +254,52 @@ async function fetchJson<T>(url: string): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+function getCodigoQueryParam(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("codigo")?.trim() || null;
+}
+
+function actualizarUrlPlano(codigo: string): void {
+  const url = new URL(window.location.href);
+  url.searchParams.set("codigo", codigo);
+  window.history.replaceState({}, "", url);
+}
+
+function navegarAPlano(codigo: string): void {
+  window.location.href = `planos.html?codigo=${encodeURIComponent(codigo)}`;
+}
+
+function renderSelectorPlanos(codigoSeleccionado: string | null): void {
+  if (!planoSelect) return;
+
+  planoSelect.innerHTML = "";
+
+  if (planosDisponibles.length === 0) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No hay planos configurados";
+    planoSelect.appendChild(option);
+    planoSelect.disabled = true;
+    return;
+  }
+
+  planoSelect.disabled = false;
+  planosDisponibles.forEach((plano) => {
+    const option = document.createElement("option");
+    option.value = plano.codigo;
+    option.textContent = `${plano.codigo} · ${plano.nombre}`;
+    option.selected = plano.codigo === codigoSeleccionado;
+    planoSelect.appendChild(option);
+  });
+}
+
+function seleccionarCodigoInicial(planos: PlanoResumenResponse[], codigoQuery: string | null): string | null {
+  if (codigoQuery) return codigoQuery;
+  const demo = planos.find((plano) => plano.codigo === CODIGO_PLANO_DEMO);
+  if (demo) return demo.codigo;
+  return planos.find((plano) => plano.activo !== false)?.codigo ?? planos[0]?.codigo ?? null;
 }
 
 function renderListaEstanterias(plano: PlanoOperativoResponse): void {
@@ -462,6 +522,11 @@ function renderPlano(plano: PlanoOperativoResponse): void {
   setTexto(tituloPlano, plano.nombre);
   setTexto(subtituloPlano, plano.descripcion ?? "Plano operativo persistido");
   setTexto(estadoCarga, "Operativo");
+  if (btnEditarPlano) {
+    btnEditarPlano.href = `editor.html?codigo=${encodeURIComponent(plano.codigo)}`;
+    btnEditarPlano.removeAttribute("aria-disabled");
+  }
+  renderSelectorPlanos(plano.codigo);
 
   renderListaEstanterias(plano);
   renderCanvas(plano);
@@ -472,9 +537,13 @@ function renderPlano(plano: PlanoOperativoResponse): void {
 
 function renderError(message: string): void {
   setTexto(planoMeta, "Sin plano operativo");
-  setTexto(tituloPlano, CODIGO_PLANO);
+  setTexto(tituloPlano, "Plano no disponible");
   setTexto(subtituloPlano, message);
   setTexto(estadoCarga, "Error");
+  if (btnEditarPlano) {
+    btnEditarPlano.href = "editor.html";
+    btnEditarPlano.setAttribute("aria-disabled", "true");
+  }
   if (canvas) {
     canvas.innerHTML = "";
     const error = document.createElement("span");
@@ -489,11 +558,36 @@ function renderError(message: string): void {
   renderDetalleAlertas(null);
 }
 
-async function cargarPlanoOperativo(): Promise<void> {
+function renderSinPlanos(): void {
+  renderSelectorPlanos(null);
+  setTexto(planoMeta, "Todavía no hay planos configurados.");
+  setTexto(tituloPlano, "Sin planos configurados");
+  setTexto(subtituloPlano, "Crea el primer plano para empezar a visualizar zonas y estanterías.");
+  setTexto(estadoCarga, "Sin planos");
+  if (btnEditarPlano) {
+    btnEditarPlano.href = "editor.html";
+    btnEditarPlano.setAttribute("aria-disabled", "true");
+  }
+  if (canvas) {
+    canvas.innerHTML = "";
+    const empty = document.createElement("span");
+    empty.innerHTML = `Todavía no hay planos configurados.<br><a class="canvas-empty-link" href="editor.html">Crear primer plano</a>`;
+    canvas.appendChild(empty);
+  }
+  if (listaEstanterias) {
+    listaEstanterias.innerHTML = "<li class=\"plan-item\">Crea un plano para ver estanterías.</li>";
+  }
+  renderDetalleEstanteria(null);
+  renderDetalleSlot(null);
+  renderDetalleAlertas(null);
+}
+
+async function cargarPlanoOperativo(codigo: string): Promise<void> {
   setTexto(estadoCarga, "Cargando");
 
   try {
-    const plano = await fetchJson<PlanoOperativoResponse>(`/api/planos/${encodeURIComponent(CODIGO_PLANO)}/operativo`);
+    const plano = await fetchJson<PlanoOperativoResponse>(`/api/planos/${encodeURIComponent(codigo)}/operativo`);
+    actualizarUrlPlano(plano.codigo);
     renderPlano(plano);
   } catch (err) {
     const message = err instanceof Error ? err.message : "No se pudo cargar el plano operativo.";
@@ -501,6 +595,32 @@ async function cargarPlanoOperativo(): Promise<void> {
   }
 }
 
+async function cargarPlanosDisponibles(): Promise<void> {
+  setTexto(estadoCarga, "Cargando");
+  const codigoQuery = getCodigoQueryParam();
+
+  try {
+    planosDisponibles = await fetchJson<PlanoResumenResponse[]>(`/api/empresas/${encodeURIComponent(EMPRESA_DEMO)}/planos`);
+    const codigoInicial = seleccionarCodigoInicial(planosDisponibles, codigoQuery);
+
+    if (!codigoInicial) {
+      renderSinPlanos();
+      return;
+    }
+
+    renderSelectorPlanos(codigoInicial);
+    await cargarPlanoOperativo(codigoInicial);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "No se pudieron cargar los planos disponibles.";
+    renderError(message);
+  }
+}
+
+planoSelect?.addEventListener("change", () => {
+  const codigo = planoSelect.value;
+  if (codigo) navegarAPlano(codigo);
+});
+
 document.addEventListener("DOMContentLoaded", () => {
-  void cargarPlanoOperativo();
+  void cargarPlanosDisponibles();
 });

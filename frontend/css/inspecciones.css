@@ -213,10 +213,12 @@ select {
 
 .table-shell {
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .table {
   width: 100%;
+  min-width: 980px;
   border-collapse: collapse;
 }
 
@@ -236,6 +238,24 @@ select {
   font-family: 'Courier New', Courier, monospace;
   font-weight: 700;
   text-transform: none;
+  vertical-align: top;
+}
+
+.table th,
+.table td {
+  white-space: nowrap;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3),
+.table th:nth-child(7),
+.table td:nth-child(7) {
+  white-space: normal;
+  min-width: 150px;
+}
+
+.table td:last-child {
+  min-width: 280px;
 }
 
 .table tbody tr:hover td {

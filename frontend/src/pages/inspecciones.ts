@@ -66,6 +66,8 @@ type ApiErrorResponse = {
 const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-inspecciones");
 const filtroPlano = document.querySelector<HTMLInputElement>("#filtro-plano");
 const filtroEstado = document.querySelector<HTMLSelectElement>("#filtro-estado");
+const filtroFechaDesde = document.querySelector<HTMLInputElement>("#filtro-fecha-desde");
+const filtroFechaHasta = document.querySelector<HTMLInputElement>("#filtro-fecha-hasta");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar-filtros");
 
 const errorEl = document.querySelector<HTMLElement>("#inspecciones-error");
@@ -155,6 +157,36 @@ function formatFecha(value: string | null | undefined): string {
         dateStyle: "short",
         timeStyle: "short"
     }).format(fecha);
+}
+
+function getFechaFiltro(ins: InspeccionResponse): Date | null {
+    const raw = ins.capturadaEn ?? ins.createdAt;
+    if (!raw) return null;
+    const fecha = new Date(raw);
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function getInicioDia(value: string): Date | null {
+    if (!value) return null;
+    const fecha = new Date(`${value}T00:00:00`);
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function getFinDia(value: string): Date | null {
+    if (!value) return null;
+    const fecha = new Date(`${value}T23:59:59.999`);
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function getErrorRangoFechas(): string | null {
+    const desde = getInicioDia(filtroFechaDesde?.value ?? "");
+    const hasta = getFinDia(filtroFechaHasta?.value ?? "");
+
+    if (desde && hasta && desde.getTime() > hasta.getTime()) {
+        return "La fecha desde no puede ser posterior a la fecha hasta";
+    }
+
+    return null;
 }
 
 function formatNullable(value: string | number | null | undefined): string {
@@ -310,9 +342,12 @@ async function renderDetalleDesdeBackend(id: number) {
 function getInspeccionesFiltradas(): InspeccionResponse[] {
     const texto = filtroPlano?.value.trim().toLowerCase() ?? "";
     const estado = filtroEstado?.value ?? "";
+    const desde = getInicioDia(filtroFechaDesde?.value ?? "");
+    const hasta = getFinDia(filtroFechaHasta?.value ?? "");
 
     return inspecciones.filter((ins) => {
         const resumen = getResumenPersistido(ins);
+        const fecha = getFechaFiltro(ins);
         const coincideTexto =
             !texto ||
             ins.estanteriaCodigo.toLowerCase().includes(texto) ||
@@ -323,7 +358,10 @@ function getInspeccionesFiltradas(): InspeccionResponse[] {
             !estado ||
             ins.estado === estado;
 
-        return coincideTexto && coincideEstado;
+        const coincideDesde = !desde || (fecha !== null && fecha.getTime() >= desde.getTime());
+        const coincideHasta = !hasta || (fecha !== null && fecha.getTime() <= hasta.getTime());
+
+        return coincideTexto && coincideEstado && coincideDesde && coincideHasta;
     });
 }
 
@@ -331,6 +369,20 @@ function renderTabla() {
     if (!tbody) return;
 
     tbody.innerHTML = "";
+
+    const errorRango = getErrorRangoFechas();
+    if (errorRango) {
+        setError(errorRango);
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 8;
+        td.textContent = "Corrige el rango de fechas para aplicar el filtro";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+    }
+
+    setError(null);
 
     const lista = getInspeccionesFiltradas();
 
@@ -470,10 +522,26 @@ if (filtroEstado) {
     });
 }
 
+if (filtroFechaDesde) {
+    filtroFechaDesde.addEventListener("change", () => {
+        setSuccess(null);
+        renderTabla();
+    });
+}
+
+if (filtroFechaHasta) {
+    filtroFechaHasta.addEventListener("change", () => {
+        setSuccess(null);
+        renderTabla();
+    });
+}
+
 if (btnLimpiar) {
     btnLimpiar.addEventListener("click", () => {
         if (filtroPlano) filtroPlano.value = "";
         if (filtroEstado) filtroEstado.value = "";
+        if (filtroFechaDesde) filtroFechaDesde.value = "";
+        if (filtroFechaHasta) filtroFechaHasta.value = "";
 
         setError(null);
         setSuccess(null);

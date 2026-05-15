@@ -251,6 +251,14 @@ const inlineSlotsContainer = document.querySelector<HTMLElement>("#inline-slots-
 const productsStatus = document.querySelector<HTMLElement>("#products-status");
 const rackCreateStatus = document.querySelector<HTMLElement>("#rack-create-status");
 const btnCreateRack = document.querySelector<HTMLButtonElement>("#btn-create-rack");
+const sectionDialog = document.querySelector<HTMLDialogElement>("#section-dialog");
+const rackDialog = document.querySelector<HTMLDialogElement>("#rack-dialog");
+const btnOpenSectionDialog = document.querySelector<HTMLButtonElement>("#btn-open-section-dialog");
+const btnOpenRackDialog = document.querySelector<HTMLButtonElement>("#btn-open-rack-dialog");
+const btnCloseSectionDialog = document.querySelector<HTMLButtonElement>("#btn-close-section-dialog");
+const btnCancelSectionDialog = document.querySelector<HTMLButtonElement>("#btn-cancel-section-dialog");
+const btnCloseRackDialog = document.querySelector<HTMLButtonElement>("#btn-close-rack-dialog");
+const btnCancelRackDialog = document.querySelector<HTMLButtonElement>("#btn-cancel-rack-dialog");
 
 let mode: EditorMode = "select";
 let selected: SelectedElement = null;
@@ -281,6 +289,24 @@ function setInlineStatus(element: HTMLElement | null, message: string, kind: "in
   if (!element) return;
   element.textContent = message;
   element.dataset.kind = kind;
+}
+
+function openDialog(dialog: HTMLDialogElement | null): void {
+  if (!dialog) return;
+  if (typeof dialog.showModal === "function") {
+    dialog.showModal();
+  } else {
+    dialog.setAttribute("open", "");
+  }
+}
+
+function closeDialog(dialog: HTMLDialogElement | null): void {
+  if (!dialog) return;
+  if (typeof dialog.close === "function") {
+    dialog.close();
+  } else {
+    dialog.removeAttribute("open");
+  }
 }
 
 function textValue(input: HTMLInputElement | HTMLTextAreaElement | null): string {
@@ -1037,6 +1063,7 @@ async function crearSeccionInline(event: SubmitEvent): Promise<void> {
     setMode("zone");
     setInlineStatus(sectionCreateStatus, "Sección creada y seleccionada. Dibuja su zona en el lienzo.", "ok");
     setStatus("Sección creada. Arrastra en el lienzo para añadir la zona.", "ok");
+    closeDialog(sectionDialog);
   } catch (err) {
     setInlineStatus(sectionCreateStatus, err instanceof Error ? err.message : "No se pudo crear la sección.", "error");
   } finally {
@@ -1072,6 +1099,7 @@ async function crearEstanteriaInline(event: SubmitEvent): Promise<void> {
     setMode("rack");
     setInlineStatus(rackCreateStatus, "Estantería creada y seleccionada. Dibújala dentro de su zona.", "ok");
     setStatus("Estantería creada. Arrastra dentro de su zona para colocarla.", "ok");
+    closeDialog(rackDialog);
   } catch (err) {
     setInlineStatus(rackCreateStatus, err instanceof Error ? err.message : "No se pudo crear la estantería.", "error");
   } finally {
@@ -1511,6 +1539,19 @@ function bindEvents(): void {
   formInlineRack?.addEventListener("submit", (event) => {
     void crearEstanteriaInline(event);
   });
+  btnOpenSectionDialog?.addEventListener("click", () => {
+    setInlineStatus(sectionCreateStatus, "", "info");
+    openDialog(sectionDialog);
+  });
+  btnOpenRackDialog?.addEventListener("click", () => {
+    setInlineStatus(rackCreateStatus, "", "info");
+    renderInlineSlots();
+    openDialog(rackDialog);
+  });
+  btnCloseSectionDialog?.addEventListener("click", () => closeDialog(sectionDialog));
+  btnCancelSectionDialog?.addEventListener("click", () => closeDialog(sectionDialog));
+  btnCloseRackDialog?.addEventListener("click", () => closeDialog(rackDialog));
+  btnCancelRackDialog?.addEventListener("click", () => closeDialog(rackDialog));
   newRackSlotCountInput?.addEventListener("input", renderInlineSlots);
   newRackSlotCountInput?.addEventListener("change", renderInlineSlots);
   btnSave?.addEventListener("click", () => {

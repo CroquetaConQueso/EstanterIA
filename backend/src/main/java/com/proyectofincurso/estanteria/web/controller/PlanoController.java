@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,11 +46,13 @@ public class PlanoController {
 
     @PostMapping(value = "/api/planos", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public PlanoResponse crearPlano(@Valid @RequestBody CrearPlanoRequest request) {
         return planoService.crearPlano(request);
     }
 
     @PutMapping(value = "/api/planos/{codigo}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public PlanoResponse actualizarPlano(@PathVariable String codigo,
                                          @Valid @RequestBody ActualizarPlanoRequest request) {
         return planoService.actualizarPlanoCompleto(codigo, request);

@@ -1,4 +1,4 @@
-import { authFetch } from "../lib/api";
+import { authFetch, isStructuralAdmin } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
 
 requireAuth();
@@ -141,6 +141,7 @@ const CODIGO_PLANO_DEMO = "PLANO-DEMO";
 
 const planoMeta = document.querySelector<HTMLElement>("#plano-meta");
 const planoSelect = document.querySelector<HTMLSelectElement>("#plano-select");
+const btnCrearPlano = document.querySelector<HTMLAnchorElement>("#btn-crear-plano");
 const btnEditarPlano = document.querySelector<HTMLAnchorElement>("#btn-editar-plano");
 const listaEstanterias = document.querySelector<HTMLUListElement>("#lista-estanterias");
 const tituloPlano = document.querySelector<HTMLElement>("#titulo-plano");
@@ -157,6 +158,12 @@ let planosDisponibles: PlanoResumenResponse[] = [];
 let zonaSeleccionada: PlanoZonaOperativaResponse | null = null;
 let estanteriaSeleccionada: PlanoEstanteriaOperativaResponse | null = null;
 let slotSeleccionado: PlanoSlotOperativoResponse | null = null;
+const puedeConfigurarEstructura = isStructuralAdmin();
+
+if (!puedeConfigurarEstructura) {
+  if (btnCrearPlano) btnCrearPlano.hidden = true;
+  if (btnEditarPlano) btnEditarPlano.hidden = true;
+}
 
 const estadoLabels: Record<string, string> = {
   OK: "OK",
@@ -670,7 +677,10 @@ function renderPlano(plano: PlanoOperativoResponse): void {
   setTexto(estadoCarga, "Operativo");
   if (btnEditarPlano) {
     btnEditarPlano.href = `editor.html?codigo=${encodeURIComponent(plano.codigo)}`;
-    btnEditarPlano.removeAttribute("aria-disabled");
+    if (puedeConfigurarEstructura) {
+      btnEditarPlano.hidden = false;
+      btnEditarPlano.removeAttribute("aria-disabled");
+    }
   }
   renderSelectorPlanos(plano.codigo);
 
@@ -723,7 +733,9 @@ function renderSinPlanos(): void {
   if (canvas) {
     canvas.innerHTML = "";
     const empty = document.createElement("span");
-    empty.innerHTML = `Todavía no hay planos configurados.<br><a class="canvas-empty-link" href="editor.html">Crear primer plano</a>`;
+    empty.innerHTML = puedeConfigurarEstructura
+      ? `Todavía no hay planos configurados.<br><a class="canvas-empty-link" href="editor.html">Crear primer plano</a>`
+      : "Todavía no hay planos configurados.";
     canvas.appendChild(empty);
   }
   if (listaEstanterias) {

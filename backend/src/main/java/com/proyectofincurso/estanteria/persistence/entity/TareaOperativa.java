@@ -36,8 +36,8 @@ public class TareaOperativa {
     @Column(name = "tarea_operativa_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "alerta_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "alerta_id")
     private Alerta alerta;
 
     @Enumerated(EnumType.STRING)

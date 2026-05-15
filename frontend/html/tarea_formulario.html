@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Tarea operativa - Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/tarea_formulario.css" rel="stylesheet" />
+  <link href="../css/app-shell.css" rel="stylesheet" />
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <div class="left">
+      <a class="brand" href="../index.html">
+        <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+        <span class="brand-text">Suite<span class="brand-accent">Tienda</span></span>
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <a class="nav-link" href="home.html">Inicio</a>
+        <a class="nav-link" href="planos.html">Planos</a>
+        <a class="nav-link" href="inspecciones.html">Inspecciones</a>
+        <a class="nav-link" href="inventario.html">Inventario</a>
+        <a class="nav-link" href="alertas_centro.html">Alertas</a>
+        <a class="nav-link is-active" aria-current="page" href="tareas_reposicion.html">Tareas</a>
+        <a class="nav-link" href="vision.html">Vision</a>
+      </nav>
+    </div>
+    <div class="right">
+      <a class="user" href="perfil.html">Mi perfil</a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow" id="form-mode">Tarea manual</p>
+      <h1 id="form-title">Nueva tarea operativa</h1>
+      <p>Crea o edita acciones operativas sin cerrar alertas asociadas.</p>
+    </div>
+    <div class="toolbar">
+      <a class="btn ghost" href="tareas_reposicion.html">Volver a tareas</a>
+      <button class="btn primary" id="btn-submit" type="submit" form="task-form">Guardar tarea</button>
+    </div>
+  </header>
+
+  <p class="status" id="form-status" role="status">Preparando formulario...</p>
+
+  <form id="task-form" class="task-form">
+    <section class="panel">
+      <h2>Datos principales</h2>
+      <div class="field-grid">
+        <label class="field">
+          Tipo
+          <select id="tipo-tarea" required>
+            <option value="REPOSICION">Reposicion</option>
+            <option value="REVISION_VISUAL">Revision visual</option>
+            <option value="VERIFICACION_MANUAL">Verificacion manual</option>
+            <option value="REVISION_CADUCIDAD">Revision de caducidad</option>
+            <option value="RETIRADA_PRODUCTO">Retirada de producto</option>
+          </select>
+        </label>
+        <label class="field">
+          Prioridad
+          <select id="prioridad" required>
+            <option value="MEDIA">Media</option>
+            <option value="BAJA">Baja</option>
+            <option value="ALTA">Alta</option>
+            <option value="CRITICA">Critica</option>
+          </select>
+        </label>
+      </div>
+      <label class="field">
+        Titulo
+        <input id="titulo" type="text" maxlength="200" required placeholder="Reponer bebidas" />
+      </label>
+      <label class="field">
+        Descripcion
+        <textarea id="descripcion" rows="5" maxlength="2000"></textarea>
+      </label>
+    </section>
+
+    <section class="panel">
+      <h2>Contexto operativo</h2>
+      <div class="field-grid">
+        <label class="field">
+          Seccion
+          <select id="seccion"></select>
+        </label>
+        <label class="field">
+          Estanteria
+          <select id="estanteria"></select>
+        </label>
+      </div>
+      <label class="field">
+        Slot
+        <select id="slot"></select>
+      </label>
+    </section>
+
+    <section class="panel">
+      <h2>Asignacion</h2>
+      <div class="field-grid">
+        <label class="field">
+          Trabajador asignado
+          <select id="trabajador"></select>
+        </label>
+        <label class="field">
+          Fecha limite
+          <input id="fecha-limite" type="datetime-local" />
+        </label>
+      </div>
+    </section>
+  </form>
+</main>
+
+<footer class="foot">
+  <small>Suite Tienda - Tareas operativas</small>
+</footer>
+
+<script type="module" src="/src/pages/tarea_formulario.ts"></script>
+</body>
+</html>

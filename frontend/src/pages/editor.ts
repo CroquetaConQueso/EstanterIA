@@ -741,8 +741,13 @@ function applySelectedElement(): void {
       setStatus("No puedes reducir la zona dejando estanterÃ­as fuera.", "error");
       return;
     }
+
     Object.assign(zone, box);
-    setStatus("Zona actualizada.", "ok");
+    movedRacks.forEach(({ rack, next }) => {
+      rack.x = next.x;
+      rack.y = next.y;
+    });
+    setStatus(deltaX !== 0 || deltaY !== 0 ? "Zona actualizada y estanterias desplazadas." : "Zona actualizada.", "ok");
     render();
     return;
   }

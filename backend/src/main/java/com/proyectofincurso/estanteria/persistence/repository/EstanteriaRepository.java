@@ -12,6 +12,8 @@ public interface EstanteriaRepository extends JpaRepository<Estanteria, Long> {
 
     Optional<Estanteria> findByCodigoAndActivaTrue(String codigo);
 
+    boolean existsByCodigoIgnoreCase(String codigo);
+
     @EntityGraph(attributePaths = {"seccion", "seccion.empresa"})
     Optional<Estanteria> findWithSeccionByCodigoAndActivaTrue(String codigo);
 }

@@ -15,9 +15,13 @@ import com.proyectofincurso.estanteria.persistence.repository.AsignacionProducto
 import com.proyectofincurso.estanteria.persistence.repository.EmpresaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConfiguracionRepository;
+import com.proyectofincurso.estanteria.persistence.repository.ProductoRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionRepository;
 import com.proyectofincurso.estanteria.web.dto.AsignacionActivaSlotResponse;
+import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaRequest;
+import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaSlotRequest;
+import com.proyectofincurso.estanteria.web.dto.CrearSeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.EmpresaResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaConfiguracionResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
@@ -31,8 +35,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -46,6 +53,7 @@ public class ModeloOperativoService {
     private final EstanteriaSlotConfiguracionRepository slotConfiguracionRepository;
     private final AsignacionProductoSlotRepository asignacionProductoSlotRepository;
     private final SeccionEncargadoRepository seccionEncargadoRepository;
+    private final ProductoRepository productoRepository;
 
     @Transactional(readOnly = true)
     public EmpresaResponse obtenerEmpresaActivaPorCodigo(String codigo) {
@@ -72,6 +80,35 @@ public class ModeloOperativoService {
                 .toList();
     }
 
+    @Transactional
+    public SeccionResponse crearSeccion(CrearSeccionRequest request) {
+        Empresa empresa = empresaRepository.findByCodigoAndActivaTrue(normalizar(request.empresaCodigo()))
+                .orElseThrow(() -> ApiException.notFound(
+                        "EMPRESA_NOT_FOUND",
+                        "No existe una empresa activa con el codigo indicado"
+                ));
+
+        String codigo = normalizar(request.codigo());
+        if (seccionRepository.existsByEmpresaIdAndCodigoIgnoreCase(empresa.getId(), codigo)) {
+            throw ApiException.conflict(
+                    "SECCION_CODIGO_DUPLICADO",
+                    "Ya existe una seccion con ese codigo en la empresa"
+            );
+        }
+
+        Instant ahora = Instant.now();
+        Seccion seccion = new Seccion();
+        seccion.setEmpresa(empresa);
+        seccion.setCodigo(codigo);
+        seccion.setNombre(normalizar(request.nombre()));
+        seccion.setDescripcion(normalizarNullable(request.descripcion()));
+        seccion.setActiva(true);
+        seccion.setCreatedAt(ahora);
+        seccion.setUpdatedAt(ahora);
+
+        return toSeccionResponse(seccionRepository.save(seccion));
+    }
+
     @Transactional(readOnly = true)
     public List<EstanteriaResumenResponse> obtenerEstanteriasDeSeccion(Long seccionId) {
         if (!seccionRepository.existsById(seccionId)) {
@@ -83,6 +120,77 @@ public class ModeloOperativoService {
 
         return estanteriaRepository.findBySeccionIdAndActivaTrueOrderByCodigoAsc(seccionId).stream()
                 .map(this::toEstanteriaResumenResponse)
+                .toList();
+    }
+
+    @Transactional
+    public EstanteriaConfiguracionResponse crearEstanteria(CrearEstanteriaRequest request) {
+        Seccion seccion = seccionRepository.findByIdAndActivaTrue(request.seccionId())
+                .orElseThrow(() -> ApiException.notFound(
+                        "SECCION_NOT_FOUND",
+                        "No existe una seccion activa con el identificador indicado"
+                ));
+
+        String codigo = normalizar(request.codigo());
+        if (estanteriaRepository.existsByCodigoIgnoreCase(codigo)) {
+            throw ApiException.conflict(
+                    "ESTANTERIA_CODIGO_DUPLICADO",
+                    "Ya existe una estanteria con el codigo indicado"
+            );
+        }
+
+        List<CrearEstanteriaSlotRequest> slotsRequest = request.slots() == null ? List.of() : request.slots();
+        validarSlotsAlta(slotsRequest);
+
+        Map<Long, Producto> productos = productoRepository.findAllById(
+                        slotsRequest.stream().map(CrearEstanteriaSlotRequest::productoId).toList()
+                ).stream()
+                .filter(producto -> Boolean.TRUE.equals(producto.getActivo()))
+                .collect(Collectors.toMap(Producto::getId, Function.identity()));
+
+        for (CrearEstanteriaSlotRequest slotRequest : slotsRequest) {
+            if (!productos.containsKey(slotRequest.productoId())) {
+                throw ApiException.notFound(
+                        "PRODUCTO_NOT_FOUND",
+                        "No existe un producto activo con el identificador indicado"
+                );
+            }
+        }
+
+        Instant ahora = Instant.now();
+        Estanteria estanteria = new Estanteria();
+        estanteria.setSeccion(seccion);
+        estanteria.setCodigo(codigo);
+        estanteria.setNombre(normalizar(request.nombre()));
+        estanteria.setDescripcion(normalizarNullable(request.descripcion()));
+        estanteria.setActiva(true);
+        estanteria.setCreatedAt(ahora);
+        estanteria.setUpdatedAt(ahora);
+        Estanteria estanteriaGuardada = estanteriaRepository.save(estanteria);
+
+        List<EstanteriaSlotConfiguracion> slots = slotsRequest.stream()
+                .map(slotRequest -> {
+                    EstanteriaSlotConfiguracion slot = new EstanteriaSlotConfiguracion();
+                    slot.setEstanteria(estanteriaGuardada);
+                    slot.setSlotId(normalizar(slotRequest.slotId()));
+                    slot.setOrden(slotRequest.orden());
+                    slot.setProducto(productos.get(slotRequest.productoId()));
+                    slot.setCantidadObjetivo(slotRequest.cantidadObjetivo());
+                    slot.setActivo(true);
+                    slot.setCreatedAt(ahora);
+                    slot.setUpdatedAt(ahora);
+                    return slot;
+                })
+                .toList();
+        slotConfiguracionRepository.saveAll(slots);
+
+        return obtenerConfiguracionDeEstanteria(estanteriaGuardada.getCodigo());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductoResumenResponse> obtenerProductosActivos() {
+        return productoRepository.findByActivoTrueOrderByNombreAsc().stream()
+                .map(this::toProductoResumenResponse)
                 .toList();
     }
 
@@ -130,6 +238,52 @@ public class ModeloOperativoService {
                 encargados,
                 slotResponses
         );
+    }
+
+    private void validarSlotsAlta(List<CrearEstanteriaSlotRequest> slotsRequest) {
+        if (slotsRequest.isEmpty()) {
+            throw ApiException.badRequest(
+                    "ESTANTERIA_SLOTS_OBLIGATORIOS",
+                    "La estanteria debe tener al menos un slot configurado"
+            );
+        }
+
+        Set<String> slotIds = new HashSet<>();
+        Set<Integer> ordenes = new HashSet<>();
+
+        for (CrearEstanteriaSlotRequest slotRequest : slotsRequest) {
+            String slotId = normalizar(slotRequest.slotId());
+            if (slotId == null || slotId.isBlank()) {
+                throw ApiException.badRequest(
+                        "SLOT_ID_OBLIGATORIO",
+                        "El identificador de slot es obligatorio"
+                );
+            }
+            if (!slotIds.add(slotId.toLowerCase())) {
+                throw ApiException.badRequest(
+                        "SLOT_ID_DUPLICADO",
+                        "No puede haber dos slots con el mismo identificador"
+                );
+            }
+            if (slotRequest.orden() == null || slotRequest.orden() <= 0) {
+                throw ApiException.badRequest(
+                        "SLOT_ORDEN_INVALIDO",
+                        "El orden del slot debe ser mayor que cero"
+                );
+            }
+            if (!ordenes.add(slotRequest.orden())) {
+                throw ApiException.badRequest(
+                        "SLOT_ORDEN_DUPLICADO",
+                        "No puede haber dos slots con el mismo orden"
+                );
+            }
+            if (slotRequest.cantidadObjetivo() == null || slotRequest.cantidadObjetivo() < 0) {
+                throw ApiException.badRequest(
+                        "SLOT_CANTIDAD_INVALIDA",
+                        "La cantidad objetivo no puede ser negativa"
+                );
+            }
+        }
     }
 
     private EmpresaResponse toEmpresaResponse(Empresa empresa) {
@@ -221,5 +375,14 @@ public class ModeloOperativoService {
                 trabajador.getTipoTrabajador(),
                 seccionEncargado.getResponsablePrincipal()
         );
+    }
+
+    private String normalizar(String valor) {
+        return valor == null ? null : valor.trim();
+    }
+
+    private String normalizarNullable(String valor) {
+        String normalizado = normalizar(valor);
+        return normalizado == null || normalizado.isBlank() ? null : normalizado;
     }
 }

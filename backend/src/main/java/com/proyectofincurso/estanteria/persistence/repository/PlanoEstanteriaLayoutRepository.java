@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface PlanoEstanteriaLayoutRepository extends JpaRepository<PlanoEstanteriaLayout, Long> {
 
-    @EntityGraph(attributePaths = {"planoZona", "estanteria"})
+    @EntityGraph(attributePaths = {"planoZona", "planoZona.seccion", "estanteria", "estanteria.seccion"})
     List<PlanoEstanteriaLayout> findByPlanoIdOrderByIdAsc(Long planoId);
 
     @Modifying(flushAutomatically = true)

@@ -1,8 +1,10 @@
 package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.service.PlanoService;
+import com.proyectofincurso.estanteria.service.PlanoOperativoService;
 import com.proyectofincurso.estanteria.web.dto.ActualizarPlanoRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearPlanoRequest;
+import com.proyectofincurso.estanteria.web.dto.PlanoOperativoResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoResumenResponse;
 import jakarta.validation.Valid;
@@ -24,6 +26,7 @@ import java.util.List;
 public class PlanoController {
 
     private final PlanoService planoService;
+    private final PlanoOperativoService planoOperativoService;
 
     @GetMapping(value = "/api/empresas/{codigoEmpresa}/planos", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<PlanoResumenResponse> listarPlanosDeEmpresa(@PathVariable String codigoEmpresa) {
@@ -33,6 +36,11 @@ public class PlanoController {
     @GetMapping(value = "/api/planos/{codigo}", produces = MediaType.APPLICATION_JSON_VALUE)
     public PlanoResponse obtenerPlano(@PathVariable String codigo) {
         return planoService.obtenerPlanoCompleto(codigo);
+    }
+
+    @GetMapping(value = "/api/planos/{codigo}/operativo", produces = MediaType.APPLICATION_JSON_VALUE)
+    public PlanoOperativoResponse obtenerPlanoOperativo(@PathVariable String codigo) {
+        return planoOperativoService.obtenerPlanoOperativo(codigo);
     }
 
     @PostMapping(value = "/api/planos", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

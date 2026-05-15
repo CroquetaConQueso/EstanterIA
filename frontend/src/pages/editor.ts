@@ -45,15 +45,6 @@ type EstanteriaConfiguracionResponse = {
   descripcion: string | null;
   activa: boolean | null;
   seccion: SeccionResponse;
-  slots: SlotConfiguradoResponse[];
-};
-
-type SlotConfiguradoResponse = {
-  id: number;
-  slotId: string;
-  orden: number;
-  productoEsperado: ProductoResumenResponse | null;
-  cantidadObjetivo: number | null;
 };
 
 type PlanoZonaResponse = {
@@ -159,24 +150,6 @@ type CrearEstanteriaPayload = {
   }>;
 };
 
-type ActualizarSeccionPayload = {
-  codigo: string;
-  nombre: string;
-  descripcion: string | null;
-};
-
-type ActualizarEstanteriaPayload = {
-  nombre: string;
-  descripcion: string | null;
-  slots: Array<{
-    slotId: string;
-    orden: number;
-    productoId: number;
-    cantidadObjetivo: number;
-    activo: boolean;
-  }>;
-};
-
 type DragState =
   | {
       type: "zone";
@@ -259,7 +232,6 @@ let racks: LocalRack[] = [];
 let secciones: SeccionResponse[] = [];
 let estanteriasSeccion: EstanteriaResumenResponse[] = [];
 let productos: ProductoResumenResponse[] = [];
-const rackConfigurations = new Map<string, EstanteriaConfiguracionResponse>();
 let saving = false;
 let creatingSection = false;
 let creatingRack = false;
@@ -732,61 +704,6 @@ function renderInlineSlots(): void {
   }
 }
 
-function renderElementSlots(slots: SlotConfiguradoResponse[]): void {
-  if (!elementSlotsContainer) return;
-  elementSlotsContainer.innerHTML = "";
-
-  if (slots.length === 0) {
-    const empty = document.createElement("p");
-    empty.className = "hint";
-    empty.textContent = "Cargando slots configurados...";
-    elementSlotsContainer.appendChild(empty);
-    return;
-  }
-
-  slots.forEach((slot, index) => {
-    const row = document.createElement("div");
-    row.className = "slot-row";
-
-    const slotId = document.createElement("input");
-    slotId.type = "text";
-    slotId.value = slot.slotId;
-    slotId.maxLength = 50;
-    slotId.dataset.field = "slotId";
-
-    const orden = document.createElement("input");
-    orden.type = "number";
-    orden.value = String(slot.orden ?? index + 1);
-    orden.min = "1";
-    orden.step = "1";
-    orden.dataset.field = "orden";
-
-    const producto = document.createElement("select");
-    producto.dataset.field = "productoId";
-    if (productos.length === 0) {
-      producto.appendChild(option("", "No hay productos activos"));
-    } else {
-      productos.forEach((item) => producto.appendChild(option(String(item.id), productoLabel(item))));
-      if (slot.productoEsperado?.id) producto.value = String(slot.productoEsperado.id);
-    }
-
-    const cantidad = document.createElement("input");
-    cantidad.type = "number";
-    cantidad.value = String(slot.cantidadObjetivo ?? 8);
-    cantidad.min = "0";
-    cantidad.step = "1";
-    cantidad.dataset.field = "cantidadObjetivo";
-
-    row.append(
-      labeledSlotField("Slot", slotId),
-      labeledSlotField("Orden", orden),
-      labeledSlotField("Producto esperado", producto),
-      labeledSlotField("Cantidad", cantidad)
-    );
-    elementSlotsContainer.appendChild(row);
-  });
-}
-
 function labeledSlotField(labelText: string, control: HTMLElement): HTMLElement {
   const wrap = document.createElement("label");
   wrap.className = "slot-field";
@@ -968,44 +885,6 @@ function buildEstanteriaPayload(): CrearEstanteriaPayload | string {
   };
 }
 
-function buildActualizarEstanteriaPayload(): ActualizarEstanteriaPayload | string {
-  const nombre = textValue(elementName);
-  if (!nombre) return "El nombre de estantería es obligatorio.";
-  if (productos.length === 0) return "No hay productos activos para asignar a los slots.";
-
-  const rows = Array.from(elementSlotsContainer?.querySelectorAll<HTMLElement>(".slot-row") ?? []);
-  if (rows.length === 0) return "La estantería debe tener al menos un slot.";
-
-  const slots = rows.map((row) => {
-    const slotId = row.querySelector<HTMLInputElement>("[data-field='slotId']")?.value.trim() ?? "";
-    const orden = Number(row.querySelector<HTMLInputElement>("[data-field='orden']")?.value);
-    const productoId = Number(row.querySelector<HTMLSelectElement>("[data-field='productoId']")?.value);
-    const cantidadObjetivo = Number(row.querySelector<HTMLInputElement>("[data-field='cantidadObjetivo']")?.value);
-    return { slotId, orden, productoId, cantidadObjetivo, activo: true };
-  });
-
-  if (slots.some((slot) => !slot.slotId)) return "Todos los slots deben tener identificador.";
-  if (slots.some((slot) => !Number.isFinite(slot.orden) || slot.orden <= 0)) return "Todos los slots deben tener orden mayor que cero.";
-  if (slots.some((slot) => !Number.isFinite(slot.productoId) || slot.productoId <= 0)) return "Todos los slots deben tener producto esperado.";
-  if (slots.some((slot) => !Number.isFinite(slot.cantidadObjetivo) || slot.cantidadObjetivo < 0)) return "La cantidad objetivo no puede ser negativa.";
-
-  const slotIds = new Set<string>();
-  const ordenes = new Set<number>();
-  for (const slot of slots) {
-    const normalizedSlotId = slot.slotId.toLowerCase();
-    if (slotIds.has(normalizedSlotId)) return "No puedes repetir identificadores de slot.";
-    if (ordenes.has(slot.orden)) return "No puedes repetir órdenes de slot.";
-    slotIds.add(normalizedSlotId);
-    ordenes.add(slot.orden);
-  }
-
-  return {
-    nombre,
-    descripcion: nullableText(elementDescription),
-    slots
-  };
-}
-
 async function crearSeccionInline(event: SubmitEvent): Promise<void> {
   event.preventDefault();
   if (creatingSection) return;
@@ -1057,7 +936,6 @@ async function crearEstanteriaInline(event: SubmitEvent): Promise<void> {
       method: "POST",
       body: JSON.stringify(payload)
     });
-    rackConfigurations.set(created.codigo, created);
     formInlineRack?.reset();
     if (newRackSlotCountInput) newRackSlotCountInput.value = "4";
     renderInlineSlots();

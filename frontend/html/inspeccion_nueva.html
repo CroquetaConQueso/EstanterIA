@@ -39,21 +39,24 @@
 
 <main class="page">
   <header class="page-head">
-    <p class="eyebrow">Flujo de trabajo</p>
-    <h1>Nueva inspección</h1>
-    <p class="page-desc">
-      Crea una inspección base con los campos que persiste el backend.
-      El análisis visual se puede lanzar desde el módulo de Visión.
-    </p>
+    <div>
+      <p class="eyebrow">Alta operativa</p>
+      <h1>Nueva inspección</h1>
+      <p class="page-desc">
+        Crea una inspección manual básica con los campos que persiste el backend.
+        Para captura y clasificación visual por slots, usa el módulo de Visión.
+      </p>
+    </div>
   </header>
 
   <section class="layout">
     <section class="panel form-panel">
       <div class="panel-head">
-        <h2>Datos de la inspección</h2>
-        <p class="hint">
-          Indica la estantería, una ruta de imagen si ya existe y notas operativas opcionales.
-        </p>
+        <div>
+          <p class="section-kicker">Formulario</p>
+          <h2>Datos de la inspección</h2>
+        </div>
+        <span class="panel-badge">Backend real</span>
       </div>
 
       <form id="form-inspeccion-nueva" class="form">
@@ -83,12 +86,13 @@
         </div>
 
         <p class="micro">
-          Tras crear, se vuelve al listado y se selecciona la inspección nueva.
+          Tras crearla, volverás al histórico y la nueva inspección quedará seleccionada.
         </p>
       </form>
     </section>
 
     <aside class="panel side-panel">
+      <p class="section-kicker">Contexto</p>
       <h2>Qué se crea exactamente</h2>
       <ul class="bullets">
         <li><strong>Inspección</strong> con fecha y código de estantería.</li>
@@ -100,8 +104,8 @@
 
       <h3>Encaje con Visión</h3>
       <p class="hint">
-        Esta página mantiene el alta manual básica. Para capturar y clasificar slots,
-        usa la pantalla de Visión.
+        Esta página mantiene el alta manual básica. Para capturar imagen,
+        clasificar slots y generar resultado visual, usa la pantalla de Visión.
       </p>
     </aside>
   </section>

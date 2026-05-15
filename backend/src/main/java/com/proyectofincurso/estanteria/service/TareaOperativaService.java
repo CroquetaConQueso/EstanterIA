@@ -17,10 +17,15 @@ import com.proyectofincurso.estanteria.persistence.entity.TipoTareaOperativa;
 import com.proyectofincurso.estanteria.persistence.entity.Trabajador;
 import com.proyectofincurso.estanteria.persistence.entity.UserAccount;
 import com.proyectofincurso.estanteria.persistence.repository.TareaOperativaRepository;
+import com.proyectofincurso.estanteria.persistence.repository.SeccionRepository;
+import com.proyectofincurso.estanteria.persistence.repository.EstanteriaRepository;
+import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConfiguracionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.TrabajadorRepository;
 import com.proyectofincurso.estanteria.persistence.repository.UserAccountRepository;
+import com.proyectofincurso.estanteria.web.dto.ActualizarTareaOperativaRequest;
 import com.proyectofincurso.estanteria.web.dto.AlertaAsignacionResponse;
 import com.proyectofincurso.estanteria.web.dto.AlertaSlotResponse;
+import com.proyectofincurso.estanteria.web.dto.CrearTareaManualRequest;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.ProductoResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.ProveedorResumenResponse;
@@ -42,6 +47,9 @@ import java.util.List;
 public class TareaOperativaService {
 
     private final TareaOperativaRepository tareaOperativaRepository;
+    private final SeccionRepository seccionRepository;
+    private final EstanteriaRepository estanteriaRepository;
+    private final EstanteriaSlotConfiguracionRepository slotConfiguracionRepository;
     private final TrabajadorRepository trabajadorRepository;
     private final UserAccountRepository userAccountRepository;
 
@@ -95,6 +103,64 @@ public class TareaOperativaService {
     }
 
     @Transactional
+    public TareaOperativaResponse crearTareaManual(CrearTareaManualRequest request) {
+        TareaOperativa tarea = new TareaOperativa();
+        aplicarCamposEditables(
+                tarea,
+                request.tipoTarea(),
+                request.prioridad(),
+                request.titulo(),
+                request.descripcion(),
+                request.seccionId(),
+                request.estanteriaId(),
+                request.slotConfiguracionId(),
+                request.trabajadorAsignadoId(),
+                request.fechaLimite()
+        );
+        tarea.setEstadoTarea(EstadoTareaOperativa.PENDIENTE);
+        tarea.setAlerta(null);
+        tarea.setResueltaAt(null);
+        resolverUsuarioAutenticado().ifPresent(tarea::setAsignadaPor);
+
+        TareaOperativa saved = tareaOperativaRepository.save(tarea);
+        return tareaOperativaRepository.findByIdConContexto(saved.getId())
+                .map(this::toResponse)
+                .orElseGet(() -> toResponse(saved));
+    }
+
+    @Transactional
+    public TareaOperativaResponse actualizarTarea(Long id, ActualizarTareaOperativaRequest request) {
+        TareaOperativa tarea = tareaOperativaRepository.findByIdConContexto(id)
+                .orElseThrow(() -> ApiException.notFound(
+                        "TAREA_OPERATIVA_NOT_FOUND",
+                        "No existe la tarea operativa indicada"
+                ));
+
+        if (tarea.getEstadoTarea() == EstadoTareaOperativa.RESUELTA
+                || tarea.getEstadoTarea() == EstadoTareaOperativa.CANCELADA) {
+            throw ApiException.conflict(
+                    "TAREA_FINALIZADA_NO_EDITABLE",
+                    "No se puede editar una tarea resuelta o cancelada"
+            );
+        }
+
+        aplicarCamposEditables(
+                tarea,
+                request.tipoTarea(),
+                request.prioridad(),
+                request.titulo(),
+                request.descripcion(),
+                request.seccionId(),
+                request.estanteriaId(),
+                request.slotConfiguracionId(),
+                request.trabajadorAsignadoId(),
+                request.fechaLimite()
+        );
+
+        return toResponse(tarea);
+    }
+
+    @Transactional
     public TareaOperativaResponse asignarTrabajador(Long id, Long trabajadorId) {
         TareaOperativa tarea = tareaOperativaRepository.findByIdConContexto(id)
                 .orElseThrow(() -> ApiException.notFound(
@@ -137,6 +203,131 @@ public class TareaOperativaService {
         }
 
         return toResponse(tarea);
+    }
+
+    private void aplicarCamposEditables(
+            TareaOperativa tarea,
+            TipoTareaOperativa tipoTarea,
+            PrioridadAlerta prioridad,
+            String titulo,
+            String descripcion,
+            Long seccionId,
+            Long estanteriaId,
+            Long slotConfiguracionId,
+            Long trabajadorAsignadoId,
+            Instant fechaLimite
+    ) {
+        Seccion seccion = resolverSeccion(seccionId);
+        Estanteria estanteria = resolverEstanteria(estanteriaId);
+        EstanteriaSlotConfiguracion slot = resolverSlot(slotConfiguracionId, estanteria);
+        Trabajador trabajador = resolverTrabajador(trabajadorAsignadoId);
+
+        if (estanteria != null) {
+            Seccion seccionDeEstanteria = estanteria.getSeccion();
+            if (seccion != null && !seccion.getId().equals(seccionDeEstanteria.getId())) {
+                throw ApiException.badRequest(
+                        "TAREA_ESTANTERIA_SECCION_INCOHERENTE",
+                        "La estanteria indicada no pertenece a la seccion seleccionada"
+                );
+            }
+            seccion = seccionDeEstanteria;
+        }
+
+        if (slot != null) {
+            estanteria = slot.getEstanteria();
+            seccion = estanteria.getSeccion();
+        }
+
+        tarea.setTipoTarea(tipoTarea);
+        tarea.setPrioridad(prioridad);
+        tarea.setTitulo(titulo.trim());
+        tarea.setDescripcion(descripcion == null || descripcion.isBlank() ? "" : descripcion.trim());
+        tarea.setSeccion(seccion);
+        tarea.setEstanteria(estanteria);
+        tarea.setSlotConfiguracion(slot);
+        if (tarea.getAlerta() == null) {
+            tarea.setAsignacionProductoSlot(null);
+        }
+        tarea.setFechaLimite(fechaLimite);
+
+        Trabajador anterior = tarea.getTrabajadorAsignado();
+        tarea.setTrabajadorAsignado(trabajador);
+        if (trabajador == null) {
+            tarea.setAssignedAt(null);
+        } else if (anterior == null) {
+            tarea.setAssignedAt(Instant.now());
+            resolverUsuarioAutenticado().ifPresent(tarea::setAsignadaPor);
+        }
+    }
+
+    private Seccion resolverSeccion(Long seccionId) {
+        if (seccionId == null) {
+            return null;
+        }
+        return seccionRepository.findByIdAndActivaTrue(seccionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SECCION_NOT_FOUND",
+                        "No existe una seccion activa con el identificador indicado"
+                ));
+    }
+
+    private Estanteria resolverEstanteria(Long estanteriaId) {
+        if (estanteriaId == null) {
+            return null;
+        }
+        Estanteria estanteria = estanteriaRepository.findById(estanteriaId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "ESTANTERIA_NOT_FOUND",
+                        "No existe la estanteria indicada"
+                ));
+        if (!Boolean.TRUE.equals(estanteria.getActiva())) {
+            throw ApiException.badRequest(
+                    "ESTANTERIA_INACTIVA",
+                    "La estanteria indicada no esta activa"
+            );
+        }
+        return estanteria;
+    }
+
+    private EstanteriaSlotConfiguracion resolverSlot(Long slotConfiguracionId, Estanteria estanteria) {
+        if (slotConfiguracionId == null) {
+            return null;
+        }
+        if (estanteria == null) {
+            throw ApiException.badRequest(
+                    "TAREA_SLOT_SIN_ESTANTERIA",
+                    "Selecciona una estanteria antes de vincular un slot"
+            );
+        }
+        EstanteriaSlotConfiguracion slot = slotConfiguracionRepository.findById(slotConfiguracionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SLOT_CONFIGURACION_NOT_FOUND",
+                        "No existe el slot indicado"
+                ));
+        if (!Boolean.TRUE.equals(slot.getActivo())) {
+            throw ApiException.badRequest(
+                    "SLOT_CONFIGURACION_INACTIVO",
+                    "El slot indicado no esta activo"
+            );
+        }
+        if (!slot.getEstanteria().getId().equals(estanteria.getId())) {
+            throw ApiException.badRequest(
+                    "TAREA_SLOT_ESTANTERIA_INCOHERENTE",
+                    "El slot indicado no pertenece a la estanteria seleccionada"
+            );
+        }
+        return slot;
+    }
+
+    private Trabajador resolverTrabajador(Long trabajadorId) {
+        if (trabajadorId == null) {
+            return null;
+        }
+        return trabajadorRepository.findByIdAndActivoTrue(trabajadorId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "TRABAJADOR_NOT_FOUND",
+                        "No existe un trabajador activo con el identificador indicado"
+                ));
     }
 
     private java.util.Optional<UserAccount> resolverUsuarioAutenticado() {
@@ -215,7 +406,7 @@ public class TareaOperativaService {
         UserAccount asignadaPor = tarea.getAsignadaPor();
         return new TareaOperativaResponse(
                 tarea.getId(),
-                tarea.getAlerta().getId(),
+                tarea.getAlerta() != null ? tarea.getAlerta().getId() : null,
                 tarea.getTipoTarea(),
                 tarea.getPrioridad(),
                 tarea.getEstadoTarea(),

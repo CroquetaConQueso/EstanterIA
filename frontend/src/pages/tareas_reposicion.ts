@@ -1,4 +1,4 @@
-import { authFetch } from "../lib/api";
+import { authFetch, isStructuralAdmin } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
 
 requireAuth();
@@ -24,11 +24,13 @@ type ProveedorResumenResponse = {
 };
 
 type SeccionResponse = {
+  id?: number | null;
   codigo?: string | null;
   nombre?: string | null;
 };
 
 type EstanteriaResumenResponse = {
+  id?: number | null;
   codigo?: string | null;
   nombre?: string | null;
 };
@@ -67,7 +69,7 @@ type TrabajadorActivoResponse = {
 
 type TareaOperativaResponse = {
   id: number;
-  alertaId: number;
+  alertaId: number | null;
   tipoTarea: TipoTareaOperativa;
   prioridad: Prioridad;
   estadoTarea: EstadoTareaOperativa;
@@ -102,6 +104,7 @@ const filtroPrioridad = document.querySelector<HTMLSelectElement>("#filtro-prior
 const filtroTexto = document.querySelector<HTMLInputElement>("#filtro-texto");
 const trabajadorSelect = document.querySelector<HTMLSelectElement>("#trabajador-select");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar");
+const btnNuevaTarea = document.querySelector<HTMLAnchorElement>("#btn-nueva-tarea");
 const tasksFeedback = document.querySelector<HTMLElement>("#tasks-feedback");
 
 const metricPendientes = document.querySelector<HTMLElement>("#metric-pendientes");
@@ -110,6 +113,11 @@ const metricCompletadas = document.querySelector<HTMLElement>("#metric-completad
 
 let tareas: TareaOperativaResponse[] = [];
 let trabajadoresActivos: TrabajadorActivoResponse[] = [];
+const puedeGestionarTareas = isStructuralAdmin();
+
+if (!puedeGestionarTareas && btnNuevaTarea) {
+  btnNuevaTarea.hidden = true;
+}
 
 const tipoLabels: Record<string, string> = {
   REPOSICION: "Reposición",
@@ -226,7 +234,7 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
   if (data?.message) return data.message;
   if (status === 400) return "Revisa los datos de la tarea";
   if (status === 401) return "Debes iniciar sesión para consultar tareas";
-  if (status === 403) return "No tienes permisos para modificar esta tarea";
+  if (status === 403) return "Solo un administrador puede crear o editar tareas manuales.";
   if (status === 404) return "No se encontró la tarea solicitada";
   if (status === 409) return "El cambio solicitado no está permitido";
   if (status >= 500) return "Error interno del servidor";
@@ -329,6 +337,14 @@ function crearBoton(texto: string, action: string, id: number, className: string
   return button;
 }
 
+function crearLink(texto: string, href: string, className: string): HTMLAnchorElement {
+  const link = document.createElement("a");
+  link.className = className;
+  link.href = href;
+  link.textContent = texto;
+  return link;
+}
+
 function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
   const article = document.createElement("article");
   article.className = "task-card";
@@ -341,7 +357,7 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
 
   const id = document.createElement("span");
   id.className = "task-id";
-  id.textContent = `T-${tarea.id} / A-${tarea.alertaId}`;
+  id.textContent = tarea.alertaId ? `T-${tarea.id} / A-${tarea.alertaId}` : `T-${tarea.id} / Manual`;
 
   const title = document.createElement("h2");
   title.className = "task-title";
@@ -377,6 +393,10 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
 
   const actions = document.createElement("div");
   actions.className = "task-actions";
+
+  if (puedeGestionarTareas && tarea.estadoTarea !== "RESUELTA" && tarea.estadoTarea !== "CANCELADA") {
+    actions.appendChild(crearLink("Editar", `tarea_formulario.html?id=${encodeURIComponent(String(tarea.id))}`, "btn primary"));
+  }
 
   if (tarea.estadoTarea === "PENDIENTE") {
     actions.appendChild(crearBoton("Asignar", "asignar", tarea.id, "btn ghost"));

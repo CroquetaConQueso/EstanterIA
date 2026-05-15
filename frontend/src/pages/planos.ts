@@ -44,6 +44,14 @@ type ProductoResumenResponse = {
   descripcion: string | null;
 };
 
+type PlanoResponsableResponse = {
+  trabajadorId: number;
+  nombre: string | null;
+  apellidos: string | null;
+  tipoTrabajador: string | null;
+  responsablePrincipal: boolean | null;
+};
+
 type PlanoZonaOperativaResponse = {
   id: number;
   seccion: SeccionResponse;
@@ -51,6 +59,7 @@ type PlanoZonaOperativaResponse = {
   y: number;
   width: number;
   height: number;
+  responsables: PlanoResponsableResponse[];
 };
 
 type PlanoUltimaInspeccionResponse = {
@@ -139,11 +148,13 @@ const subtituloPlano = document.querySelector<HTMLElement>("#subtitulo-plano");
 const estadoCarga = document.querySelector<HTMLElement>("#estado-carga");
 const canvas = document.querySelector<HTMLElement>("#plano-canvas");
 const detalleEstanteria = document.querySelector<HTMLElement>("#detalle-estanteria");
+const detallePrincipalTitulo = document.querySelector<HTMLElement>("#detalle-principal-titulo");
 const detalleSlot = document.querySelector<HTMLElement>("#detalle-slot");
 const detalleAlertas = document.querySelector<HTMLElement>("#detalle-alertas");
 
 let planoActual: PlanoOperativoResponse | null = null;
 let planosDisponibles: PlanoResumenResponse[] = [];
+let zonaSeleccionada: PlanoZonaOperativaResponse | null = null;
 let estanteriaSeleccionada: PlanoEstanteriaOperativaResponse | null = null;
 let slotSeleccionado: PlanoSlotOperativoResponse | null = null;
 
@@ -206,6 +217,25 @@ function abreviarProducto(producto: ProductoResumenResponse | null): string {
   const nombre = producto?.nombre ?? producto?.codigoInterno;
   if (!nombre) return "Sin producto";
   return nombre.length > 16 ? `${nombre.slice(0, 14)}...` : nombre;
+}
+
+function nombreResponsable(responsable: PlanoResponsableResponse): string {
+  return [responsable.nombre, responsable.apellidos].filter(Boolean).join(" ").trim()
+    || `Trabajador #${responsable.trabajadorId}`;
+}
+
+function textoResponsables(responsables: PlanoResponsableResponse[]): string {
+  if (responsables.length === 0) return "Sin responsable asignado";
+  const principal = responsables.find((responsable) => responsable.responsablePrincipal) ?? responsables[0];
+  return nombreResponsable(principal);
+}
+
+function estanteriasDeZona(plano: PlanoOperativoResponse, zonaId: number): PlanoEstanteriaOperativaResponse[] {
+  return plano.estanterias.filter((estanteria) => estanteria.zonaId === zonaId);
+}
+
+function totalAlertas(estanterias: PlanoEstanteriaOperativaResponse[]): number {
+  return estanterias.reduce((total, estanteria) => total + estanteria.alertasAbiertas.length, 0);
 }
 
 function setTexto(element: HTMLElement | null, text: string): void {
@@ -306,33 +336,68 @@ function renderListaEstanterias(plano: PlanoOperativoResponse): void {
   if (!listaEstanterias) return;
 
   listaEstanterias.innerHTML = "";
-  if (plano.estanterias.length === 0) {
+  if (plano.zonas.length === 0) {
     const item = document.createElement("li");
     item.className = "plan-item";
-    item.textContent = "El plano no tiene estanterías colocadas.";
+    item.textContent = "El plano no tiene zonas configuradas.";
     listaEstanterias.appendChild(item);
     return;
   }
 
-  plano.estanterias.forEach((estanteria) => {
+  plano.zonas.forEach((zona) => {
+    const estanterias = estanteriasDeZona(plano, zona.id);
     const item = document.createElement("li");
-    item.className = `plan-item${estanteriaSeleccionada?.layoutId === estanteria.layoutId ? " is-active" : ""}`;
+    item.className = `plan-item tree-zone${zonaSeleccionada?.id === zona.id ? " is-active" : ""}`;
 
     const button = document.createElement("button");
     button.type = "button";
     button.className = "plan-list-button";
-    button.addEventListener("click", () => seleccionarEstanteria(estanteria, null));
+    button.addEventListener("click", () => seleccionarZona(zona));
 
     const title = document.createElement("span");
     title.className = "plan-title";
-    title.textContent = estanteria.estanteria.codigo;
+    title.textContent = `${zona.seccion.nombre} · ${zona.seccion.codigo}`;
 
     const meta = document.createElement("span");
     meta.className = "plan-meta";
-    meta.textContent = `${etiquetaEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual)} · ${estanteria.alertasAbiertas.length} alertas`;
+    meta.textContent = `Responsable: ${textoResponsables(zona.responsables)} · ${estanterias.length} estanterías · ${totalAlertas(estanterias)} alertas`;
 
     button.append(title, meta);
     item.appendChild(button);
+
+    const childList = document.createElement("ul");
+    childList.className = "tree-rack-list";
+    if (estanterias.length === 0) {
+      const empty = document.createElement("li");
+      empty.className = "tree-rack-empty";
+      empty.textContent = "Sin estanterías colocadas";
+      childList.appendChild(empty);
+    } else {
+      estanterias.forEach((estanteria) => {
+        const rackItem = document.createElement("li");
+        rackItem.className = `tree-rack-item${estanteriaSeleccionada?.layoutId === estanteria.layoutId ? " is-active" : ""}`;
+        const rackButton = document.createElement("button");
+        rackButton.type = "button";
+        rackButton.className = "tree-rack-button";
+        rackButton.addEventListener("click", (event) => {
+          event.stopPropagation();
+          seleccionarEstanteria(estanteria, null);
+        });
+
+        const rackTitle = document.createElement("span");
+        rackTitle.className = "plan-title";
+        rackTitle.textContent = `${estanteria.estanteria.codigo} · ${estanteria.estanteria.nombre}`;
+
+        const rackMeta = document.createElement("span");
+        rackMeta.className = "plan-meta";
+        rackMeta.textContent = `${etiquetaEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual)} · ${estanteria.alertasAbiertas.length === 0 ? "Sin alertas abiertas" : `${estanteria.alertasAbiertas.length} alertas`}`;
+
+        rackButton.append(rackTitle, rackMeta);
+        rackItem.appendChild(rackButton);
+        childList.appendChild(rackItem);
+      });
+    }
+    item.appendChild(childList);
     listaEstanterias.appendChild(item);
   });
 }
@@ -352,8 +417,18 @@ function renderCanvas(plano: PlanoOperativoResponse): void {
 
   plano.zonas.forEach((zona) => {
     const zonaNode = document.createElement("section");
-    zonaNode.className = "zone-node";
+    zonaNode.className = `zone-node${zonaSeleccionada?.id === zona.id ? " is-selected" : ""}`;
+    zonaNode.tabIndex = 0;
+    zonaNode.role = "button";
+    zonaNode.setAttribute("aria-label", `Sección ${zona.seccion.codigo}`);
     posicionar(zonaNode, zona.x, zona.y, zona.width, zona.height, plano);
+    zonaNode.addEventListener("click", () => seleccionarZona(zona));
+    zonaNode.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        seleccionarZona(zona);
+      }
+    });
 
     const label = document.createElement("span");
     label.className = "zone-label";
@@ -369,7 +444,10 @@ function renderCanvas(plano: PlanoOperativoResponse): void {
     rack.role = "button";
     rack.setAttribute("aria-label", `Estantería ${estanteria.estanteria.codigo}`);
     posicionar(rack, estanteria.x, estanteria.y, estanteria.width, estanteria.height, plano);
-    rack.addEventListener("click", () => seleccionarEstanteria(estanteria, null));
+    rack.addEventListener("click", (event) => {
+      event.stopPropagation();
+      seleccionarEstanteria(estanteria, null);
+    });
     rack.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
@@ -410,9 +488,11 @@ function renderCanvas(plano: PlanoOperativoResponse): void {
 
 function renderDetalleEstanteria(estanteria: PlanoEstanteriaOperativaResponse | null): void {
   if (!detalleEstanteria) return;
+  setTexto(detallePrincipalTitulo, "Detalle de estantería");
 
   if (!estanteria) {
-    setHtml(detalleEstanteria, "<p>Selecciona una estantería del plano para ver su detalle.</p>");
+    setTexto(detallePrincipalTitulo, "Detalle de sección");
+    setHtml(detalleEstanteria, "<p>Selecciona una sección o estantería del plano para ver su detalle.</p>");
     return;
   }
 
@@ -427,6 +507,27 @@ function renderDetalleEstanteria(estanteria: PlanoEstanteriaOperativaResponse | 
     crearLineaDetalle("Vacíos", textoSeguro(inspeccion?.vacios, "0")),
     crearLineaDetalle("Anomalías", textoSeguro(inspeccion?.anomalias, "0")),
     crearLineaDetalle("Tareas activas", String(estanteria.tareasActivas.length))
+  );
+}
+
+function renderDetalleZona(zona: PlanoZonaOperativaResponse | null): void {
+  if (!detalleEstanteria) return;
+  setTexto(detallePrincipalTitulo, "Detalle de sección");
+
+  if (!zona || !planoActual) {
+    setHtml(detalleEstanteria, "<p>Selecciona una sección del plano para ver su detalle.</p>");
+    return;
+  }
+
+  const estanterias = estanteriasDeZona(planoActual, zona.id);
+  detalleEstanteria.innerHTML = "";
+  detalleEstanteria.append(
+    crearLineaDetalle("Código", zona.seccion.codigo),
+    crearLineaDetalle("Nombre", zona.seccion.nombre),
+    crearLineaDetalle("Descripción", textoSeguro(zona.seccion.descripcion)),
+    crearLineaDetalle("Responsable", textoResponsables(zona.responsables)),
+    crearLineaDetalle("Estanterías", String(estanterias.length)),
+    crearLineaDetalle("Alertas abiertas", String(totalAlertas(estanterias)))
   );
 }
 
@@ -486,6 +587,35 @@ function renderDetalleAlertas(estanteria: PlanoEstanteriaOperativaResponse | nul
   }
 }
 
+function renderDetalleAlertasZona(zona: PlanoZonaOperativaResponse | null): void {
+  if (!detalleAlertas) return;
+
+  if (!zona || !planoActual) {
+    setHtml(detalleAlertas, "<p>Selecciona una sección para ver sus alertas agregadas.</p>");
+    return;
+  }
+
+  const alertas = estanteriasDeZona(planoActual, zona.id).flatMap((estanteria) =>
+    estanteria.alertasAbiertas.map((alerta) => ({ alerta, estanteria }))
+  );
+  detalleAlertas.innerHTML = "";
+
+  if (alertas.length === 0) {
+    const empty = document.createElement("p");
+    empty.textContent = "Sin alertas abiertas en la sección.";
+    detalleAlertas.appendChild(empty);
+    return;
+  }
+
+  const list = document.createElement("ul");
+  alertas.forEach(({ alerta, estanteria }) => {
+    const item = document.createElement("li");
+    item.textContent = `${estanteria.estanteria.codigo} · #${alerta.id} · ${etiquetaAlerta(alerta.tipo)} · ${alerta.prioridad}`;
+    list.appendChild(item);
+  });
+  detalleAlertas.appendChild(list);
+}
+
 function crearLineaDetalle(label: string, value: string): HTMLElement {
   const row = document.createElement("p");
   row.className = "detail-row";
@@ -501,6 +631,7 @@ function crearLineaDetalle(label: string, value: string): HTMLElement {
 }
 
 function seleccionarEstanteria(estanteria: PlanoEstanteriaOperativaResponse, slot: PlanoSlotOperativoResponse | null): void {
+  zonaSeleccionada = null;
   estanteriaSeleccionada = estanteria;
   slotSeleccionado = slot;
 
@@ -513,9 +644,24 @@ function seleccionarEstanteria(estanteria: PlanoEstanteriaOperativaResponse, slo
   renderDetalleAlertas(estanteriaSeleccionada);
 }
 
+function seleccionarZona(zona: PlanoZonaOperativaResponse): void {
+  zonaSeleccionada = zona;
+  estanteriaSeleccionada = null;
+  slotSeleccionado = null;
+
+  if (planoActual) {
+    renderListaEstanterias(planoActual);
+    renderCanvas(planoActual);
+  }
+  renderDetalleZona(zonaSeleccionada);
+  renderDetalleSlot(null);
+  renderDetalleAlertasZona(zonaSeleccionada);
+}
+
 function renderPlano(plano: PlanoOperativoResponse): void {
   planoActual = plano;
-  estanteriaSeleccionada = plano.estanterias[0] ?? null;
+  zonaSeleccionada = plano.zonas[0] ?? null;
+  estanteriaSeleccionada = null;
   slotSeleccionado = null;
 
   setTexto(planoMeta, `${plano.codigo} · ${plano.empresa.nombre} · ${plano.ancho} x ${plano.alto}`);
@@ -530,12 +676,15 @@ function renderPlano(plano: PlanoOperativoResponse): void {
 
   renderListaEstanterias(plano);
   renderCanvas(plano);
-  renderDetalleEstanteria(estanteriaSeleccionada);
+  renderDetalleZona(zonaSeleccionada);
   renderDetalleSlot(null);
-  renderDetalleAlertas(estanteriaSeleccionada);
+  renderDetalleAlertasZona(zonaSeleccionada);
 }
 
 function renderError(message: string): void {
+  zonaSeleccionada = null;
+  estanteriaSeleccionada = null;
+  slotSeleccionado = null;
   setTexto(planoMeta, "Sin plano operativo");
   setTexto(tituloPlano, "Plano no disponible");
   setTexto(subtituloPlano, message);
@@ -559,6 +708,9 @@ function renderError(message: string): void {
 }
 
 function renderSinPlanos(): void {
+  zonaSeleccionada = null;
+  estanteriaSeleccionada = null;
+  slotSeleccionado = null;
   renderSelectorPlanos(null);
   setTexto(planoMeta, "Todavía no hay planos configurados.");
   setTexto(tituloPlano, "Sin planos configurados");

@@ -250,6 +250,10 @@ button {
   background: var(--gold);
 }
 
+.tree-zone {
+  overflow: hidden;
+}
+
 .plan-list-button {
   width: 100%;
   border: 0;
@@ -258,6 +262,41 @@ button {
   color: var(--black);
   text-align: left;
   cursor: pointer;
+}
+
+.tree-rack-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 12px 14px 28px;
+  list-style: none;
+}
+
+.tree-rack-item,
+.tree-rack-empty {
+  border-left: var(--border-light);
+  background: rgba(244, 240, 236, 0.72);
+}
+
+.tree-rack-item.is-active {
+  background: var(--gold);
+}
+
+.tree-rack-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--black);
+  cursor: pointer;
+  padding: 12px;
+  text-align: left;
+}
+
+.tree-rack-empty {
+  padding: 12px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 800;
+  text-transform: none;
 }
 
 .plan-title,
@@ -374,6 +413,12 @@ button {
   border: 3px dashed rgba(17, 17, 17, 0.65);
   background: rgba(249, 160, 27, 0.16);
   z-index: 1;
+  cursor: pointer;
+}
+
+.zone-node.is-selected {
+  outline: 5px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .zone-label {

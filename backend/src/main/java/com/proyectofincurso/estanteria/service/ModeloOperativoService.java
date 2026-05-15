@@ -18,6 +18,7 @@ import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConf
 import com.proyectofincurso.estanteria.persistence.repository.ProductoRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionRepository;
+import com.proyectofincurso.estanteria.persistence.repository.TrabajadorRepository;
 import com.proyectofincurso.estanteria.web.dto.AsignacionActivaSlotResponse;
 import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaSlotRequest;
@@ -28,6 +29,7 @@ import com.proyectofincurso.estanteria.web.dto.CrearSeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.EmpresaResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaConfiguracionResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
+import com.proyectofincurso.estanteria.web.dto.PlanoResponsableResponse;
 import com.proyectofincurso.estanteria.web.dto.ProductoResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.ProveedorResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.SeccionResponse;
@@ -57,6 +59,7 @@ public class ModeloOperativoService {
     private final AsignacionProductoSlotRepository asignacionProductoSlotRepository;
     private final SeccionEncargadoRepository seccionEncargadoRepository;
     private final ProductoRepository productoRepository;
+    private final TrabajadorRepository trabajadorRepository;
 
     @Transactional(readOnly = true)
     public EmpresaResponse obtenerEmpresaActivaPorCodigo(String codigo) {
@@ -135,6 +138,50 @@ public class ModeloOperativoService {
         seccion.setUpdatedAt(Instant.now());
 
         return toSeccionResponse(seccionRepository.save(seccion));
+    }
+
+    @Transactional
+    public PlanoResponsableResponse asignarResponsablePrincipal(Long seccionId, Long trabajadorId) {
+        Seccion seccion = seccionRepository.findByIdAndActivaTrue(seccionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SECCION_NOT_FOUND",
+                        "No existe una seccion activa con el identificador indicado"
+                ));
+
+        Trabajador trabajador = trabajadorRepository.findByIdAndActivoTrue(trabajadorId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "TRABAJADOR_NOT_FOUND",
+                        "No existe un trabajador activo con el identificador indicado"
+                ));
+
+        if (!trabajador.getEmpresa().getId().equals(seccion.getEmpresa().getId())) {
+            throw ApiException.badRequest(
+                    "TRABAJADOR_EMPRESA_INCOHERENTE",
+                    "El trabajador no pertenece a la misma empresa que la seccion"
+            );
+        }
+
+        List<SeccionEncargado> encargadosActivos = seccionEncargadoRepository.findBySeccionIdAndActivoTrue(seccionId);
+        encargadosActivos.forEach(encargado -> encargado.setResponsablePrincipal(false));
+
+        SeccionEncargado asignacion = seccionEncargadoRepository
+                .findBySeccionIdAndTrabajadorId(seccionId, trabajadorId)
+                .orElseGet(() -> {
+                    SeccionEncargado nuevaAsignacion = new SeccionEncargado();
+                    nuevaAsignacion.setSeccion(seccion);
+                    nuevaAsignacion.setTrabajador(trabajador);
+                    return nuevaAsignacion;
+                });
+
+        asignacion.setActivo(true);
+        asignacion.setResponsablePrincipal(true);
+        asignacion.setAsignadoAt(Instant.now());
+        if (!encargadosActivos.contains(asignacion)) {
+            encargadosActivos.add(asignacion);
+        }
+        seccionEncargadoRepository.saveAll(encargadosActivos);
+
+        return toPlanoResponsableResponse(asignacion);
     }
 
     @Transactional(readOnly = true)
@@ -516,6 +563,18 @@ public class ModeloOperativoService {
                 trabajador.getNombre(),
                 trabajador.getApellidos(),
                 trabajador.getEmailContacto(),
+                trabajador.getTipoTrabajador(),
+                seccionEncargado.getResponsablePrincipal()
+        );
+    }
+
+    private PlanoResponsableResponse toPlanoResponsableResponse(SeccionEncargado seccionEncargado) {
+        Trabajador trabajador = seccionEncargado.getTrabajador();
+
+        return new PlanoResponsableResponse(
+                trabajador.getId(),
+                trabajador.getNombre(),
+                trabajador.getApellidos(),
                 trabajador.getTipoTrabajador(),
                 seccionEncargado.getResponsablePrincipal()
         );

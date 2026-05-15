@@ -14,19 +14,23 @@ import com.proyectofincurso.estanteria.persistence.entity.PlanoEstanteriaLayout;
 import com.proyectofincurso.estanteria.persistence.entity.PlanoZona;
 import com.proyectofincurso.estanteria.persistence.entity.Producto;
 import com.proyectofincurso.estanteria.persistence.entity.Seccion;
+import com.proyectofincurso.estanteria.persistence.entity.SeccionEncargado;
 import com.proyectofincurso.estanteria.persistence.entity.TareaOperativa;
+import com.proyectofincurso.estanteria.persistence.entity.Trabajador;
 import com.proyectofincurso.estanteria.persistence.repository.AlertaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConfiguracionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.InspeccionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.PlanoEstanteriaLayoutRepository;
 import com.proyectofincurso.estanteria.persistence.repository.PlanoRepository;
 import com.proyectofincurso.estanteria.persistence.repository.PlanoZonaRepository;
+import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
 import com.proyectofincurso.estanteria.persistence.repository.TareaOperativaRepository;
 import com.proyectofincurso.estanteria.web.dto.EmpresaResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoAlertaResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoEstanteriaOperativaResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoOperativoResponse;
+import com.proyectofincurso.estanteria.web.dto.PlanoResponsableResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoSlotOperativoResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoTareaResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoUltimaInspeccionResponse;
@@ -61,6 +65,7 @@ public class PlanoOperativoService {
     private final InspeccionRepository inspeccionRepository;
     private final AlertaRepository alertaRepository;
     private final TareaOperativaRepository tareaOperativaRepository;
+    private final SeccionEncargadoRepository seccionEncargadoRepository;
 
     @Transactional(readOnly = true)
     public PlanoOperativoResponse obtenerPlanoOperativo(String codigo) {
@@ -75,10 +80,15 @@ public class PlanoOperativoService {
         List<Long> estanteriaIds = layouts.stream()
                 .map(layout -> layout.getEstanteria().getId())
                 .toList();
+        List<Long> seccionIds = zonas.stream()
+                .map(zona -> zona.getSeccion().getId())
+                .distinct()
+                .toList();
 
         Map<Long, List<EstanteriaSlotConfiguracion>> slotsPorEstanteria = cargarSlotsPorEstanteria(estanteriaIds);
         Map<Long, List<Alerta>> alertasPorEstanteria = cargarAlertasPorEstanteria(estanteriaIds);
         Map<Long, List<TareaOperativa>> tareasPorEstanteria = cargarTareasPorEstanteria(estanteriaIds);
+        Map<Long, List<PlanoResponsableResponse>> responsablesPorSeccion = cargarResponsablesPorSeccion(seccionIds);
 
         return new PlanoOperativoResponse(
                 plano.getId(),
@@ -88,7 +98,12 @@ public class PlanoOperativoService {
                 plano.getAncho(),
                 plano.getAlto(),
                 toEmpresaResponse(plano.getEmpresa()),
-                zonas.stream().map(this::toZonaOperativaResponse).toList(),
+                zonas.stream()
+                        .map(zona -> toZonaOperativaResponse(
+                                zona,
+                                responsablesPorSeccion.getOrDefault(zona.getSeccion().getId(), List.of())
+                        ))
+                        .toList(),
                 layouts.stream()
                         .map(layout -> toEstanteriaOperativaResponse(
                                 layout,
@@ -129,6 +144,18 @@ public class PlanoOperativoService {
                         List.of(EstadoTareaOperativa.PENDIENTE, EstadoTareaOperativa.EN_PROGRESO)
                 ).stream()
                 .collect(Collectors.groupingBy(tarea -> tarea.getEstanteria().getId()));
+    }
+
+    private Map<Long, List<PlanoResponsableResponse>> cargarResponsablesPorSeccion(List<Long> seccionIds) {
+        if (seccionIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return seccionEncargadoRepository.findEncargadosActivosBySeccionIds(seccionIds).stream()
+                .collect(Collectors.groupingBy(
+                        asignacion -> asignacion.getSeccion().getId(),
+                        Collectors.mapping(this::toPlanoResponsableResponse, Collectors.toList())
+                ));
     }
 
     private PlanoEstanteriaOperativaResponse toEstanteriaOperativaResponse(PlanoEstanteriaLayout layout,
@@ -198,14 +225,28 @@ public class PlanoOperativoService {
         );
     }
 
-    private PlanoZonaOperativaResponse toZonaOperativaResponse(PlanoZona zona) {
+    private PlanoZonaOperativaResponse toZonaOperativaResponse(PlanoZona zona,
+                                                               List<PlanoResponsableResponse> responsables) {
         return new PlanoZonaOperativaResponse(
                 zona.getId(),
                 toSeccionResponse(zona.getSeccion()),
                 zona.getX(),
                 zona.getY(),
                 zona.getWidth(),
-                zona.getHeight()
+                zona.getHeight(),
+                responsables
+        );
+    }
+
+    private PlanoResponsableResponse toPlanoResponsableResponse(SeccionEncargado seccionEncargado) {
+        Trabajador trabajador = seccionEncargado.getTrabajador();
+
+        return new PlanoResponsableResponse(
+                trabajador.getId(),
+                trabajador.getNombre(),
+                trabajador.getApellidos(),
+                trabajador.getTipoTrabajador(),
+                seccionEncargado.getResponsablePrincipal()
         );
     }
 

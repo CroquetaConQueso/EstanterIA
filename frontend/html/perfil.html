@@ -5,8 +5,8 @@
   <title>Mi perfil · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
-  <link href="../css/perfil.css" rel="stylesheet" />
   <link href="../css/app-shell.css" rel="stylesheet" />
+  <link href="../css/perfil.css" rel="stylesheet" />
 </head>
 <body>
 <header class="topbar">
@@ -36,71 +36,123 @@
 
 <main class="page">
   <header class="page-head">
-    <h1>Perfil de usuario</h1>
+    <p class="eyebrow">Cuenta operativa</p>
+    <h1>Mi perfil</h1>
     <p>
-      Consulta de la sesión autenticada actual y salida segura del panel operativo.
+      Gestiona tus datos de acceso y consulta la empresa o trabajador vinculados a tu usuario.
     </p>
   </header>
 
-  <section class="layout">
-    <section class="col-main">
-      <section class="card">
-        <h2>Sesión activa</h2>
-        <p class="help session-error" id="perfil-error" role="alert" aria-live="polite" hidden></p>
+  <p class="status-message" id="perfil-status" role="status" aria-live="polite" hidden></p>
+  <p class="status-message error" id="perfil-error" role="alert" aria-live="assertive" hidden></p>
 
-        <dl class="session-grid">
-          <div class="data-row">
-            <dt>Usuario</dt>
-            <dd id="perfil-usuario">Cargando...</dd>
+  <section class="profile-layout">
+    <section class="card account-card">
+      <div class="card-head">
+        <div>
+          <p class="eyebrow">Cuenta</p>
+          <h2>Datos de acceso</h2>
+        </div>
+        <span class="badge" id="perfil-estado">Sesión activa</span>
+      </div>
+
+      <form id="perfil-form" class="profile-form">
+        <label>
+          <span>Nombre de usuario</span>
+          <input id="perfil-username" name="username" type="text" autocomplete="username" required minlength="3" maxlength="80" />
+        </label>
+
+        <label>
+          <span>Email</span>
+          <input id="perfil-email" name="email" type="email" autocomplete="email" required maxlength="120" />
+        </label>
+
+        <label>
+          <span>Rol</span>
+          <input id="perfil-role" type="text" readonly />
+        </label>
+
+        <div class="form-actions">
+          <button class="btn primary" id="btn-guardar-perfil" type="submit">Guardar cambios</button>
+        </div>
+
+        <p class="help">
+          Si cambias el usuario o el email, se cerrará la sesión para que vuelvas a entrar con los datos actualizados.
+        </p>
+      </form>
+    </section>
+
+    <aside class="profile-side">
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">Empresa</p>
+            <h2>Empresa asociada</h2>
           </div>
-          <div class="data-row">
-            <dt>Correo</dt>
-            <dd id="perfil-email">Cargando...</dd>
+        </div>
+        <dl class="data-list">
+          <div>
+            <dt>Código</dt>
+            <dd id="perfil-empresa-codigo">Cargando...</dd>
           </div>
-          <div class="data-row">
-            <dt>Rol</dt>
-            <dd id="perfil-rol">Cargando...</dd>
-          </div>
-          <div class="data-row">
-            <dt>Estado</dt>
-            <dd id="perfil-estado">Sesión iniciada</dd>
-          </div>
-          <div class="data-row">
-            <dt>ID de usuario</dt>
-            <dd id="perfil-user-id">No disponible</dd>
-          </div>
-          <div class="data-row">
-            <dt>Caducidad</dt>
-            <dd id="perfil-expira">No disponible</dd>
+          <div>
+            <dt>Nombre</dt>
+            <dd id="perfil-empresa-nombre">Cargando...</dd>
           </div>
         </dl>
       </section>
-    </section>
 
-    <aside class="col-side">
       <section class="card">
-        <h2>Información de sesión</h2>
-        <ul class="summary-list">
-          <li><strong>Emisión:</strong> <span id="perfil-emitido">No disponible</span></li>
-          <li><strong>Emisor:</strong> <span id="perfil-issuer">No disponible</span></li>
-          <li><strong>Token:</strong> visible solo como sesión local del navegador</li>
-          <li><strong>Seguridad:</strong> la autorización real la valida el backend con JWT</li>
-        </ul>
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">Trabajador</p>
+            <h2>Trabajador vinculado</h2>
+          </div>
+        </div>
+        <dl class="data-list">
+          <div>
+            <dt>Nombre</dt>
+            <dd id="perfil-trabajador-nombre">Cargando...</dd>
+          </div>
+          <div>
+            <dt>Apellidos</dt>
+            <dd id="perfil-trabajador-apellidos">Cargando...</dd>
+          </div>
+          <div>
+            <dt>Tipo</dt>
+            <dd id="perfil-trabajador-tipo">Cargando...</dd>
+          </div>
+          <div>
+            <dt>Email contacto</dt>
+            <dd id="perfil-trabajador-email">Cargando...</dd>
+          </div>
+          <div>
+            <dt>Teléfono</dt>
+            <dd id="perfil-trabajador-telefono">Cargando...</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd id="perfil-trabajador-estado">Cargando...</dd>
+          </div>
+        </dl>
       </section>
 
-      <section class="card">
-        <h2>Acciones</h2>
-        <p class="help">
-          Cerrar sesión elimina el token guardado en este navegador. No se realiza llamada al backend porque la API usa JWT stateless.
-        </p>
-        <button class="btn primary" id="btn-logout" type="button">Cerrar sesión</button>
+      <section class="card session-card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">Sesión</p>
+            <h2>Acceso actual</h2>
+          </div>
+        </div>
+        <p class="help">Sesión activa en este navegador.</p>
+        <button class="btn ghost" id="btn-logout" type="button">Cerrar sesión</button>
       </section>
     </aside>
   </section>
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda · Perfil de usuario · Acceso operativo</small>
+  <small>Suite Tienda · Perfil de usuario</small>
 </footer>
 
 <script type="module" src="/src/pages/perfil.ts"></script>

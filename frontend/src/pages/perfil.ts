@@ -1,141 +1,273 @@
-import { authFetch, clearAuthSession, getAuthToken } from "../lib/api";
+import { authFetch, clearAuthSession } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
 
 requireAuth();
 
-type JwtPayload = {
-  sub?: string;
-  email?: string;
-  role?: string;
-  userId?: number | string;
-  exp?: number;
-  iat?: number;
-  iss?: string;
+type PerfilEmpresa = {
+  id: number;
+  codigo: string;
+  nombre: string;
 };
 
-const CAMPOS_ROL: Record<string, string> = {
-  ADMIN: "Administrador",
+type PerfilTrabajador = {
+  id: number;
+  nombre: string;
+  apellidos?: string | null;
+  emailContacto?: string | null;
+  telefonoContacto?: string | null;
+  tipoTrabajador?: string | null;
+  activo?: boolean | null;
+};
+
+type PerfilResponse = {
+  userId: number;
+  username: string;
+  email: string;
+  role: "SUPERADMIN" | "ADMIN" | "WORKER" | string;
+  enabled: boolean;
+  empresa?: PerfilEmpresa | null;
+  trabajador?: PerfilTrabajador | null;
+  requiereNuevoLogin?: boolean | null;
+  mensaje?: string | null;
+};
+
+type ApiError = {
+  message?: string;
+  fieldErrors?: Record<string, string>;
+};
+
+const ROLE_LABELS: Record<string, string> = {
   SUPERADMIN: "Superadministrador",
+  ADMIN: "Administrador",
   WORKER: "Trabajador"
 };
 
-const usuarioEl = document.querySelector<HTMLElement>("#perfil-usuario");
-const emailEl = document.querySelector<HTMLElement>("#perfil-email");
-const rolEl = document.querySelector<HTMLElement>("#perfil-rol");
+const TRABAJADOR_LABELS: Record<string, string> = {
+  GERENTE: "Gerente",
+  ENCARGADO_SECCION: "Encargado de sección",
+  REPONEDOR: "Reponedor",
+  CAJERO: "Cajero",
+  ADMINISTRATIVO: "Administrativo"
+};
+
+const form = document.querySelector<HTMLFormElement>("#perfil-form");
+const usernameInput = document.querySelector<HTMLInputElement>("#perfil-username");
+const emailInput = document.querySelector<HTMLInputElement>("#perfil-email");
+const roleInput = document.querySelector<HTMLInputElement>("#perfil-role");
 const estadoEl = document.querySelector<HTMLElement>("#perfil-estado");
-const userIdEl = document.querySelector<HTMLElement>("#perfil-user-id");
-const expiraEl = document.querySelector<HTMLElement>("#perfil-expira");
-const emitidoEl = document.querySelector<HTMLElement>("#perfil-emitido");
-const issuerEl = document.querySelector<HTMLElement>("#perfil-issuer");
+const statusEl = document.querySelector<HTMLElement>("#perfil-status");
 const errorEl = document.querySelector<HTMLElement>("#perfil-error");
 const logoutBtn = document.querySelector<HTMLButtonElement>("#btn-logout");
+const guardarBtn = document.querySelector<HTMLButtonElement>("#btn-guardar-perfil");
 
-function setText(element: HTMLElement | null, value: string | number | null | undefined): void {
+const empresaCodigoEl = document.querySelector<HTMLElement>("#perfil-empresa-codigo");
+const empresaNombreEl = document.querySelector<HTMLElement>("#perfil-empresa-nombre");
+const trabajadorNombreEl = document.querySelector<HTMLElement>("#perfil-trabajador-nombre");
+const trabajadorApellidosEl = document.querySelector<HTMLElement>("#perfil-trabajador-apellidos");
+const trabajadorTipoEl = document.querySelector<HTMLElement>("#perfil-trabajador-tipo");
+const trabajadorEmailEl = document.querySelector<HTMLElement>("#perfil-trabajador-email");
+const trabajadorTelefonoEl = document.querySelector<HTMLElement>("#perfil-trabajador-telefono");
+const trabajadorEstadoEl = document.querySelector<HTMLElement>("#perfil-trabajador-estado");
+
+function setText(element: HTMLElement | HTMLInputElement | null, value: string | number | null | undefined): void {
   if (!element) return;
   const text = value === null || value === undefined || value === "" ? "No disponible" : String(value);
-  element.textContent = text;
+  if (element instanceof HTMLInputElement) {
+    element.value = text === "No disponible" ? "" : text;
+  } else {
+    element.textContent = text;
+  }
+}
+
+function mostrarEstado(message: string): void {
+  if (!statusEl) return;
+  statusEl.textContent = message;
+  statusEl.removeAttribute("hidden");
+  errorEl?.setAttribute("hidden", "true");
 }
 
 function mostrarError(message: string): void {
   if (!errorEl) return;
   errorEl.textContent = message;
   errorEl.removeAttribute("hidden");
+  statusEl?.setAttribute("hidden", "true");
 }
 
-function obtenerDatoGuardado(key: "auth_user" | "auth_role"): string | null {
-  return localStorage.getItem(key) || sessionStorage.getItem(key);
-}
-
-function base64UrlToJson(segment: string): unknown {
-  const normalizado = segment.replace(/-/g, "+").replace(/_/g, "/");
-  const padding = "=".repeat((4 - (normalizado.length % 4)) % 4);
-  const decoded = atob(normalizado + padding);
-  const bytes = Uint8Array.from(decoded, (char) => char.charCodeAt(0));
-  const json = new TextDecoder().decode(bytes);
-  return JSON.parse(json);
-}
-
-function decodificarJwt(token: string): JwtPayload | null {
-  const parts = token.split(".");
-  if (parts.length !== 3 || !parts[1]) return null;
-
-  try {
-    const payload = base64UrlToJson(parts[1]);
-    if (!payload || typeof payload !== "object") return null;
-    return payload as JwtPayload;
-  } catch {
-    return null;
-  }
-}
-
-function formatearFechaEpoch(value: number | undefined): string {
-  if (!value) return "No disponible";
-  const date = new Date(value * 1000);
-  if (Number.isNaN(date.getTime())) return "No disponible";
-  return date.toLocaleString("es-ES", {
-    dateStyle: "medium",
-    timeStyle: "short"
-  });
-}
-
-function tokenCaducado(exp: number | undefined): boolean {
-  return typeof exp === "number" && exp * 1000 <= Date.now();
+function ocultarMensajes(): void {
+  statusEl?.setAttribute("hidden", "true");
+  errorEl?.setAttribute("hidden", "true");
 }
 
 function formatearRol(role: string | undefined | null): string {
   if (!role) return "No disponible";
-  return CAMPOS_ROL[role] ?? role;
+  return ROLE_LABELS[role] ?? role;
 }
 
-function cargarPerfil(): void {
-  const token = getAuthToken();
-  if (!token) return;
-
-  const payload = decodificarJwt(token);
-  if (!payload) {
-    clearAuthSession();
-    setText(estadoEl, "Sesión no válida");
-    mostrarError("No se pudo leer la sesión actual. Vuelve a iniciar sesión.");
-    window.setTimeout(() => {
-      window.location.replace("/html/login.html");
-    }, 1200);
-    return;
-  }
-
-  if (tokenCaducado(payload.exp)) {
-    clearAuthSession();
-    setText(estadoEl, "Sesión caducada");
-    mostrarError("La sesión ha caducado. Vuelve a iniciar sesión.");
-    window.setTimeout(() => {
-      window.location.replace("/html/login.html");
-    }, 1200);
-    return;
-  }
-
-  const usuario = payload.sub ?? obtenerDatoGuardado("auth_user");
-  const role = payload.role ?? obtenerDatoGuardado("auth_role");
-
-  setText(usuarioEl, usuario);
-  setText(emailEl, payload.email);
-  setText(rolEl, formatearRol(role));
-  setText(estadoEl, "Sesión iniciada");
-  setText(userIdEl, payload.userId);
-  setText(expiraEl, formatearFechaEpoch(payload.exp));
-  setText(emitidoEl, formatearFechaEpoch(payload.iat));
-  setText(issuerEl, payload.iss);
+function formatearTipoTrabajador(tipo: string | undefined | null): string {
+  if (!tipo) return "No disponible";
+  return TRABAJADOR_LABELS[tipo] ?? tipo;
 }
 
-logoutBtn?.addEventListener("click", async () => {
-  logoutBtn.disabled = true;
+function setLoading(loading: boolean): void {
+  if (guardarBtn) guardarBtn.disabled = loading;
+  if (logoutBtn) logoutBtn.disabled = loading;
+  if (usernameInput) usernameInput.disabled = loading;
+  if (emailInput) emailInput.disabled = loading;
+}
 
+async function leerError(response: Response, fallback: string): Promise<string> {
+  try {
+    const body = (await response.json()) as ApiError;
+    const fieldMessage = body.fieldErrors ? Object.values(body.fieldErrors)[0] : null;
+    return fieldMessage || body.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function pintarPerfil(perfil: PerfilResponse): void {
+  setText(usernameInput, perfil.username);
+  setText(emailInput, perfil.email);
+  setText(roleInput, formatearRol(perfil.role));
+  setText(estadoEl, perfil.enabled ? "Cuenta activa" : "Cuenta deshabilitada");
+
+  if (perfil.empresa) {
+    setText(empresaCodigoEl, perfil.empresa.codigo);
+    setText(empresaNombreEl, perfil.empresa.nombre);
+  } else {
+    setText(empresaCodigoEl, "Sin empresa asociada");
+    setText(empresaNombreEl, "Sin empresa asociada");
+  }
+
+  if (perfil.trabajador) {
+    setText(trabajadorNombreEl, perfil.trabajador.nombre);
+    setText(trabajadorApellidosEl, perfil.trabajador.apellidos);
+    setText(trabajadorTipoEl, formatearTipoTrabajador(perfil.trabajador.tipoTrabajador));
+    setText(trabajadorEmailEl, perfil.trabajador.emailContacto);
+    setText(trabajadorTelefonoEl, perfil.trabajador.telefonoContacto);
+    setText(trabajadorEstadoEl, perfil.trabajador.activo ? "Activo" : "Inactivo");
+  } else {
+    setText(trabajadorNombreEl, "Sin trabajador vinculado");
+    setText(trabajadorApellidosEl, "Sin trabajador vinculado");
+    setText(trabajadorTipoEl, "Sin trabajador vinculado");
+    setText(trabajadorEmailEl, "Sin trabajador vinculado");
+    setText(trabajadorTelefonoEl, "Sin trabajador vinculado");
+    setText(trabajadorEstadoEl, "Sin trabajador vinculado");
+  }
+}
+
+async function cargarPerfil(): Promise<void> {
+  ocultarMensajes();
+  setLoading(true);
+
+  try {
+    const response = await authFetch("/api/perfil", {
+      headers: { Accept: "application/json" }
+    });
+
+    if (response.status === 401) {
+      clearAuthSession();
+      window.location.replace("/html/login.html");
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(await leerError(response, "No se pudo cargar el perfil."));
+    }
+
+    const perfil = (await response.json()) as PerfilResponse;
+    pintarPerfil(perfil);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "No se pudo cargar el perfil.";
+    mostrarError(message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function validarFormulario(): { username: string; email: string } | null {
+  const username = usernameInput?.value.trim() ?? "";
+  const email = emailInput?.value.trim() ?? "";
+
+  if (username.length < 3 || username.length > 80) {
+    mostrarError("El nombre de usuario debe tener entre 3 y 80 caracteres.");
+    usernameInput?.focus();
+    return null;
+  }
+
+  if (!email || email.length > 120 || !email.includes("@")) {
+    mostrarError("Introduce un email válido.");
+    emailInput?.focus();
+    return null;
+  }
+
+  return { username, email };
+}
+
+async function cerrarSesionLocal(): Promise<void> {
   try {
     await authFetch("/api/logout", { method: "POST" });
   } catch {
-    // El cierre local debe ocurrir aunque el backend no responda.
+    // Si el backend ya revoco la sesion, igualmente limpiamos el navegador.
   } finally {
     clearAuthSession();
     window.location.href = "/html/login.html";
   }
+}
+
+form?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  ocultarMensajes();
+
+  const payload = validarFormulario();
+  if (!payload) return;
+
+  setLoading(true);
+  try {
+    const response = await authFetch("/api/perfil", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.status === 401) {
+      clearAuthSession();
+      window.location.replace("/html/login.html");
+      return;
+    }
+
+    if (response.status === 409) {
+      throw new Error(await leerError(response, "Ya existe un usuario con ese nombre o email."));
+    }
+
+    if (!response.ok) {
+      throw new Error(await leerError(response, "No se pudo actualizar el perfil."));
+    }
+
+    const perfil = (await response.json()) as PerfilResponse;
+    pintarPerfil(perfil);
+    if (perfil.requiereNuevoLogin) {
+      mostrarEstado(perfil.mensaje || "Perfil actualizado. Debes iniciar sesión de nuevo.");
+      window.setTimeout(() => {
+        void cerrarSesionLocal();
+      }, 1200);
+    } else {
+      mostrarEstado(perfil.mensaje || "Perfil actualizado.");
+      setLoading(false);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "No se pudo actualizar el perfil.";
+    mostrarError(message);
+    setLoading(false);
+  }
 });
 
-cargarPerfil();
+logoutBtn?.addEventListener("click", () => {
+  logoutBtn.disabled = true;
+  void cerrarSesionLocal();
+});
+
+void cargarPerfil();

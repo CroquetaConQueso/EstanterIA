@@ -6,6 +6,7 @@ import com.proyectofincurso.estanteria.web.dto.AlertaTrabajadorResponse;
 import com.proyectofincurso.estanteria.web.dto.EvaluacionCaducidadResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +31,18 @@ public class AlertaController {
     @PostMapping(value = "/alertas/evaluar-caducidad", produces = MediaType.APPLICATION_JSON_VALUE)
     public EvaluacionCaducidadResponse evaluarCaducidad() {
         return alertaOperativaService.evaluarCaducidad();
+    }
+
+    @PatchMapping(value = "/alertas/{id}/resolver", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    public AlertaResponse resolverAlerta(@PathVariable Long id) {
+        return alertaOperativaService.resolverAlerta(id);
+    }
+
+    @PatchMapping(value = "/alertas/{id}/descartar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    public AlertaResponse descartarAlerta(@PathVariable Long id) {
+        return alertaOperativaService.descartarAlerta(id);
     }
 
     @PatchMapping(value = "/notificaciones-alerta/{alertaTrabajadorId}/leer", produces = MediaType.APPLICATION_JSON_VALUE)

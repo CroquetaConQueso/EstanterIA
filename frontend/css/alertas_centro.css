@@ -423,6 +423,22 @@ button, input, select {
   margin-top: 20px;
 }
 
+.action-status {
+  min-height: 1.4rem;
+  margin: 0;
+  color: var(--gold);
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+.action-status[data-type="success"] {
+  color: var(--white);
+}
+
+.action-status[data-type="error"] {
+  color: var(--red);
+}
+
 .btn {
   height: 54px;
   border: var(--border-heavy);

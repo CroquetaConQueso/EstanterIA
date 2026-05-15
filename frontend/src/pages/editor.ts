@@ -38,6 +38,22 @@ type ProductoResumenResponse = {
   descripcion: string | null;
 };
 
+type TrabajadorActivoResponse = {
+  id: number;
+  nombre: string | null;
+  apellidos: string | null;
+  tipoTrabajador: string | null;
+  activo: boolean | null;
+};
+
+type PlanoResponsableResponse = {
+  trabajadorId: number;
+  nombre: string | null;
+  apellidos: string | null;
+  tipoTrabajador: string | null;
+  responsablePrincipal: boolean | null;
+};
+
 type SlotConfiguradoResponse = {
   id: number;
   slotId: string;
@@ -86,6 +102,14 @@ type PlanoResponse = {
   activo: boolean | null;
   zonas: PlanoZonaResponse[];
   estanterias: PlanoEstanteriaLayoutResponse[];
+};
+
+type PlanoOperativoResponsablesResponse = {
+  zonas: Array<{
+    id: number;
+    seccion: SeccionResponse;
+    responsables: PlanoResponsableResponse[];
+  }>;
 };
 
 type LocalZone = {
@@ -230,6 +254,8 @@ const elementName = document.querySelector<HTMLInputElement>("#element-name");
 const elementDescription = document.querySelector<HTMLTextAreaElement>("#element-description");
 const elementOrientationField = document.querySelector<HTMLElement>("#element-orientation-field");
 const elementOrientation = document.querySelector<HTMLSelectElement>("#element-orientation");
+const elementResponsibleField = document.querySelector<HTMLElement>("#element-responsible-field");
+const elementResponsible = document.querySelector<HTMLSelectElement>("#element-responsible");
 const elementSlotsField = document.querySelector<HTMLElement>("#element-slots-field");
 const elementSlotsContainer = document.querySelector<HTMLElement>("#element-slots-container");
 const elementEditStatus = document.querySelector<HTMLElement>("#element-edit-status");
@@ -240,6 +266,7 @@ const formInlineSeccion = document.querySelector<HTMLFormElement>("#form-inline-
 const newSeccionCodigoInput = document.querySelector<HTMLInputElement>("#new-seccion-codigo");
 const newSeccionNombreInput = document.querySelector<HTMLInputElement>("#new-seccion-nombre");
 const newSeccionDescripcionInput = document.querySelector<HTMLTextAreaElement>("#new-seccion-descripcion");
+const newSeccionResponsableSelect = document.querySelector<HTMLSelectElement>("#new-seccion-responsable");
 const sectionCreateStatus = document.querySelector<HTMLElement>("#section-create-status");
 const btnCreateSection = document.querySelector<HTMLButtonElement>("#btn-create-section");
 const formInlineRack = document.querySelector<HTMLFormElement>("#form-inline-rack");
@@ -267,6 +294,8 @@ let racks: LocalRack[] = [];
 let secciones: SeccionResponse[] = [];
 let estanteriasSeccion: EstanteriaResumenResponse[] = [];
 let productos: ProductoResumenResponse[] = [];
+let trabajadoresActivos: TrabajadorActivoResponse[] = [];
+const responsablePrincipalPorSeccionId = new Map<number, number>();
 const rackConfigurations = new Map<string, EstanteriaConfiguracionResponse>();
 let saving = false;
 let creatingSection = false;
@@ -550,6 +579,7 @@ function renderSelectionPanel(): void {
   if (!zone && !rack) {
     setText(selectionSummary, "No hay ningún elemento seleccionado.");
     formElemento?.classList.remove("is-visible");
+    if (elementResponsibleField) elementResponsibleField.style.display = "none";
     if (elementEditStatus) elementEditStatus.textContent = "";
     return;
   }
@@ -565,6 +595,8 @@ function renderSelectionPanel(): void {
     if (elementDescription) elementDescription.value = seccion?.descripcion ?? "";
     fillElementInputs(zone);
     if (elementOrientationField) elementOrientationField.style.display = "none";
+    if (elementResponsibleField) elementResponsibleField.style.display = "grid";
+    renderTrabajadorOptions(elementResponsible, responsablePrincipalPorSeccionId.get(zone.seccionId) ?? null);
     if (elementSlotsField) elementSlotsField.style.display = "none";
     if (elementSlotsContainer) elementSlotsContainer.innerHTML = "";
     return;
@@ -579,6 +611,8 @@ function renderSelectionPanel(): void {
     fillElementInputs(rack);
     if (elementOrientationField) elementOrientationField.style.display = "grid";
     if (elementOrientation) elementOrientation.value = rack.orientacion;
+    if (elementResponsibleField) elementResponsibleField.style.display = "none";
+    renderTrabajadorOptions(elementResponsible);
     if (elementSlotsField) elementSlotsField.style.display = "grid";
     renderElementSlots(config?.slots ?? []);
     if (!config) void cargarConfiguracionRack(rack.estanteriaCodigo);
@@ -704,6 +738,57 @@ function option(value: string, text: string): HTMLOptionElement {
 function productoLabel(producto: ProductoResumenResponse): string {
   const codigo = producto.codigoInterno ? `${producto.codigoInterno} · ` : "";
   return `${codigo}${producto.nombre ?? "Producto sin nombre"}`;
+}
+
+function trabajadorLabel(trabajador: TrabajadorActivoResponse | PlanoResponsableResponse): string {
+  const nombre = [trabajador.nombre, trabajador.apellidos].filter(Boolean).join(" ").trim();
+  return `${nombre || "Trabajador sin nombre"} · ${trabajador.tipoTrabajador ?? "Sin tipo"}`;
+}
+
+function renderTrabajadorOptions(select: HTMLSelectElement | null, selectedId?: number | null): void {
+  if (!select) return;
+  select.innerHTML = "";
+  select.appendChild(option("", trabajadoresActivos.length === 0
+    ? "No hay trabajadores activos disponibles"
+    : "Sin responsable asignado"));
+  trabajadoresActivos.forEach((trabajador) => {
+    const node = option(String(trabajador.id), trabajadorLabel(trabajador));
+    node.selected = trabajador.id === selectedId;
+    select.appendChild(node);
+  });
+  select.disabled = trabajadoresActivos.length === 0;
+}
+
+async function asignarResponsablePrincipal(seccionId: number, trabajadorId: number): Promise<PlanoResponsableResponse> {
+  const responsable = await fetchJson<PlanoResponsableResponse>(`/api/secciones/${seccionId}/responsable-principal`, {
+    method: "PATCH",
+    body: JSON.stringify({ trabajadorId })
+  });
+  responsablePrincipalPorSeccionId.set(seccionId, responsable.trabajadorId);
+  return responsable;
+}
+
+async function cargarResponsablesDePlano(codigo: string): Promise<void> {
+  try {
+    const operativo = await fetchJson<PlanoOperativoResponsablesResponse>(`/api/planos/${encodeURIComponent(codigo)}/operativo`);
+    responsablePrincipalPorSeccionId.clear();
+    operativo.zonas.forEach((zona) => {
+      const principal = zona.responsables.find((responsable) => responsable.responsablePrincipal);
+      if (principal) {
+        responsablePrincipalPorSeccionId.set(zona.seccion.id, principal.trabajadorId);
+      }
+    });
+  } catch {
+    // El responsable no bloquea la edición del layout.
+  }
+}
+
+async function cargarTrabajadoresActivos(): Promise<void> {
+  trabajadoresActivos = await fetchJson<TrabajadorActivoResponse[]>("/api/trabajadores/activos");
+  renderTrabajadorOptions(newSeccionResponsableSelect);
+  renderTrabajadorOptions(elementResponsible, selectedZone()
+    ? responsablePrincipalPorSeccionId.get(selectedZone()!.seccionId)
+    : null);
 }
 
 function renderInlineSlots(): void {
@@ -875,6 +960,8 @@ async function cargarPlano(codigo: string): Promise<void> {
       orientacion: layout.orientacion
     }];
   });
+
+  await cargarResponsablesDePlano(plano.codigo);
 }
 
 function validateMetadata(): string | null {
@@ -1058,7 +1145,12 @@ async function crearSeccionInline(event: SubmitEvent): Promise<void> {
       method: "POST",
       body: JSON.stringify(payload)
     });
+    const responsableId = Number(newSeccionResponsableSelect?.value);
+    if (Number.isFinite(responsableId) && responsableId > 0) {
+      await asignarResponsablePrincipal(created.id, responsableId);
+    }
     formInlineSeccion?.reset();
+    renderTrabajadorOptions(newSeccionResponsableSelect);
     await cargarSecciones(created.id);
     setMode("zone");
     setInlineStatus(sectionCreateStatus, "Sección creada y seleccionada. Dibuja su zona en el lienzo.", "ok");
@@ -1297,6 +1389,8 @@ async function persistirSeccion(zone: LocalZone, moved: boolean): Promise<void> 
     nombre: zone.seccionNombre,
     descripcion: nullableText(elementDescription)
   };
+  const responsableId = Number(elementResponsible?.value);
+  const responsableActualId = responsablePrincipalPorSeccionId.get(zone.seccionId);
 
   try {
     const updated = await fetchJson<SeccionResponse>(`/api/secciones/${zone.seccionId}`, {
@@ -1306,6 +1400,9 @@ async function persistirSeccion(zone: LocalZone, moved: boolean): Promise<void> 
     zone.seccionCodigo = updated.codigo;
     zone.seccionNombre = updated.nombre;
     secciones = secciones.map((item) => item.id === updated.id ? updated : item);
+    if (Number.isFinite(responsableId) && responsableId > 0 && responsableId !== responsableActualId) {
+      await asignarResponsablePrincipal(zone.seccionId, responsableId);
+    }
     setStatus(moved ? "Zona actualizada y estanterías desplazadas." : "Zona actualizada.", "ok");
     setInlineStatus(elementEditStatus, "Datos de sección guardados.", "ok");
   } catch (err) {
@@ -1584,7 +1681,7 @@ async function init(): Promise<void> {
 
   bindEvents();
   try {
-    await Promise.all([cargarSecciones(), cargarProductos()]);
+    await Promise.all([cargarSecciones(), cargarProductos(), cargarTrabajadoresActivos()]);
     if (isEditMode && codigoInicial) {
       await cargarPlano(codigoInicial);
       setStatus("Plano cargado correctamente.", "ok");

@@ -4,8 +4,10 @@ import com.proyectofincurso.estanteria.service.ModeloOperativoService;
 import com.proyectofincurso.estanteria.service.AlertaOperativaService;
 import com.proyectofincurso.estanteria.web.dto.AlertaResponse;
 import com.proyectofincurso.estanteria.web.dto.ActualizarSeccionRequest;
+import com.proyectofincurso.estanteria.web.dto.AsignarResponsablePrincipalRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearSeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
+import com.proyectofincurso.estanteria.web.dto.PlanoResponsableResponse;
 import com.proyectofincurso.estanteria.web.dto.SeccionResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,13 @@ public class SeccionController {
     public SeccionResponse actualizarSeccion(@PathVariable Long seccionId,
                                              @Valid @RequestBody ActualizarSeccionRequest request) {
         return modeloOperativoService.actualizarSeccion(seccionId, request);
+    }
+
+    @PatchMapping(value = "/{seccionId}/responsable-principal", consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public PlanoResponsableResponse asignarResponsablePrincipal(@PathVariable Long seccionId,
+                                                                @Valid @RequestBody AsignarResponsablePrincipalRequest request) {
+        return modeloOperativoService.asignarResponsablePrincipal(seccionId, request.trabajadorId());
     }
 
     @GetMapping(value = "/{seccionId}/estanterias", produces = MediaType.APPLICATION_JSON_VALUE)

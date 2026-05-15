@@ -242,7 +242,8 @@ select {
 }
 
 .badge-ok,
-.badge-gap {
+.badge-gap,
+.badge-neutral {
   display: inline-block;
   padding: 5px 10px;
   border: var(--border-light);
@@ -257,6 +258,11 @@ select {
 .badge-gap {
   background: var(--alert-bg);
   color: var(--red);
+}
+
+.badge-neutral {
+  background: var(--paper);
+  color: var(--muted);
 }
 
 .detail-shell {

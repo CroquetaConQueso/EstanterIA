@@ -9,6 +9,7 @@ public record AsignacionActivaSlotResponse(
         ProveedorResumenResponse proveedor,
         String claveProductoProveedor,
         Boolean stockDisponible,
+        String stockMensaje,
         LocalDate fechaColocacion,
         LocalDate fechaCaducidad,
         LocalDate fechaRetiradaProgramada,

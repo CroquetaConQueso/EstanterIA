@@ -9,6 +9,8 @@ public record AlertaAsignacionResponse(
         ProductoResumenResponse producto,
         ProveedorResumenResponse proveedor,
         String claveProductoProveedor,
+        Boolean stockDisponible,
+        String stockMensaje,
         LocalDate fechaCaducidad,
         LocalDate fechaRetiradaProgramada,
         EstadoAsignacionProductoSlot estadoAsignacion

@@ -56,6 +56,7 @@ type AsignacionActivaSlotResponse = {
   proveedor: ProveedorResumenResponse | null;
   claveProductoProveedor: string | null;
   stockDisponible: boolean | null;
+  stockMensaje: string | null;
   fechaColocacion: string | null;
   fechaCaducidad: string | null;
   fechaRetiradaProgramada: string | null;
@@ -125,9 +126,19 @@ function formatFecha(value: string | null | undefined): string {
 }
 
 function formatStock(value: boolean | null | undefined): string {
-  if (value === true) return "Disponible";
-  if (value === false) return "No disponible";
-  return "No informado";
+  if (value === true) return "Stock disponible: Sí";
+  if (value === false) return "Stock disponible: No · requiere pedido o reposición externa";
+  return "Sin dato de stock";
+}
+
+function stockMensaje(slot: SlotConfiguradoResponse): string {
+  return slot.asignacionActiva?.stockMensaje ?? formatStock(slot.asignacionActiva?.stockDisponible);
+}
+
+function claseStock(slot: SlotConfiguradoResponse): string {
+  if (slot.asignacionActiva?.stockDisponible === true) return "badge-ok";
+  if (slot.asignacionActiva?.stockDisponible === false) return "badge-gap";
+  return "badge-neutral";
 }
 
 function formatEncargado(encargado: TrabajadorResumenResponse): string {
@@ -168,6 +179,7 @@ function blobBusqueda(slot: SlotConfiguradoResponse): string {
     slot.asignacionActiva?.proveedor?.codigo,
     slot.asignacionActiva?.proveedor?.nombre,
     slot.asignacionActiva?.claveProductoProveedor,
+    stockMensaje(slot),
     slot.asignacionActiva?.estadoAsignacion
   ].join(" ").toLowerCase();
 }
@@ -210,7 +222,7 @@ function setRowMessage(message: string): void {
   tbody.innerHTML = "";
   const tr = document.createElement("tr");
   const td = document.createElement("td");
-  td.colSpan = 8;
+  td.colSpan = 9;
   td.textContent = message;
   tr.appendChild(td);
   tbody.appendChild(tr);
@@ -331,6 +343,12 @@ function renderTabla(): void {
     const tdProveedor = document.createElement("td");
     tdProveedor.textContent = proveedorNombre(slot);
 
+    const tdStock = document.createElement("td");
+    const stockChip = document.createElement("span");
+    stockChip.className = claseStock(slot);
+    stockChip.textContent = stockMensaje(slot);
+    tdStock.appendChild(stockChip);
+
     const tdFechas = document.createElement("td");
     tdFechas.textContent = fechasSlot(slot);
 
@@ -348,7 +366,7 @@ function renderTabla(): void {
     button.textContent = "Ver";
     tdAcciones.appendChild(button);
 
-    tr.append(tdSeccion, tdEstanteria, tdSlot, tdProducto, tdProveedor, tdFechas, tdEstado, tdAcciones);
+    tr.append(tdSeccion, tdEstanteria, tdSlot, tdProducto, tdProveedor, tdStock, tdFechas, tdEstado, tdAcciones);
     tbody.appendChild(tr);
   });
 }
@@ -411,7 +429,7 @@ function renderDetalle(slotSeleccionado?: SlotConfiguradoResponse): void {
   addListItem(detalleAsignacion, "Estado", textoSeguro(asignacion.estadoAsignacion));
   addListItem(detalleAsignacion, "Proveedor", proveedorNombre(slot));
   addListItem(detalleAsignacion, "Clave proveedor", claveProveedor(slot));
-  addListItem(detalleAsignacion, "Stock proveedor", formatStock(asignacion.stockDisponible));
+  addListItem(detalleAsignacion, "Stock disponible", asignacion.stockMensaje ?? formatStock(asignacion.stockDisponible));
   addListItem(detalleAsignacion, "Fecha colocaci\u00f3n", formatFecha(asignacion.fechaColocacion));
   addListItem(detalleAsignacion, "Fecha caducidad", formatFecha(asignacion.fechaCaducidad));
   addListItem(detalleAsignacion, "Retirada programada", formatFecha(asignacion.fechaRetiradaProgramada));

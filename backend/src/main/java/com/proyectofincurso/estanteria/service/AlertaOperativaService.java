@@ -496,6 +496,8 @@ public class AlertaOperativaService {
     }
 
     private AlertaResponse toAlertaResponse(Alerta alerta) {
+        AsignacionProductoSlot asignacionStock = resolverAsignacionParaStock(alerta);
+        StockResumen stock = toStockResumen(asignacionStock);
         return new AlertaResponse(
                 alerta.getId(),
                 alerta.getTipoAlerta(),
@@ -507,7 +509,47 @@ public class AlertaOperativaService {
                 toSeccionResponse(alerta.getSeccion()),
                 toEstanteriaResumenResponse(alerta.getEstanteria()),
                 toAlertaSlotResponse(alerta.getSlotConfiguracion()),
-                toAlertaAsignacionResponse(alerta.getAsignacionProductoSlot())
+                toAlertaAsignacionResponse(alerta.getAsignacionProductoSlot()),
+                stock.productoId(),
+                stock.productoCodigo(),
+                stock.productoNombre(),
+                stock.proveedorId(),
+                stock.proveedorNombre(),
+                stock.stockDisponible(),
+                stock.stockMensaje()
+        );
+    }
+
+    private AsignacionProductoSlot resolverAsignacionParaStock(Alerta alerta) {
+        if (alerta.getAsignacionProductoSlot() != null) {
+            return alerta.getAsignacionProductoSlot();
+        }
+        if (alerta.getSlotConfiguracion() == null || alerta.getSlotConfiguracion().getId() == null) {
+            return null;
+        }
+        return asignacionProductoSlotRepository
+                .findAsignacionActivaDeSlot(alerta.getSlotConfiguracion().getId(), EstadoAsignacionProductoSlot.ACTIVA)
+                .orElse(null);
+    }
+
+    private StockResumen toStockResumen(AsignacionProductoSlot asignacion) {
+        if (asignacion == null || asignacion.getProductoProveedor() == null) {
+            return StockResumen.sinDato();
+        }
+
+        ProductoProveedor productoProveedor = asignacion.getProductoProveedor();
+        Producto producto = productoProveedor.getProducto();
+        Proveedor proveedor = productoProveedor.getProveedor();
+        Boolean stockDisponible = productoProveedor.getStockDisponible();
+
+        return new StockResumen(
+                producto != null ? producto.getId() : null,
+                producto != null ? producto.getCodigoInterno() : null,
+                producto != null ? producto.getNombre() : null,
+                proveedor != null ? proveedor.getId() : null,
+                proveedor != null ? proveedor.getNombre() : null,
+                stockDisponible,
+                stockMensaje(stockDisponible)
         );
     }
 
@@ -560,10 +602,21 @@ public class AlertaOperativaService {
                 toProductoResumenResponse(productoProveedor.getProducto()),
                 toProveedorResumenResponse(productoProveedor.getProveedor()),
                 productoProveedor.getClaveProductoProveedor(),
+                productoProveedor.getStockDisponible(),
+                stockMensaje(productoProveedor.getStockDisponible()),
                 asignacion.getFechaCaducidad(),
                 asignacion.getFechaRetiradaProgramada(),
                 asignacion.getEstadoAsignacion()
         );
+    }
+
+    private String stockMensaje(Boolean stockDisponible) {
+        if (stockDisponible == null) {
+            return "Sin dato de stock";
+        }
+        return stockDisponible
+                ? "Stock disponible: Sí"
+                : "Stock disponible: No · requiere pedido o reposición externa";
     }
 
     private ProductoResumenResponse toProductoResumenResponse(Producto producto) {
@@ -596,5 +649,19 @@ public class AlertaOperativaService {
         private int alertasCreadas;
         private int alertasExistentes;
         private int notificacionesCreadas;
+    }
+
+    private record StockResumen(
+            Long productoId,
+            String productoCodigo,
+            String productoNombre,
+            Long proveedorId,
+            String proveedorNombre,
+            Boolean stockDisponible,
+            String stockMensaje
+    ) {
+        private static StockResumen sinDato() {
+            return new StockResumen(null, null, null, null, null, null, "Sin dato de stock");
+        }
     }
 }

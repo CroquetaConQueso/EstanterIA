@@ -430,6 +430,21 @@ button, input, select {
   font-size: 1.5rem;
 }
 
+.meta-box.stock-ok {
+  border-color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.meta-box.stock-warning {
+  border-color: var(--alert);
+  background: var(--alert-bg);
+}
+
+.meta-box.stock-unknown {
+  border-color: var(--muted);
+  background: var(--highlight);
+}
+
 .task-actions {
   display: flex;
   gap: 12px;

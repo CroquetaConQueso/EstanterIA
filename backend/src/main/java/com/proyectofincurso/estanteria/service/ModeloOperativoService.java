@@ -527,6 +527,7 @@ public class ModeloOperativoService {
                 toProveedorResumenResponse(productoProveedor.getProveedor()),
                 productoProveedor.getClaveProductoProveedor(),
                 productoProveedor.getStockDisponible(),
+                stockMensaje(productoProveedor.getStockDisponible()),
                 asignacion.getFechaColocacion(),
                 asignacion.getFechaCaducidad(),
                 asignacion.getFechaRetiradaProgramada(),
@@ -534,6 +535,15 @@ public class ModeloOperativoService {
                 asignacion.getEstadoAsignacion(),
                 asignacion.getObservaciones()
         );
+    }
+
+    private String stockMensaje(Boolean stockDisponible) {
+        if (stockDisponible == null) {
+            return "Sin dato de stock";
+        }
+        return stockDisponible
+                ? "Stock disponible: Sí"
+                : "Stock disponible: No · requiere pedido o reposición externa";
     }
 
     private ProductoResumenResponse toProductoResumenResponse(Producto producto) {

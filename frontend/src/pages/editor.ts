@@ -211,7 +211,7 @@ function updateToolFeedback(): void {
   const estanteriaCodigo = selectedEstanteriaCodigo();
 
   if (!seccionId) {
-    toolFeedback.textContent = "Selecciona una secciÃ³n para dibujar zonas o estanterÃ­as.";
+    toolFeedback.textContent = "Selecciona una sección para dibujar zonas o estanterías.";
     return;
   }
 
@@ -229,14 +229,14 @@ function updateToolFeedback(): void {
 
   const zonaSeccion = zones.find((zone) => zone.seccionId === seccionId);
   if (mode === "rack" && !zonaSeccion) {
-    toolFeedback.textContent = "Crea primero una zona para la secciÃ³n seleccionada.";
+    toolFeedback.textContent = "Crea primero una zona para la sección seleccionada.";
     return;
   }
 
   const noQuedanEstanterias = estanteriasSeccion.length > 0
     && estanteriasSeccion.every((estanteria) => racks.some((rack) => rack.estanteriaCodigo === estanteria.codigo));
   if (mode === "rack" && noQuedanEstanterias) {
-    toolFeedback.textContent = "No quedan estanterÃ­as libres de esta secciÃ³n para aÃ±adir.";
+    toolFeedback.textContent = "No quedan estanterías libres de esta sección para añadir.";
     return;
   }
 
@@ -258,10 +258,10 @@ function setMode(nextMode: EditorMode): void {
     button.classList.toggle("is-active", button.dataset.mode === mode);
   });
   setText(canvasHelp, mode === "zone"
-    ? "Arrastra para dibujar una zona de la secciÃ³n seleccionada."
+    ? "Arrastra para dibujar una zona de la sección seleccionada."
     : mode === "rack"
-      ? "Arrastra dentro de una zona para colocar la estanterÃ­a seleccionada."
-      : "Selecciona zonas o estanterÃ­as para editar sus coordenadas.");
+      ? "Arrastra dentro de una zona para colocar la estantería seleccionada."
+      : "Selecciona zonas o estanterías para editar sus coordenadas.");
   updateToolFeedback();
 }
 
@@ -355,7 +355,7 @@ function renderLists(): void {
       zoneList.appendChild(listItem("No hay zonas creadas.", false, () => undefined));
     } else {
       zones.forEach((zone) => {
-        zoneList.appendChild(listItem(`${zone.seccionNombre} Â· ${zone.width}x${zone.height}`, selected?.type === "zone" && selected.uid === zone.uid, () => {
+        zoneList.appendChild(listItem(`${zone.seccionNombre} · ${zone.width}x${zone.height}`, selected?.type === "zone" && selected.uid === zone.uid, () => {
           selected = { type: "zone", uid: zone.uid };
           render();
         }));
@@ -366,10 +366,10 @@ function renderLists(): void {
   if (rackList) {
     rackList.innerHTML = "";
     if (racks.length === 0) {
-      rackList.appendChild(listItem("No hay estanterÃ­as colocadas.", false, () => undefined));
+      rackList.appendChild(listItem("No hay estanterías colocadas.", false, () => undefined));
     } else {
       racks.forEach((rack) => {
-        rackList.appendChild(listItem(`${rack.estanteriaCodigo} Â· ${rack.orientacion}`, selected?.type === "rack" && selected.uid === rack.uid, () => {
+        rackList.appendChild(listItem(`${rack.estanteriaCodigo} · ${rack.orientacion}`, selected?.type === "rack" && selected.uid === rack.uid, () => {
           selected = { type: "rack", uid: rack.uid };
           render();
         }));
@@ -392,7 +392,7 @@ function renderSelectionPanel(): void {
   const rack = selectedRack();
 
   if (!zone && !rack) {
-    setText(selectionSummary, "No hay ningÃºn elemento seleccionado.");
+    setText(selectionSummary, "No hay ningún elemento seleccionado.");
     formElemento?.classList.remove("is-visible");
     return;
   }
@@ -407,7 +407,7 @@ function renderSelectionPanel(): void {
   }
 
   if (rack) {
-    setText(selectionSummary, `EstanterÃ­a: ${rack.estanteriaCodigo} Â· ${rack.estanteriaNombre}`);
+    setText(selectionSummary, `Estantería: ${rack.estanteriaCodigo} · ${rack.estanteriaNombre}`);
     fillElementInputs(rack);
     if (elementOrientationField) elementOrientationField.style.display = "grid";
     if (elementOrientation) elementOrientation.value = rack.orientacion;
@@ -432,8 +432,8 @@ async function parseErrorResponse(response: Response): Promise<ApiErrorResponse 
 
 function backendErrorMessage(data: ApiErrorResponse | null, status: number): string {
   if (data?.message) return data.message;
-  if (status === 401) return "La sesiÃ³n no es vÃ¡lida o ha caducado.";
-  if (status === 404) return "No se encontrÃ³ el recurso solicitado.";
+  if (status === 401) return "La sesión no es válida o ha caducado.";
+  if (status === 404) return "No se encontró el recurso solicitado.";
   if (status === 409) return "Ya existe un recurso con esos datos.";
   if (status >= 500) return "Error interno del servidor.";
   return `Error HTTP ${status}`;
@@ -465,7 +465,7 @@ async function cargarSecciones(): Promise<void> {
       seccionSelect.appendChild(option("", "No hay secciones disponibles"));
     } else {
       secciones.forEach((seccion) => {
-        seccionSelect.appendChild(option(String(seccion.id), `${seccion.nombre} Â· ${seccion.codigo}`));
+        seccionSelect.appendChild(option(String(seccion.id), `${seccion.nombre} · ${seccion.codigo}`));
       });
     }
   }
@@ -481,10 +481,10 @@ async function cargarEstanteriasDeSeccion(): Promise<void> {
   if (estanteriaSelect) {
     estanteriaSelect.innerHTML = "";
     if (estanteriasSeccion.length === 0) {
-      estanteriaSelect.appendChild(option("", "No hay estanterÃ­as disponibles"));
+      estanteriaSelect.appendChild(option("", "No hay estanterías disponibles"));
     } else {
       estanteriasSeccion.forEach((estanteria) => {
-        estanteriaSelect.appendChild(option(estanteria.codigo, `${estanteria.codigo} Â· ${estanteria.nombre}`));
+        estanteriaSelect.appendChild(option(estanteria.codigo, `${estanteria.codigo} · ${estanteria.nombre}`));
       });
     }
   }
@@ -547,7 +547,7 @@ async function cargarPlano(codigo: string): Promise<void> {
 }
 
 function validateMetadata(): string | null {
-  if (!isEditMode && !codigoInput?.value.trim()) return "El cÃ³digo del plano es obligatorio.";
+  if (!isEditMode && !codigoInput?.value.trim()) return "El código del plano es obligatorio.";
   if (!nombreInput?.value.trim()) return "El nombre del plano es obligatorio.";
   const { ancho, alto } = getPlanoSize();
   if (ancho <= 0 || alto <= 0) return "El ancho y el alto deben ser mayores que cero.";
@@ -557,7 +557,7 @@ function validateMetadata(): string | null {
 function validateBox(item: { x: number; y: number; width: number; height: number }): string | null {
   const { ancho, alto } = getPlanoSize();
   if (item.x < 0 || item.y < 0 || item.width <= 0 || item.height <= 0) {
-    return "Las coordenadas y dimensiones no son vÃ¡lidas.";
+    return "Las coordenadas y dimensiones no son válidas.";
   }
   if (item.x + item.width > ancho || item.y + item.height > alto) {
     return "El elemento debe quedar dentro del plano.";
@@ -635,7 +635,7 @@ async function guardarPlano(): Promise<void> {
         method: "POST",
         body: JSON.stringify(payload)
       });
-      setStatus("Plano creado correctamente. Redirigiendo al modo ediciÃ³n...", "ok");
+      setStatus("Plano creado correctamente. Redirigiendo al modo edición...", "ok");
       window.location.href = `editor.html?codigo=${encodeURIComponent(created.codigo)}`;
     }
   } catch (err) {
@@ -659,7 +659,7 @@ function addZone(box: { x: number; y: number; width: number; height: number }): 
   const seccionId = Number(seccionSelect?.value);
   const seccion = secciones.find((item) => item.id === seccionId);
   if (!seccion) {
-    setStatus("Selecciona una secciÃ³n vÃ¡lida antes de dibujar la zona.", "error");
+    setStatus("Selecciona una sección válida antes de dibujar la zona.", "error");
     return;
   }
   if (zones.some((zone) => zone.seccionId === seccionId)) {
@@ -682,7 +682,7 @@ function addZone(box: { x: number; y: number; width: number; height: number }): 
   };
   zones.push(zone);
   selected = { type: "zone", uid: zone.uid };
-  setStatus("Zona aÃ±adida al plano.", "ok");
+  setStatus("Zona añadida al plano.", "ok");
   render();
 }
 
@@ -691,7 +691,7 @@ function addRack(box: { x: number; y: number; width: number; height: number }): 
   const estanteriaCodigo = estanteriaSelect?.value ?? "";
   const estanteria = estanteriasSeccion.find((item) => item.codigo === estanteriaCodigo);
   if (!estanteria) {
-    setStatus("Selecciona una estanterÃ­a vÃ¡lida antes de dibujar.", "error");
+    setStatus("Selecciona una estantería válida antes de dibujar.", "error");
     return;
   }
   if (racks.some((rack) => rack.estanteriaCodigo === estanteriaCodigo)) {
@@ -701,7 +701,7 @@ function addRack(box: { x: number; y: number; width: number; height: number }): 
 
   const zone = zoneAtBox(box, seccionId);
   if (!zone) {
-    setStatus("La estanterÃ­a debe quedar dentro de una zona de su secciÃ³n.", "error");
+    setStatus("La estantería debe quedar dentro de una zona de su sección.", "error");
     return;
   }
 
@@ -717,7 +717,7 @@ function addRack(box: { x: number; y: number; width: number; height: number }): 
   };
   racks.push(rack);
   selected = { type: "rack", uid: rack.uid };
-  setStatus("EstanterÃ­a colocada en el plano.", "ok");
+  setStatus("Estantería colocada en el plano.", "ok");
   render();
 }
 
@@ -736,18 +736,34 @@ function applySelectedElement(): void {
 
   const zone = selectedZone();
   if (zone) {
-    const hasRacks = racks.some((rack) => rack.zonaUid === zone.uid && !rackInsideZone(rack, { ...zone, ...box }));
-    if (hasRacks) {
-      setStatus("No puedes reducir la zona dejando estanterÃ­as fuera.", "error");
+    const nextZone: LocalZone = { ...zone, ...box };
+    const deltaX = nextZone.x - zone.x;
+    const deltaY = nextZone.y - zone.y;
+    const movedRacks = racks
+      .filter((rack) => rack.zonaUid === zone.uid)
+      .map((rack) => ({
+        rack,
+        next: {
+          ...rack,
+          x: rack.x + deltaX,
+          y: rack.y + deltaY
+        }
+      }));
+
+    const hasRacksOutside = movedRacks.some(({ next }) => !rackInsideZone(next, nextZone));
+    if (hasRacksOutside) {
+      setStatus(deltaX !== 0 || deltaY !== 0
+        ? "No puedes mover la zona dejando estanterías fuera."
+        : "No puedes reducir la zona dejando estanterías fuera.", "error");
       return;
     }
 
-    Object.assign(zone, box);
+    Object.assign(zone, nextZone);
     movedRacks.forEach(({ rack, next }) => {
       rack.x = next.x;
       rack.y = next.y;
     });
-    setStatus(deltaX !== 0 || deltaY !== 0 ? "Zona actualizada y estanterias desplazadas." : "Zona actualizada.", "ok");
+    setStatus(deltaX !== 0 || deltaY !== 0 ? "Zona actualizada y estanterías desplazadas." : "Zona actualizada.", "ok");
     render();
     return;
   }
@@ -756,12 +772,12 @@ function applySelectedElement(): void {
   if (rack) {
     const zoneForRack = findZoneForRack(rack);
     if (!zoneForRack || !rackInsideZone(box, zoneForRack)) {
-      setStatus("La estanterÃ­a debe quedar dentro de su zona.", "error");
+      setStatus("La estantería debe quedar dentro de su zona.", "error");
       return;
     }
     Object.assign(rack, box);
     rack.orientacion = elementOrientation?.value === "VERTICAL" ? "VERTICAL" : "HORIZONTAL";
-    setStatus("EstanterÃ­a actualizada.", "ok");
+    setStatus("Estantería actualizada.", "ok");
     render();
   }
 }
@@ -770,7 +786,7 @@ function deleteSelectedElement(): void {
   const zone = selectedZone();
   if (zone) {
     if (racks.some((rack) => rack.zonaUid === zone.uid)) {
-      setStatus("Retira las estanterÃ­as de la zona antes de eliminarla.", "error");
+      setStatus("Retira las estanterías de la zona antes de eliminarla.", "error");
       return;
     }
     zones = zones.filter((item) => item.uid !== zone.uid);
@@ -784,7 +800,7 @@ function deleteSelectedElement(): void {
   if (rack) {
     racks = racks.filter((item) => item.uid !== rack.uid);
     selected = null;
-    setStatus("EstanterÃ­a eliminada.", "ok");
+    setStatus("Estantería eliminada.", "ok");
     render();
   }
 }
@@ -844,7 +860,7 @@ function bindEvents(): void {
 }
 
 async function init(): Promise<void> {
-  setText(editorModeLabel, isEditMode ? "EdiciÃ³n persistente" : "CreaciÃ³n persistente");
+  setText(editorModeLabel, isEditMode ? "Edición persistente" : "Creación persistente");
   setText(editorTitle, isEditMode ? "Editar plano 2D" : "Crear plano 2D");
   if (btnSave) btnSave.textContent = isEditMode ? "Guardar cambios" : "Guardar plano";
   if (empresaInput) empresaInput.value = "EMP-DEMO";

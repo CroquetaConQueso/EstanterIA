@@ -3,11 +3,13 @@ package com.proyectofincurso.estanteria.auth;
 import com.proyectofincurso.estanteria.persistence.entity.UserAccount;
 import com.proyectofincurso.estanteria.persistence.entity.UserRole;
 import com.proyectofincurso.estanteria.persistence.repository.UserAccountRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(name = "app.auth.seed.enabled", havingValue = "true", matchIfMissing = true)
 public class AuthSeed implements CommandLineRunner {
 
     private final UserAccountRepository repo;

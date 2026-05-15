@@ -126,6 +126,17 @@
 
       <p class="hint">Seleccionar mueve elementos. Añadir zona o estantería dibuja arrastrando sobre el lienzo.</p>
       <p class="hint tool-feedback" id="tool-feedback"></p>
+
+      <div class="lists-panel" aria-label="Elementos del plano">
+        <div>
+          <h2>Zonas del plano</h2>
+          <ul id="zone-list" class="entity-list"></ul>
+        </div>
+        <div>
+          <h2>Estanterías colocadas</h2>
+          <ul id="rack-list" class="entity-list"></ul>
+        </div>
+      </div>
     </aside>
 
     <section class="panel canvas-panel">
@@ -208,17 +219,6 @@
         </div>
       </form>
     </aside>
-  </section>
-
-  <section class="panel lists-panel">
-    <div>
-      <h2>Zonas del plano</h2>
-      <ul id="zone-list" class="entity-list"></ul>
-    </div>
-    <div>
-      <h2>Estanterías colocadas</h2>
-      <ul id="rack-list" class="entity-list"></ul>
-    </div>
   </section>
 </main>
 

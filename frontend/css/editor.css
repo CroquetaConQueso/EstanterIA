@@ -320,9 +320,13 @@ textarea {
 }
 
 .btn:hover,
-.tool:hover {
+.btn:focus-visible,
+.tool:hover,
+.tool:focus-visible {
   background: var(--black);
   color: var(--gold);
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .btn.danger {
@@ -341,6 +345,10 @@ textarea {
 .detail-panel {
   position: sticky;
   top: 92px;
+  align-self: start;
+  max-height: calc(100vh - 112px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .tool-buttons {
@@ -370,6 +378,7 @@ textarea {
 .canvas-panel {
   min-width: 0;
   padding: 18px;
+  align-self: start;
 }
 
 .canvas-head {
@@ -490,6 +499,7 @@ textarea {
 .detail-panel {
   display: grid;
   gap: 14px;
+  min-height: 0;
 }
 
 .element-form {
@@ -515,9 +525,11 @@ textarea {
 
 .lists-panel {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: 1fr;
+  gap: 14px;
   margin-top: 18px;
+  padding-top: 16px;
+  border-top: var(--border-light);
 }
 
 .entity-list {
@@ -526,6 +538,10 @@ textarea {
   gap: 10px;
   padding: 0;
   margin: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
 }
 
 .entity-list li {
@@ -546,6 +562,13 @@ textarea {
 .slot-editor {
   display: grid;
   gap: 10px;
+}
+
+#element-slots-container {
+  max-height: clamp(180px, 30vh, 360px);
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
 }
 
 .slot-row {
@@ -665,14 +688,16 @@ textarea {
   .tools-panel,
   .detail-panel {
     position: static;
+    max-height: none;
+    overflow: visible;
   }
 
   .tool-buttons {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .lists-panel {
-    grid-template-columns: 1fr;
+  .entity-list {
+    max-height: 220px;
   }
 }
 

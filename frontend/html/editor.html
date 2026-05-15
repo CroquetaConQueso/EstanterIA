@@ -38,8 +38,8 @@
       <p class="eyebrow" id="editor-mode-label">Editor persistente</p>
       <h1 id="editor-title">Crear plano 2D</h1>
       <p>
-        Dibuja zonas vinculadas a secciones reales y coloca estanterías existentes
-        para guardar el layout en backend.
+        Crea secciones y estanterías, dibuja el layout 2D y guarda el resultado
+        persistido para verlo después en Planos.
       </p>
     </div>
     <div class="toolbar">
@@ -107,8 +107,63 @@
             <option value="VERTICAL">Vertical</option>
           </select>
         </div>
-        <p class="hint">Dibuja arrastrando sobre el lienzo. Las estanterías deben quedar dentro de su zona.</p>
+        <p class="hint">Dibuja arrastrando sobre el lienzo. También puedes mover zonas y estanterías en modo seleccionar.</p>
         <p class="hint tool-feedback" id="tool-feedback"></p>
+      </section>
+
+      <section class="side-block creation-block">
+        <h2>Crear sección</h2>
+        <form id="form-inline-seccion" class="form">
+          <div class="field-grid">
+            <div class="field">
+              <label for="new-seccion-codigo">Código</label>
+              <input id="new-seccion-codigo" type="text" maxlength="50" placeholder="SEC-BEBIDAS" />
+            </div>
+            <div class="field">
+              <label for="new-seccion-nombre">Nombre</label>
+              <input id="new-seccion-nombre" type="text" maxlength="150" placeholder="Bebidas" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="new-seccion-descripcion">Descripción</label>
+            <textarea id="new-seccion-descripcion" rows="2"></textarea>
+          </div>
+          <button class="btn secondary" id="btn-create-section" type="submit">Crear y usar sección</button>
+          <p class="hint inline-status" id="section-create-status"></p>
+        </form>
+      </section>
+
+      <section class="side-block creation-block">
+        <h2>Crear estantería</h2>
+        <form id="form-inline-rack" class="form">
+          <p class="hint">Se crea dentro de la sección seleccionada. Después podrás dibujarla en su zona.</p>
+          <div class="field-grid">
+            <div class="field">
+              <label for="new-rack-codigo">Código</label>
+              <input id="new-rack-codigo" type="text" maxlength="50" placeholder="EST-BEB-001" />
+            </div>
+            <div class="field">
+              <label for="new-rack-nombre">Nombre</label>
+              <input id="new-rack-nombre" type="text" maxlength="150" placeholder="Estantería bebidas" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="new-rack-descripcion">Descripción</label>
+            <textarea id="new-rack-descripcion" rows="2"></textarea>
+          </div>
+          <div class="field">
+            <label for="new-rack-slot-count">Huecos / slots</label>
+            <input id="new-rack-slot-count" type="number" min="1" max="24" step="1" value="4" />
+          </div>
+          <p class="hint warning">
+            La inspección visual automatizada actual está optimizada para estanterías de 4 huecos.
+            Puedes crear otras configuraciones para preparar escenarios futuros.
+          </p>
+          <p class="hint" id="products-status">Cargando productos...</p>
+          <div class="slot-editor" id="inline-slots-container"></div>
+          <button class="btn secondary" id="btn-create-rack" type="submit">Crear y usar estantería</button>
+          <p class="hint inline-status" id="rack-create-status"></p>
+        </form>
       </section>
     </aside>
 
@@ -135,6 +190,20 @@
         </div>
 
         <form id="form-elemento" class="form element-form">
+          <div class="field-grid element-metadata">
+            <div class="field">
+              <label for="element-code">Código</label>
+              <input id="element-code" type="text" disabled />
+            </div>
+            <div class="field">
+              <label for="element-name">Nombre</label>
+              <input id="element-name" type="text" maxlength="150" />
+            </div>
+          </div>
+          <div class="field element-metadata">
+            <label for="element-description">Descripción</label>
+            <textarea id="element-description" rows="2"></textarea>
+          </div>
           <div class="field-grid">
             <div class="field">
               <label for="element-x">X</label>
@@ -160,6 +229,11 @@
               <option value="VERTICAL">Vertical</option>
             </select>
           </div>
+          <div class="field" id="element-slots-field">
+            <label>Slots configurados</label>
+            <div class="slot-editor" id="element-slots-container"></div>
+          </div>
+          <p class="hint inline-status" id="element-edit-status"></p>
           <div class="form-actions">
             <button class="btn primary" id="btn-apply-element" type="button">Aplicar cambios</button>
             <button class="btn danger" id="btn-delete-element" type="button">Eliminar elemento</button>

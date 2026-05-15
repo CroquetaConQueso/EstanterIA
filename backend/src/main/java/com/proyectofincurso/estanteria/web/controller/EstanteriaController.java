@@ -1,6 +1,7 @@
 package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.service.ModeloOperativoService;
+import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaConfiguracionResponse;
 import jakarta.validation.Valid;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +28,13 @@ public class EstanteriaController {
     @ResponseStatus(HttpStatus.CREATED)
     public EstanteriaConfiguracionResponse crearEstanteria(@Valid @RequestBody CrearEstanteriaRequest request) {
         return modeloOperativoService.crearEstanteria(request);
+    }
+
+    @PatchMapping(value = "/{codigo}", consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public EstanteriaConfiguracionResponse actualizarEstanteria(@PathVariable String codigo,
+                                                                @Valid @RequestBody ActualizarEstanteriaRequest request) {
+        return modeloOperativoService.actualizarEstanteria(codigo, request);
     }
 
     @GetMapping(value = "/{codigo}/configuracion", produces = MediaType.APPLICATION_JSON_VALUE)

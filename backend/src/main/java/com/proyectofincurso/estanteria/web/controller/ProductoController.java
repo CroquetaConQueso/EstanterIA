@@ -1,11 +1,19 @@
 package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.service.ModeloOperativoService;
+import com.proyectofincurso.estanteria.web.dto.CrearProductoRequest;
+import com.proyectofincurso.estanteria.web.dto.ProductoCreadoResponse;
 import com.proyectofincurso.estanteria.web.dto.ProductoResumenResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -20,5 +28,12 @@ public class ProductoController {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<ProductoResumenResponse> listarProductosActivos() {
         return modeloOperativoService.obtenerProductosActivos();
+    }
+
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    public ProductoCreadoResponse crearProducto(@Valid @RequestBody CrearProductoRequest request) {
+        return modeloOperativoService.crearProducto(request);
     }
 }

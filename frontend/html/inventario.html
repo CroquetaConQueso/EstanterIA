@@ -67,6 +67,9 @@
           <button class="btn ghost" id="btn-limpiar-inv" type="button">
             Limpiar
           </button>
+          <button class="btn primary" id="btn-open-product-dialog" type="button">
+            Nuevo producto
+          </button>
         </div>
       </header>
 
@@ -128,6 +131,52 @@
           </div>
         </aside>
       </section>
+
+      <dialog class="product-dialog" id="product-dialog" aria-labelledby="product-dialog-title">
+        <form class="product-form" id="product-form" method="dialog">
+          <div class="dialog-head">
+            <div>
+              <p class="eyebrow">Alta básica</p>
+              <h2 id="product-dialog-title">Nuevo producto</h2>
+            </div>
+            <button class="btn ghost compact" id="btn-close-product-dialog" type="button">Cerrar</button>
+          </div>
+
+          <label>
+            Código interno
+            <input id="product-code" type="text" maxlength="80" placeholder="PROD-LECHE" required />
+          </label>
+
+          <label>
+            Nombre
+            <input id="product-name" type="text" maxlength="160" placeholder="Leche" required />
+          </label>
+
+          <label>
+            Descripción
+            <textarea id="product-description" rows="3" maxlength="2000" placeholder="Producto lácteo básico"></textarea>
+          </label>
+
+          <label class="check-row">
+            <input id="product-link-demo-provider" type="checkbox" checked />
+            Vincular a proveedor demo
+          </label>
+
+          <label>
+            Stock disponible inicial
+            <select id="product-stock">
+              <option value="true">Sí</option>
+              <option value="false">No</option>
+            </select>
+          </label>
+
+          <p class="form-status" id="product-form-status" role="status" aria-live="polite"></p>
+
+          <div class="dialog-actions">
+            <button class="btn primary" id="btn-save-product" type="submit">Crear producto</button>
+          </div>
+        </form>
+      </dialog>
     </main>
 
     <footer class="foot">

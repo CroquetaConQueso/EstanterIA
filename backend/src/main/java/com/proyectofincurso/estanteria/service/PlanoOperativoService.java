@@ -321,7 +321,8 @@ public class PlanoOperativoService {
                 productoUuid,
                 producto.getCodigoInterno(),
                 producto.getNombre(),
-                producto.getDescripcion()
+                producto.getDescripcion(),
+                producto.getActivo()
         );
     }
 }

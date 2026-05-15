@@ -204,6 +204,20 @@ textarea {
   color: var(--danger);
 }
 
+.inline-link {
+  display: inline-flex;
+  width: fit-content;
+  color: var(--ink);
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.inline-link:hover,
+.inline-link:focus-visible {
+  color: var(--danger);
+}
+
 .panel {
   min-width: 0;
   padding: 20px;

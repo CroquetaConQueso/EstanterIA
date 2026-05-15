@@ -323,6 +323,92 @@ select {
   color: var(--black);
 }
 
+.btn.primary {
+  background: var(--black);
+  color: var(--gold);
+}
+
+.btn.compact {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.product-dialog {
+  width: min(560px, calc(100vw - 32px));
+  border: var(--border-heavy);
+  background: var(--white);
+  color: var(--black);
+  box-shadow: var(--shadow-red);
+  padding: 0;
+}
+
+.product-dialog::backdrop {
+  background: rgba(17, 17, 17, 0.65);
+}
+
+.product-form {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.dialog-head,
+.dialog-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dialog-head h2 {
+  margin: 0;
+}
+
+.product-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 0.82rem;
+  letter-spacing: 1px;
+}
+
+.product-form input,
+.product-form textarea,
+.product-form select {
+  width: 100%;
+  max-width: 100%;
+  border: var(--border-light);
+  background: var(--paper);
+  color: var(--black);
+  padding: 12px;
+}
+
+.product-form textarea {
+  resize: vertical;
+}
+
+.check-row {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.check-row input {
+  width: auto;
+}
+
+.form-status {
+  min-height: 1.3rem;
+  margin: 0;
+  color: var(--muted);
+}
+
+.form-status[data-type="success"] {
+  color: var(--ok);
+}
+
+.form-status[data-type="error"] {
+  color: var(--red);
+}
+
 .foot {
   text-align: center;
   padding: 32px;

@@ -2,12 +2,15 @@ package com.proyectofincurso.estanteria.web.dto;
 
 import java.util.UUID;
 
-public record ProductoResumenResponse(
+public record ProductoCreadoResponse(
         Long id,
         UUID productoUuid,
         String codigoInterno,
         String nombre,
         String descripcion,
-        Boolean activo
+        Boolean activo,
+        ProveedorResumenResponse proveedor,
+        Boolean stockDisponible,
+        String stockMensaje
 ) {
 }

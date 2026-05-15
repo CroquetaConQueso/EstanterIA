@@ -560,7 +560,8 @@ public class TareaOperativaService {
                 producto.getProductoUuid(),
                 producto.getCodigoInterno(),
                 producto.getNombre(),
-                producto.getDescripcion()
+                producto.getDescripcion(),
+                producto.getActivo()
         );
     }
 

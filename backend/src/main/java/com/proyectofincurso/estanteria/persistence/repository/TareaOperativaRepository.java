@@ -56,6 +56,19 @@ public interface TareaOperativaRepository extends JpaRepository<TareaOperativa, 
     @Query("""
             select distinct tarea
             from TareaOperativa tarea
+            left join fetch tarea.estanteria
+            left join fetch tarea.slotConfiguracion slot
+            left join fetch slot.producto
+            where tarea.estadoTarea in :estados
+              and tarea.estanteria.id in :estanteriaIds
+            order by tarea.prioridad desc, tarea.createdAt desc
+            """)
+    List<TareaOperativa> findConContextoByEstanteriasAndEstadoIn(@Param("estanteriaIds") Collection<Long> estanteriaIds,
+                                                                 @Param("estados") Collection<EstadoTareaOperativa> estados);
+
+    @Query("""
+            select distinct tarea
+            from TareaOperativa tarea
             left join fetch tarea.alerta alerta
             left join fetch tarea.seccion
             left join fetch tarea.estanteria

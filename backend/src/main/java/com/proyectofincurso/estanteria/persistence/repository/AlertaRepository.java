@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface AlertaRepository extends JpaRepository<Alerta, Long> {
@@ -44,6 +45,19 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
             """)
     List<Alerta> findAlertasConContextoBySeccionAndEstado(@Param("seccionId") Long seccionId,
                                                           @Param("estado") EstadoAlerta estado);
+
+    @Query("""
+            select distinct alerta
+            from Alerta alerta
+            left join fetch alerta.estanteria
+            left join fetch alerta.slotConfiguracion slot
+            left join fetch slot.producto
+            where alerta.estadoAlerta = :estado
+              and alerta.estanteria.id in :estanteriaIds
+            order by alerta.createdAt desc
+            """)
+    List<Alerta> findAlertasConContextoByEstanteriasAndEstado(@Param("estanteriaIds") Collection<Long> estanteriaIds,
+                                                              @Param("estado") EstadoAlerta estado);
 
     @Query("""
             select alerta

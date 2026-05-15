@@ -5,7 +5,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.proyectofincurso.estanteria.persistence.entity.Inspeccion;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface InspeccionRepository extends JpaRepository<Inspeccion,Long>{
@@ -18,4 +20,13 @@ public interface InspeccionRepository extends JpaRepository<Inspeccion,Long>{
             where inspeccion.id = :id
             """)
     Optional<Inspeccion> findByIdConSlotsYEstanteria(@Param("id") Long id);
+
+    @Query("""
+            select inspeccion
+            from Inspeccion inspeccion
+            where inspeccion.estanteria.id = :estanteriaId
+            order by coalesce(inspeccion.capturadaEn, inspeccion.createdAt) desc
+            """)
+    List<Inspeccion> findUltimasConSlotsByEstanteriaId(@Param("estanteriaId") Long estanteriaId,
+                                                       Pageable pageable);
 }

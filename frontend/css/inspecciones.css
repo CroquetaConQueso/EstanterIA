@@ -332,14 +332,29 @@ select {
   margin-right: 8px;
 }
 
-.btn:hover,
 .btn.primary {
   background: var(--black);
   color: var(--gold);
 }
 
+.btn:hover,
+.btn:focus-visible,
+.btn:active {
+  background: var(--black);
+  color: var(--gold);
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .btn.ghost {
   background: var(--gold);
+  color: var(--black);
+}
+
+.btn.ghost:hover,
+.btn.ghost:focus-visible {
+  background: var(--black);
+  color: var(--gold);
 }
 
 .table .btn-link {
@@ -348,6 +363,14 @@ select {
   color: var(--red);
   cursor: pointer;
   font-weight: 900;
+}
+
+.table .btn-link:hover,
+.table .btn-link:focus-visible {
+  color: var(--black);
+  text-decoration: underline;
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .foot {

@@ -258,6 +258,7 @@ button, input, select {
   flex: 1;
 }
 
+.layout,
 .layout-grid {
   display: grid;
   grid-template-columns: 1fr 400px;
@@ -269,10 +270,12 @@ button, input, select {
   border: var(--border-heavy);
   box-shadow: var(--shadow-block);
   padding: 20px;
+  overflow-x: auto;
 }
 
 .table {
   width: 100%;
+  min-width: 1120px;
   border-collapse: collapse;
 }
 
@@ -303,6 +306,26 @@ button, input, select {
 .table tbody tr:hover {
   background: var(--gold);
   cursor: crosshair;
+}
+
+.table tbody tr.is-selected td {
+  background: var(--gold);
+  color: var(--black);
+  outline: 3px solid var(--red);
+  outline-offset: -3px;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn.small {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 0.82rem;
 }
 
 .status-chip {
@@ -458,6 +481,7 @@ button, input, select {
 }
 
 @media (max-width: 1100px) {
+  .layout,
   .layout-grid {
     grid-template-columns: 1fr;
   }

@@ -91,6 +91,7 @@ const filtroTexto = document.querySelector<HTMLInputElement>("#filtro-texto");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar");
 
 const detalle = document.querySelector<HTMLUListElement>("#detalle-alerta");
+const detallePanel = document.querySelector<HTMLElement>("#detalle-alerta-panel");
 const preview = document.querySelector<HTMLElement>("#alerta-preview");
 const btnAsignar = document.querySelector<HTMLButtonElement>("#btn-asignar");
 const btnDescartar = document.querySelector<HTMLButtonElement>("#btn-descartar");
@@ -302,11 +303,22 @@ function renderDetail(alerta: AlertaResponse): void {
   }
 }
 
-function selectAlert(id: number): void {
+function scrollDetalleSiHaceFalta(): void {
+  if (!detallePanel) return;
+
+  const rect = detallePanel.getBoundingClientRect();
+  const fueraDeVista = rect.top < 0 || rect.bottom > window.innerHeight;
+  if (window.innerWidth <= 1100 || fueraDeVista) {
+    detallePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function selectAlert(id: number, scrollToDetail = false): void {
   selectedId = id;
   const alerta = alertas.find((item) => item.id === id);
   if (alerta) renderDetail(alerta);
   renderTable();
+  if (scrollToDetail) scrollDetalleSiHaceFalta();
 }
 
 function renderTable(): void {
@@ -327,8 +339,13 @@ function renderTable(): void {
 
   rows.forEach((alerta) => {
     const tr = document.createElement("tr");
+    tr.dataset.id = String(alerta.id);
+    tr.tabIndex = 0;
+    tr.setAttribute("role", "button");
+    tr.setAttribute("aria-label", `Ver detalle de alerta ${alerta.id}`);
     if (alerta.id === selectedId) {
-      tr.style.background = "#eef6ff";
+      tr.classList.add("is-selected");
+      tr.setAttribute("aria-selected", "true");
     }
 
     const tdHora = document.createElement("td");
@@ -440,11 +457,24 @@ tbody?.addEventListener("click", (event) => {
   if (!(target instanceof HTMLElement)) return;
 
   const button = target.closest<HTMLButtonElement>("button[data-action='detalle']");
-  if (!button) return;
+  const row = target.closest<HTMLTableRowElement>("tr[data-id]");
+  const id = Number(button?.dataset.id ?? row?.dataset.id);
 
-  const id = Number(button.dataset.id);
   if (!Number.isFinite(id)) return;
-  selectAlert(id);
+  selectAlert(id, true);
+});
+
+tbody?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+
+  const row = target.closest<HTMLTableRowElement>("tr[data-id]");
+  const id = Number(row?.dataset.id);
+  if (!Number.isFinite(id)) return;
+
+  event.preventDefault();
+  selectAlert(id, true);
 });
 
 btnPlano?.addEventListener("click", () => {

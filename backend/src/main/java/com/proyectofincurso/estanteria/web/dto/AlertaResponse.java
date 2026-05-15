@@ -17,6 +17,13 @@ public record AlertaResponse(
         SeccionResponse seccion,
         EstanteriaResumenResponse estanteria,
         AlertaSlotResponse slot,
-        AlertaAsignacionResponse asignacion
+        AlertaAsignacionResponse asignacion,
+        Long productoId,
+        String productoCodigo,
+        String productoNombre,
+        Long proveedorId,
+        String proveedorNombre,
+        Boolean stockDisponible,
+        String stockMensaje
 ) {
 }

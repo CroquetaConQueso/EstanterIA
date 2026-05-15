@@ -46,6 +46,8 @@ type AlertaAsignacionResponse = {
   producto?: ProductoResumenResponse | null;
   proveedor?: ProveedorResumenResponse | null;
   claveProductoProveedor?: string | null;
+  stockDisponible?: boolean | null;
+  stockMensaje?: string | null;
   fechaCaducidad?: string | null;
   fechaRetiradaProgramada?: string | null;
   estadoAsignacion?: string | null;
@@ -79,6 +81,13 @@ type TareaOperativaResponse = {
   estanteria?: EstanteriaResumenResponse | null;
   slot?: AlertaSlotResponse | null;
   asignacion?: AlertaAsignacionResponse | null;
+  productoId?: number | null;
+  productoCodigo?: string | null;
+  productoNombre?: string | null;
+  proveedorId?: number | null;
+  proveedorNombre?: string | null;
+  stockDisponible?: boolean | null;
+  stockMensaje?: string | null;
   trabajadorAsignado?: TrabajadorResumenResponse | null;
   asignadaPorUsername?: string | null;
   createdAt?: string | null;
@@ -178,9 +187,29 @@ function etiquetaTrabajadorActivo(trabajador: TrabajadorActivoResponse): string 
 
 function productoTarea(tarea: TareaOperativaResponse): string {
   return textoSeguro(
-    tarea.asignacion?.producto?.nombre ?? tarea.slot?.productoEsperado?.nombre,
+    tarea.productoNombre ?? tarea.asignacion?.producto?.nombre ?? tarea.slot?.productoEsperado?.nombre,
     "Sin producto asociado"
   );
+}
+
+function proveedorTarea(tarea: TareaOperativaResponse): string {
+  return textoSeguro(tarea.proveedorNombre ?? tarea.asignacion?.proveedor?.nombre, "Sin proveedor");
+}
+
+function stockMensajeTarea(tarea: TareaOperativaResponse): string {
+  if (tarea.stockMensaje) return tarea.stockMensaje;
+  if (tarea.asignacion?.stockMensaje) return tarea.asignacion.stockMensaje;
+  if (tarea.stockDisponible === true || tarea.asignacion?.stockDisponible === true) return "Stock disponible: Sí";
+  if (tarea.stockDisponible === false || tarea.asignacion?.stockDisponible === false) {
+    return "Stock disponible: No · requiere pedido o reposición externa";
+  }
+  return "Sin dato de stock";
+}
+
+function claseStock(tarea: TareaOperativaResponse): string {
+  if (tarea.stockDisponible === true || tarea.asignacion?.stockDisponible === true) return "stock-ok";
+  if (tarea.stockDisponible === false || tarea.asignacion?.stockDisponible === false) return "stock-warning";
+  return "stock-unknown";
 }
 
 function seccionTarea(tarea: TareaOperativaResponse): string {
@@ -212,7 +241,8 @@ function blobBusqueda(tarea: TareaOperativaResponse): string {
     estanteriaTarea(tarea),
     slotTarea(tarea),
     productoTarea(tarea),
-    tarea.asignacion?.proveedor?.nombre,
+    proveedorTarea(tarea),
+    stockMensajeTarea(tarea),
     tarea.asignacion?.claveProductoProveedor,
     nombreTrabajador(tarea.trabajadorAsignado)
   ].join(" ").toLowerCase();
@@ -311,9 +341,9 @@ function tareasFiltradas(): TareaOperativaResponse[] {
   });
 }
 
-function addMeta(container: HTMLElement, label: string, value: string, full = false): void {
+function addMeta(container: HTMLElement, label: string, value: string, full = false, modifier = ""): void {
   const box = document.createElement("div");
-  box.className = `meta-box${full ? " full" : ""}`;
+  box.className = `meta-box${full ? " full" : ""}${modifier ? ` ${modifier}` : ""}`;
 
   const labelEl = document.createElement("span");
   labelEl.className = "meta-label";
@@ -382,11 +412,12 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
   addMeta(meta, "Sección", seccionTarea(tarea));
   addMeta(meta, "Slot", slotTarea(tarea));
   addMeta(meta, "Producto", productoTarea(tarea));
+  addMeta(meta, "Stock", stockMensajeTarea(tarea), true, claseStock(tarea));
   addMeta(meta, "Trabajador", nombreTrabajador(tarea.trabajadorAsignado), true);
   addMeta(meta, "Creada", formatFecha(tarea.createdAt));
   addMeta(meta, "Asignada", formatFecha(tarea.assignedAt));
   addMeta(meta, "Resuelta", formatFecha(tarea.resueltaAt));
-  addMeta(meta, "Proveedor", textoSeguro(tarea.asignacion?.proveedor?.nombre, "Sin proveedor"));
+  addMeta(meta, "Proveedor", proveedorTarea(tarea));
   addMeta(meta, "Descripción", tarea.descripcion || "Sin descripción", true);
 
   body.appendChild(meta);

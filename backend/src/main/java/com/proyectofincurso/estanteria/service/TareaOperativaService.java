@@ -18,6 +18,7 @@ import com.proyectofincurso.estanteria.persistence.entity.Trabajador;
 import com.proyectofincurso.estanteria.persistence.entity.UserAccount;
 import com.proyectofincurso.estanteria.persistence.repository.TareaOperativaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionRepository;
+import com.proyectofincurso.estanteria.persistence.repository.AsignacionProductoSlotRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConfiguracionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.TrabajadorRepository;
@@ -47,6 +48,7 @@ import java.util.List;
 public class TareaOperativaService {
 
     private final TareaOperativaRepository tareaOperativaRepository;
+    private final AsignacionProductoSlotRepository asignacionProductoSlotRepository;
     private final SeccionRepository seccionRepository;
     private final EstanteriaRepository estanteriaRepository;
     private final EstanteriaSlotConfiguracionRepository slotConfiguracionRepository;
@@ -404,6 +406,8 @@ public class TareaOperativaService {
 
     private TareaOperativaResponse toResponse(TareaOperativa tarea) {
         UserAccount asignadaPor = tarea.getAsignadaPor();
+        AsignacionProductoSlot asignacionStock = resolverAsignacionParaStock(tarea);
+        StockResumen stock = toStockResumen(asignacionStock);
         return new TareaOperativaResponse(
                 tarea.getId(),
                 tarea.getAlerta() != null ? tarea.getAlerta().getId() : null,
@@ -416,6 +420,13 @@ public class TareaOperativaService {
                 toEstanteriaResumenResponse(tarea.getEstanteria()),
                 toAlertaSlotResponse(tarea.getSlotConfiguracion()),
                 toAlertaAsignacionResponse(tarea.getAsignacionProductoSlot()),
+                stock.productoId(),
+                stock.productoCodigo(),
+                stock.productoNombre(),
+                stock.proveedorId(),
+                stock.proveedorNombre(),
+                stock.stockDisponible(),
+                stock.stockMensaje(),
                 toTrabajadorResumenResponse(tarea.getTrabajadorAsignado()),
                 asignadaPor != null ? asignadaPor.getId() : null,
                 asignadaPor != null ? asignadaPor.getUsername() : null,
@@ -424,6 +435,39 @@ public class TareaOperativaService {
                 tarea.getFechaLimite(),
                 tarea.getResueltaAt(),
                 tarea.getUpdatedAt()
+        );
+    }
+
+    private AsignacionProductoSlot resolverAsignacionParaStock(TareaOperativa tarea) {
+        if (tarea.getAsignacionProductoSlot() != null) {
+            return tarea.getAsignacionProductoSlot();
+        }
+        if (tarea.getSlotConfiguracion() == null || tarea.getSlotConfiguracion().getId() == null) {
+            return null;
+        }
+        return asignacionProductoSlotRepository
+                .findAsignacionActivaDeSlot(tarea.getSlotConfiguracion().getId(), EstadoAsignacionProductoSlot.ACTIVA)
+                .orElse(null);
+    }
+
+    private StockResumen toStockResumen(AsignacionProductoSlot asignacion) {
+        if (asignacion == null || asignacion.getProductoProveedor() == null) {
+            return StockResumen.sinDato();
+        }
+
+        ProductoProveedor productoProveedor = asignacion.getProductoProveedor();
+        Producto producto = productoProveedor.getProducto();
+        Proveedor proveedor = productoProveedor.getProveedor();
+        Boolean stockDisponible = productoProveedor.getStockDisponible();
+
+        return new StockResumen(
+                producto != null ? producto.getId() : null,
+                producto != null ? producto.getCodigoInterno() : null,
+                producto != null ? producto.getNombre() : null,
+                proveedor != null ? proveedor.getId() : null,
+                proveedor != null ? proveedor.getNombre() : null,
+                stockDisponible,
+                stockMensaje(stockDisponible)
         );
     }
 
@@ -476,10 +520,21 @@ public class TareaOperativaService {
                 productoProveedor != null ? toProductoResumenResponse(productoProveedor.getProducto()) : null,
                 productoProveedor != null ? toProveedorResumenResponse(productoProveedor.getProveedor()) : null,
                 productoProveedor != null ? productoProveedor.getClaveProductoProveedor() : null,
+                productoProveedor != null ? productoProveedor.getStockDisponible() : null,
+                stockMensaje(productoProveedor != null ? productoProveedor.getStockDisponible() : null),
                 asignacion.getFechaCaducidad(),
                 asignacion.getFechaRetiradaProgramada(),
                 asignacion.getEstadoAsignacion()
         );
+    }
+
+    private String stockMensaje(Boolean stockDisponible) {
+        if (stockDisponible == null) {
+            return "Sin dato de stock";
+        }
+        return stockDisponible
+                ? "Stock disponible: Sí"
+                : "Stock disponible: No · requiere pedido o reposición externa";
     }
 
     private TrabajadorResumenResponse toTrabajadorResumenResponse(Trabajador trabajador) {
@@ -519,5 +574,19 @@ public class TareaOperativaService {
                 proveedor.getNombre(),
                 proveedor.getDescripcion()
         );
+    }
+
+    private record StockResumen(
+            Long productoId,
+            String productoCodigo,
+            String productoNombre,
+            Long proveedorId,
+            String proveedorNombre,
+            Boolean stockDisponible,
+            String stockMensaje
+    ) {
+        private static StockResumen sinDato() {
+            return new StockResumen(null, null, null, null, null, null, "Sin dato de stock");
+        }
     }
 }

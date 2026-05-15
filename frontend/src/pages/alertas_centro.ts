@@ -57,6 +57,8 @@ type AlertaAsignacionResponse = {
   producto?: ProductoResumenResponse | null;
   proveedor?: ProveedorResumenResponse | null;
   claveProductoProveedor?: string | null;
+  stockDisponible?: boolean | null;
+  stockMensaje?: string | null;
   fechaCaducidad?: string | null;
   fechaRetiradaProgramada?: string | null;
   estadoAsignacion?: string | null;
@@ -74,6 +76,13 @@ type AlertaResponse = {
   estanteria?: EstanteriaResumenResponse | null;
   slot?: AlertaSlotResponse | null;
   asignacion?: AlertaAsignacionResponse | null;
+  productoId?: number | null;
+  productoCodigo?: string | null;
+  productoNombre?: string | null;
+  proveedorId?: number | null;
+  proveedorNombre?: string | null;
+  stockDisponible?: boolean | null;
+  stockMensaje?: string | null;
 };
 
 type ApiErrorResponse = {
@@ -161,9 +170,23 @@ function formatFecha(value: string | null | undefined): string {
 
 function getProducto(alerta: AlertaResponse): string {
   return textoSeguro(
-    alerta.asignacion?.producto?.nombre ?? alerta.slot?.productoEsperado?.nombre,
+    alerta.productoNombre ?? alerta.asignacion?.producto?.nombre ?? alerta.slot?.productoEsperado?.nombre,
     "Sin producto asociado"
   );
+}
+
+function getProveedor(alerta: AlertaResponse): string {
+  return textoSeguro(alerta.proveedorNombre ?? alerta.asignacion?.proveedor?.nombre, "Sin asignacion asociada");
+}
+
+function getStockMensaje(alerta: AlertaResponse): string {
+  if (alerta.stockMensaje) return alerta.stockMensaje;
+  if (alerta.asignacion?.stockMensaje) return alerta.asignacion.stockMensaje;
+  if (alerta.stockDisponible === true || alerta.asignacion?.stockDisponible === true) return "Stock disponible: Sí";
+  if (alerta.stockDisponible === false || alerta.asignacion?.stockDisponible === false) {
+    return "Stock disponible: No · requiere pedido o reposición externa";
+  }
+  return "Sin dato de stock";
 }
 
 function getSeccion(alerta: AlertaResponse): string {
@@ -201,7 +224,7 @@ function getBlobBusqueda(alerta: AlertaResponse): string {
     getEstanteria(alerta),
     getSlot(alerta),
     getProducto(alerta),
-    alerta.asignacion?.proveedor?.nombre,
+    getProveedor(alerta),
     alerta.asignacion?.claveProductoProveedor
   ].join(" ").toLowerCase();
 }
@@ -299,7 +322,8 @@ function renderDetail(alerta: AlertaResponse): void {
   addDetailItem("Estanteria", getEstanteria(alerta));
   addDetailItem("Slot", getSlot(alerta));
   addDetailItem("Producto", getProducto(alerta));
-  addDetailItem("Proveedor", textoSeguro(alerta.asignacion?.proveedor?.nombre, "Sin asignacion asociada"));
+  addDetailItem("Proveedor", getProveedor(alerta));
+  addDetailItem("Stock", getStockMensaje(alerta));
   addDetailItem("Clave proveedor", textoSeguro(alerta.asignacion?.claveProductoProveedor, "Sin asignacion asociada"));
   addDetailItem("Caducidad", textoSeguro(alerta.asignacion?.fechaCaducidad, "Sin fecha de caducidad"));
   addDetailItem("Retirada programada", textoSeguro(alerta.asignacion?.fechaRetiradaProgramada, "Sin retirada programada"));

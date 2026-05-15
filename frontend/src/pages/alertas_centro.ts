@@ -1,4 +1,4 @@
-import { authFetch } from "../lib/api";
+import { authFetch, isStructuralAdmin } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
 
 requireAuth();
@@ -93,9 +93,10 @@ const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar");
 const detalle = document.querySelector<HTMLUListElement>("#detalle-alerta");
 const detallePanel = document.querySelector<HTMLElement>("#detalle-alerta-panel");
 const preview = document.querySelector<HTMLElement>("#alerta-preview");
-const btnAsignar = document.querySelector<HTMLButtonElement>("#btn-asignar");
+const btnResolver = document.querySelector<HTMLButtonElement>("#btn-resolver");
 const btnDescartar = document.querySelector<HTMLButtonElement>("#btn-descartar");
 const btnPlano = document.querySelector<HTMLButtonElement>("#btn-plano");
+const alertaActionStatus = document.querySelector<HTMLElement>("#alerta-action-status");
 
 const metricCritical = document.querySelector<HTMLElement>("#metric-critical");
 const metricPending = document.querySelector<HTMLElement>("#metric-pending");
@@ -103,6 +104,7 @@ const metricAssigned = document.querySelector<HTMLElement>("#metric-assigned");
 
 let alertas: AlertaResponse[] = [];
 let selectedId: number | null = null;
+const puedeCerrarAlertas = isStructuralAdmin();
 
 const tipoLabels: Record<string, string> = {
   HUECO_VACIO: "Hueco vacio",
@@ -229,6 +231,12 @@ function setDetalleMessage(message: string): void {
   }
 }
 
+function setActionStatus(message = "", type: "success" | "error" | "info" = "info"): void {
+  if (!alertaActionStatus) return;
+  alertaActionStatus.textContent = message;
+  alertaActionStatus.dataset.type = type;
+}
+
 function updateMetrics(): void {
   if (metricCritical) {
     metricCritical.textContent = String(alertas.filter((alerta) => alerta.prioridad === "CRITICA").length);
@@ -270,6 +278,7 @@ function renderDetail(alerta: AlertaResponse): void {
   if (!detalle) return;
 
   detalle.innerHTML = "";
+  setActionStatus();
 
   if (preview) {
     preview.innerHTML = `
@@ -295,8 +304,21 @@ function renderDetail(alerta: AlertaResponse): void {
   addDetailItem("Caducidad", textoSeguro(alerta.asignacion?.fechaCaducidad, "Sin fecha de caducidad"));
   addDetailItem("Retirada programada", textoSeguro(alerta.asignacion?.fechaRetiradaProgramada, "Sin retirada programada"));
 
-  if (btnAsignar) btnAsignar.disabled = true;
-  if (btnDescartar) btnDescartar.disabled = true;
+  const alertaAbierta = alerta.estado === "ABIERTA";
+  if (btnResolver) {
+    btnResolver.disabled = !puedeCerrarAlertas || !alertaAbierta;
+    btnResolver.hidden = false;
+  }
+  if (btnDescartar) {
+    btnDescartar.disabled = !puedeCerrarAlertas || !alertaAbierta;
+    btnDescartar.hidden = false;
+  }
+
+  if (!puedeCerrarAlertas) {
+    setActionStatus("Solo un administrador puede cerrar alertas.", "info");
+  } else if (!alertaAbierta) {
+    setActionStatus("Esta alerta ya no esta abierta.", "info");
+  }
 
   if (btnPlano) {
     btnPlano.disabled = !alerta.estanteria?.codigo;
@@ -407,11 +429,13 @@ async function parseErrorResponse(response: Response): Promise<ApiErrorResponse 
 function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): string {
   if (data?.message) return data.message;
   if (status === 404) return "No se encontraron alertas";
+  if (status === 403) return "Solo un administrador puede cerrar alertas.";
+  if (status === 409) return "La alerta ya esta cerrada o no admite esa transicion";
   if (status >= 500) return "Error interno del servidor";
   return `Error HTTP ${status}`;
 }
 
-async function cargarAlertas(): Promise<void> {
+async function cargarAlertas(mensajeDetalle?: string): Promise<void> {
   setRowMessage("Cargando alertas abiertas...");
   setDetalleMessage("Cargando detalle de alertas...");
 
@@ -439,6 +463,14 @@ async function cargarAlertas(): Promise<void> {
     updateMetrics();
     renderTable();
 
+    if (mensajeDetalle) {
+      selectedId = null;
+      renderTable();
+      setDetalleMessage(mensajeDetalle);
+      setActionStatus(mensajeDetalle, "success");
+      return;
+    }
+
     if (alertas.length > 0) {
       selectAlert(alertas[0].id);
     } else {
@@ -449,6 +481,49 @@ async function cargarAlertas(): Promise<void> {
     updateMetrics();
     setRowMessage("No se pudo conectar con el servidor de alertas");
     setDetalleMessage("Revisa que el backend este arrancado para consultar las alertas");
+  }
+}
+
+async function cerrarAlerta(accion: "resolver" | "descartar"): Promise<void> {
+  const alerta = alertas.find((item) => item.id === selectedId);
+  if (!alerta) {
+    setActionStatus("Selecciona una alerta antes de ejecutar la accion.", "error");
+    return;
+  }
+
+  if (!puedeCerrarAlertas) {
+    setActionStatus("Solo un administrador puede cerrar alertas.", "error");
+    return;
+  }
+
+  const endpoint = accion === "resolver"
+    ? `/api/alertas/${alerta.id}/resolver`
+    : `/api/alertas/${alerta.id}/descartar`;
+
+  const textoAccion = accion === "resolver" ? "resolviendo" : "descartando";
+  setActionStatus(`Se esta ${textoAccion} la alerta...`, "info");
+  if (btnResolver) btnResolver.disabled = true;
+  if (btnDescartar) btnDescartar.disabled = true;
+
+  try {
+    const response = await authFetch(endpoint, {
+      method: "PATCH",
+      headers: {
+        "Accept": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await parseErrorResponse(response);
+      renderDetail(alerta);
+      setActionStatus(getBackendErrorMessage(errorData, response.status), "error");
+      return;
+    }
+
+    await cargarAlertas("La alerta se cerro correctamente.");
+  } catch {
+    renderDetail(alerta);
+    setActionStatus("No se pudo conectar con el servidor de alertas.", "error");
   }
 }
 
@@ -481,6 +556,14 @@ btnPlano?.addEventListener("click", () => {
   const alerta = alertas.find((item) => item.id === selectedId);
   if (!alerta?.estanteria?.codigo) return;
   window.location.href = "planos.html";
+});
+
+btnResolver?.addEventListener("click", () => {
+  void cerrarAlerta("resolver");
+});
+
+btnDescartar?.addEventListener("click", () => {
+  void cerrarAlerta("descartar");
 });
 
 filtroGravedad?.addEventListener("change", renderTable);

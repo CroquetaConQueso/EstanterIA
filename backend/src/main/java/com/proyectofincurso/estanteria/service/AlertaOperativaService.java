@@ -250,6 +250,44 @@ public class AlertaOperativaService {
     }
 
     @Transactional
+    public AlertaResponse resolverAlerta(Long alertaId) {
+        Alerta alerta = obtenerAlerta(alertaId);
+
+        if (alerta.getEstadoAlerta() == EstadoAlerta.DESCARTADA) {
+            throw ApiException.conflict(
+                    "ALERTA_DESCARTADA",
+                    "No se puede resolver una alerta descartada"
+            );
+        }
+
+        if (alerta.getEstadoAlerta() != EstadoAlerta.RESUELTA) {
+            alerta.setEstadoAlerta(EstadoAlerta.RESUELTA);
+            alerta.setResueltaAt(Instant.now());
+        }
+
+        return toAlertaResponse(alerta);
+    }
+
+    @Transactional
+    public AlertaResponse descartarAlerta(Long alertaId) {
+        Alerta alerta = obtenerAlerta(alertaId);
+
+        if (alerta.getEstadoAlerta() == EstadoAlerta.RESUELTA) {
+            throw ApiException.conflict(
+                    "ALERTA_RESUELTA",
+                    "No se puede descartar una alerta resuelta"
+            );
+        }
+
+        if (alerta.getEstadoAlerta() != EstadoAlerta.DESCARTADA) {
+            alerta.setEstadoAlerta(EstadoAlerta.DESCARTADA);
+            alerta.setResueltaAt(Instant.now());
+        }
+
+        return toAlertaResponse(alerta);
+    }
+
+    @Transactional
     public AlertaTrabajadorResponse marcarNotificacionComoLeida(Long alertaTrabajadorId) {
         AlertaTrabajador notificacion = alertaTrabajadorRepository.findByIdConAlerta(alertaTrabajadorId)
                 .orElseThrow(() -> ApiException.notFound(
@@ -262,6 +300,14 @@ public class AlertaOperativaService {
         }
 
         return toAlertaTrabajadorResponse(notificacion);
+    }
+
+    private Alerta obtenerAlerta(Long alertaId) {
+        return alertaRepository.findById(alertaId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "ALERTA_NOT_FOUND",
+                        "No existe la alerta indicada"
+                ));
     }
 
     private Estanteria resolverEstanteria(Inspeccion inspeccion) {

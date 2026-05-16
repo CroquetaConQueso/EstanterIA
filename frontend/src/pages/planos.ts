@@ -241,6 +241,14 @@ function estanteriasDeZona(plano: PlanoOperativoResponse, zonaId: number): Plano
   return plano.estanterias.filter((estanteria) => estanteria.zonaId === zonaId);
 }
 
+function estanteriaActiva(estanteria: PlanoEstanteriaOperativaResponse): boolean {
+  return estanteria.estanteria.activa !== false;
+}
+
+function textoEstadoOperativo(estanteria: PlanoEstanteriaOperativaResponse): string {
+  return estanteriaActiva(estanteria) ? "Activa" : "Inactiva";
+}
+
 function totalAlertas(estanterias: PlanoEstanteriaOperativaResponse[]): number {
   return estanterias.reduce((total, estanteria) => total + estanteria.alertasAbiertas.length, 0);
 }
@@ -389,8 +397,9 @@ function renderListaEstanterias(plano: PlanoOperativoResponse): void {
       childList.appendChild(empty);
     } else {
       estanterias.forEach((estanteria) => {
+        const activa = estanteriaActiva(estanteria);
         const rackItem = document.createElement("li");
-        rackItem.className = `tree-rack-item${estanteriaSeleccionada?.layoutId === estanteria.layoutId ? " is-active" : ""}`;
+        rackItem.className = `tree-rack-item${estanteriaSeleccionada?.layoutId === estanteria.layoutId ? " is-active" : ""}${activa ? "" : " is-inactive"}`;
         const rackButton = document.createElement("button");
         rackButton.type = "button";
         rackButton.className = "tree-rack-button";
@@ -409,13 +418,16 @@ function renderListaEstanterias(plano: PlanoOperativoResponse): void {
 
         const rackMeta = document.createElement("span");
         rackMeta.className = "plan-meta";
+        const operationalState = document.createElement("span");
+        operationalState.className = activa ? "operational-state" : "operational-state is-inactive";
+        operationalState.textContent = activa ? "Activa" : "Inactiva · histórico conservado";
         const visualState = document.createElement("span");
         visualState.textContent = etiquetaEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual);
         const alertsState = document.createElement("span");
         alertsState.textContent = estanteria.alertasAbiertas.length === 0
           ? "Sin alertas abiertas"
           : `${estanteria.alertasAbiertas.length} alertas`;
-        rackMeta.append(visualState, alertsState);
+        rackMeta.append(operationalState, visualState, alertsState);
 
         rackButton.append(rackTitle, rackMeta);
         rackItem.appendChild(rackButton);
@@ -463,11 +475,12 @@ function renderCanvas(plano: PlanoOperativoResponse): void {
   });
 
   plano.estanterias.forEach((estanteria) => {
+    const activa = estanteriaActiva(estanteria);
     const rack = document.createElement("div");
-    rack.className = `rack-node ${claseEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual)}${estanteriaSeleccionada?.layoutId === estanteria.layoutId ? " is-selected" : ""}`;
+    rack.className = `rack-node ${claseEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual)}${estanteriaSeleccionada?.layoutId === estanteria.layoutId ? " is-selected" : ""}${activa ? "" : " is-inactive"}`;
     rack.tabIndex = 0;
     rack.role = "button";
-    rack.setAttribute("aria-label", `Estantería ${estanteria.estanteria.codigo}`);
+    rack.setAttribute("aria-label", `Estantería ${estanteria.estanteria.codigo}${activa ? "" : " inactiva"}`);
     posicionar(rack, estanteria.x, estanteria.y, estanteria.width, estanteria.height, plano);
     rack.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -484,6 +497,13 @@ function renderCanvas(plano: PlanoOperativoResponse): void {
     rackTitle.className = "rack-title";
     rackTitle.textContent = estanteria.estanteria.codigo;
     rack.appendChild(rackTitle);
+
+    if (!activa) {
+      const inactiveLabel = document.createElement("span");
+      inactiveLabel.className = "rack-status";
+      inactiveLabel.textContent = "INACTIVA";
+      rack.appendChild(inactiveLabel);
+    }
 
     const slotsWrap = document.createElement("span");
     slotsWrap.className = `rack-slots ${estanteria.orientacion.toLowerCase()}`;
@@ -526,6 +546,7 @@ function renderDetalleEstanteria(estanteria: PlanoEstanteriaOperativaResponse | 
   detalleEstanteria.append(
     crearLineaDetalle("Código", estanteria.estanteria.codigo),
     crearLineaDetalle("Nombre", estanteria.estanteria.nombre),
+    crearLineaDetalle("Estado operativo", textoEstadoOperativo(estanteria)),
     crearLineaDetalle("Estado visual", etiquetaEstado(inspeccion?.estadoGeneralVisual)),
     crearLineaDetalle("Última inspección", inspeccion ? `#${inspeccion.id} · ${formatFecha(inspeccion.capturadaEn ?? inspeccion.createdAt)}` : "Sin inspección reciente"),
     crearLineaDetalle("Ocupados", textoSeguro(inspeccion?.ocupados, "0")),
@@ -533,6 +554,13 @@ function renderDetalleEstanteria(estanteria: PlanoEstanteriaOperativaResponse | 
     crearLineaDetalle("Anomalías", textoSeguro(inspeccion?.anomalias, "0")),
     crearLineaDetalle("Tareas activas", String(estanteria.tareasActivas.length))
   );
+
+  if (!estanteriaActiva(estanteria)) {
+    const note = document.createElement("p");
+    note.className = "inactive-note";
+    note.textContent = "Esta estantería está retirada de nuevas operaciones, pero conserva su histórico.";
+    detalleEstanteria.appendChild(note);
+  }
 }
 
 function renderDetalleZona(zona: PlanoZonaOperativaResponse | null): void {

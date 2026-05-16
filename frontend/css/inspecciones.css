@@ -274,8 +274,9 @@ select {
 }
 
 .table tbody tr.is-selected td {
-  background: var(--black);
-  color: var(--gold);
+  background: #efe2c9;
+  color: var(--black);
+  box-shadow: inset 6px 0 0 var(--red);
 }
 
 .table tbody tr.is-selected .btn {

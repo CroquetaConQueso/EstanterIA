@@ -212,10 +212,12 @@ select {
 
 .table-shell {
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .table {
   width: 100%;
+  min-width: 860px;
   border-collapse: collapse;
 }
 
@@ -239,6 +241,21 @@ select {
 
 .table tbody tr:hover td {
   background: var(--gold);
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.table tbody tr:focus-visible td {
+  outline: 3px solid var(--red);
+  outline-offset: -3px;
+}
+
+.table tbody tr.is-selected td {
+  background: #efe2c9;
+  color: var(--black);
+  box-shadow: inset 6px 0 0 var(--red);
 }
 
 .badge-ok,

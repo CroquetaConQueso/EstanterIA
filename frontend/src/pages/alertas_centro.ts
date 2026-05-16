@@ -9,6 +9,7 @@ type TipoAlerta =
   | "ANOMALIA_VISUAL"
   | "REVISION_MANUAL"
   | "PRODUCTO_PROXIMO_A_CADUCAR"
+  | "RETIRADA_PROGRAMADA_PENDIENTE"
   | "PRESENCIA_TRAS_RETIRADA_PROGRAMADA"
   | string;
 
@@ -120,10 +121,11 @@ let selectedId: number | null = null;
 const puedeCerrarAlertas = isStructuralAdmin();
 
 const tipoLabels: Record<string, string> = {
-  HUECO_VACIO: "Hueco vacio",
-  ANOMALIA_VISUAL: "Anomalia visual",
-  REVISION_MANUAL: "Revision manual",
-  PRODUCTO_PROXIMO_A_CADUCAR: "Producto proximo a caducar",
+  HUECO_VACIO: "Hueco vacío",
+  ANOMALIA_VISUAL: "Anomalía visual",
+  REVISION_MANUAL: "Revisión manual",
+  PRODUCTO_PROXIMO_A_CADUCAR: "Producto próximo a caducar",
+  RETIRADA_PROGRAMADA_PENDIENTE: "Retirada programada pendiente",
   PRESENCIA_TRAS_RETIRADA_PROGRAMADA: "Presencia tras retirada programada"
 };
 

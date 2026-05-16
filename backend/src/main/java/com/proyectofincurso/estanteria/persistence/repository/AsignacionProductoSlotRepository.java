@@ -28,6 +28,21 @@ public interface AsignacionProductoSlotRepository extends JpaRepository<Asignaci
             select asignacion
             from AsignacionProductoSlot asignacion
             join fetch asignacion.slotConfiguracion slot
+            join fetch slot.estanteria estanteria
+            join fetch estanteria.seccion
+            join fetch asignacion.productoProveedor productoProveedor
+            join fetch productoProveedor.proveedor
+            join fetch productoProveedor.producto
+            where asignacion.id = :asignacionId
+              and asignacion.estadoAsignacion = :estado
+            """)
+    Optional<AsignacionProductoSlot> findActivaConContextoById(@Param("asignacionId") Long asignacionId,
+                                                               @Param("estado") EstadoAsignacionProductoSlot estado);
+
+    @Query("""
+            select asignacion
+            from AsignacionProductoSlot asignacion
+            join fetch asignacion.slotConfiguracion slot
             join fetch asignacion.productoProveedor productoProveedor
             join fetch productoProveedor.proveedor
             join fetch productoProveedor.producto
@@ -48,9 +63,25 @@ public interface AsignacionProductoSlotRepository extends JpaRepository<Asignaci
             join fetch productoProveedor.producto
             where asignacion.estadoAsignacion = :estado
               and asignacion.fechaCaducidad is not null
-              and asignacion.fechaCaducidad between :desde and :hasta
+              and asignacion.fechaCaducidad <= :hasta
             """)
-    List<AsignacionProductoSlot> findActivasConCaducidadEntre(@Param("estado") EstadoAsignacionProductoSlot estado,
-                                                              @Param("desde") LocalDate desde,
+    List<AsignacionProductoSlot> findActivasConCaducidadHasta(@Param("estado") EstadoAsignacionProductoSlot estado,
                                                               @Param("hasta") LocalDate hasta);
+
+    @Query("""
+            select asignacion
+            from AsignacionProductoSlot asignacion
+            join fetch asignacion.slotConfiguracion slot
+            join fetch slot.estanteria estanteria
+            join fetch estanteria.seccion
+            join fetch asignacion.productoProveedor productoProveedor
+            join fetch productoProveedor.proveedor
+            join fetch productoProveedor.producto
+            where asignacion.estadoAsignacion = :estado
+              and asignacion.fechaRetiradaProgramada is not null
+              and asignacion.fechaRetiradaProgramada < :fecha
+              and asignacion.fechaRetiradaConfirmada is null
+            """)
+    List<AsignacionProductoSlot> findActivasConRetiradaProgramadaAntesDe(@Param("estado") EstadoAsignacionProductoSlot estado,
+                                                                         @Param("fecha") LocalDate fecha);
 }

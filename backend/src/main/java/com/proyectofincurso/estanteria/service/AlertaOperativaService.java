@@ -66,7 +66,7 @@ public class AlertaOperativaService {
     @Value("${alertas.revision-manual.umbral-confianza:0.70}")
     private double umbralConfianzaRevisionManual;
 
-    @Value("${alertas.caducidad.dias-umbral:7}")
+    @Value("${app.alertas.caducidad.dias-anticipacion:${alertas.caducidad.dias-umbral:7}}")
     private int diasUmbralCaducidad;
 
     @Transactional
@@ -202,26 +202,42 @@ public class AlertaOperativaService {
         LocalDate hoy = LocalDate.now();
         LocalDate limite = hoy.plusDays(diasUmbralCaducidad);
         List<AsignacionProductoSlot> asignaciones = asignacionProductoSlotRepository
-                .findActivasConCaducidadEntre(EstadoAsignacionProductoSlot.ACTIVA, hoy, limite);
+                .findActivasConCaducidadHasta(EstadoAsignacionProductoSlot.ACTIVA, limite);
+        List<AsignacionProductoSlot> retiradasPendientes = asignacionProductoSlotRepository
+                .findActivasConRetiradaProgramadaAntesDe(EstadoAsignacionProductoSlot.ACTIVA, hoy);
 
         ContadorEvaluacion contador = new ContadorEvaluacion();
         for (AsignacionProductoSlot asignacion : asignaciones) {
-            EstanteriaSlotConfiguracion slotConfigurado = asignacion.getSlotConfiguracion();
-            Estanteria estanteria = slotConfigurado.getEstanteria();
-            crearOReutilizarAlertaPorAsignacion(
-                    TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
-                    PrioridadAlerta.MEDIA,
-                    "El producto asignado a " + estanteria.getCodigo() + ", " + slotConfigurado.getSlotId()
-                            + ", caduca el " + asignacion.getFechaCaducidad() + ".",
-                    estanteria,
-                    slotConfigurado,
-                    asignacion,
-                    contador
-            );
+            evaluarCaducidadAsignacion(asignacion, hoy, limite, contador);
+        }
+        for (AsignacionProductoSlot asignacion : retiradasPendientes) {
+            evaluarRetiradaProgramada(asignacion, hoy, contador);
         }
 
         return new EvaluacionCaducidadResponse(
-                asignaciones.size(),
+                asignaciones.size() + retiradasPendientes.size(),
+                contador.alertasCreadas,
+                contador.alertasExistentes,
+                contador.notificacionesCreadas
+        );
+    }
+
+    @Transactional
+    public EvaluacionCaducidadResponse evaluarAsignacionActiva(Long asignacionId) {
+        AsignacionProductoSlot asignacion = asignacionProductoSlotRepository
+                .findActivaConContextoById(asignacionId, EstadoAsignacionProductoSlot.ACTIVA)
+                .orElse(null);
+        if (asignacion == null) {
+            return new EvaluacionCaducidadResponse(0, 0, 0, 0);
+        }
+
+        LocalDate hoy = LocalDate.now();
+        ContadorEvaluacion contador = new ContadorEvaluacion();
+        evaluarCaducidadAsignacion(asignacion, hoy, hoy.plusDays(diasUmbralCaducidad), contador);
+        evaluarRetiradaProgramada(asignacion, hoy, contador);
+
+        return new EvaluacionCaducidadResponse(
+                1,
                 contador.alertasCreadas,
                 contador.alertasExistentes,
                 contador.notificacionesCreadas
@@ -333,11 +349,74 @@ public class AlertaOperativaService {
         if (asignacionActiva == null || asignacionActiva.getFechaRetiradaProgramada() == null) {
             return false;
         }
-        boolean retiradaPendiente = !asignacionActiva.getFechaRetiradaProgramada().isAfter(LocalDate.now())
+        boolean retiradaPendiente = asignacionActiva.getFechaRetiradaProgramada().isBefore(LocalDate.now())
                 && asignacionActiva.getFechaRetiradaConfirmada() == null;
         boolean hayPresenciaVisual = slotVisual.getEstadoVisual() == EstadoVisualSlot.OCUPADO
                 || slotVisual.getEstadoVisual() == EstadoVisualSlot.ANOMALIA;
         return retiradaPendiente && hayPresenciaVisual;
+    }
+
+    private void evaluarCaducidadAsignacion(AsignacionProductoSlot asignacion,
+                                            LocalDate hoy,
+                                            LocalDate limite,
+                                            ContadorEvaluacion contador) {
+        if (asignacion.getFechaCaducidad() == null || asignacion.getFechaCaducidad().isAfter(limite)) {
+            return;
+        }
+
+        EstanteriaSlotConfiguracion slotConfigurado = asignacion.getSlotConfiguracion();
+        Estanteria estanteria = slotConfigurado.getEstanteria();
+        PrioridadAlerta prioridad = asignacion.getFechaCaducidad().isAfter(hoy)
+                ? PrioridadAlerta.MEDIA
+                : PrioridadAlerta.ALTA;
+
+        crearOReutilizarAlertaPorAsignacion(
+                TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
+                prioridad,
+                "El producto " + nombreProductoAsignado(asignacion) + " del slot " + slotConfigurado.getSlotId()
+                        + " esta proximo a caducar.",
+                estanteria,
+                slotConfigurado,
+                asignacion,
+                contador
+        );
+    }
+
+    private void evaluarRetiradaProgramada(AsignacionProductoSlot asignacion,
+                                           LocalDate hoy,
+                                           ContadorEvaluacion contador) {
+        if (asignacion.getFechaRetiradaProgramada() == null
+                || !asignacion.getFechaRetiradaProgramada().isBefore(hoy)
+                || asignacion.getFechaRetiradaConfirmada() != null) {
+            return;
+        }
+
+        EstanteriaSlotConfiguracion slotConfigurado = asignacion.getSlotConfiguracion();
+        Estanteria estanteria = slotConfigurado.getEstanteria();
+        crearOReutilizarAlertaPorAsignacion(
+                TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE,
+                PrioridadAlerta.ALTA,
+                "La retirada programada del producto " + nombreProductoAsignado(asignacion)
+                        + " en " + slotConfigurado.getSlotId() + " esta pendiente.",
+                estanteria,
+                slotConfigurado,
+                asignacion,
+                contador
+        );
+    }
+
+    private String nombreProductoAsignado(AsignacionProductoSlot asignacion) {
+        if (asignacion.getProductoProveedor() == null || asignacion.getProductoProveedor().getProducto() == null) {
+            return "asignado";
+        }
+        Producto producto = asignacion.getProductoProveedor().getProducto();
+        if (producto.getNombre() != null && !producto.getNombre().isBlank()) {
+            return producto.getNombre();
+        }
+        if (producto.getCodigoInterno() != null && !producto.getCodigoInterno().isBlank()) {
+            return producto.getCodigoInterno();
+        }
+        return "asignado";
     }
 
     private void crearOReutilizarAlertaVisual(TipoAlerta tipo,

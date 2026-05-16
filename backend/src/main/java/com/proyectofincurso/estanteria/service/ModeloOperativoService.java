@@ -72,6 +72,7 @@ public class ModeloOperativoService {
     private final ProductoProveedorRepository productoProveedorRepository;
     private final ProveedorRepository proveedorRepository;
     private final TrabajadorRepository trabajadorRepository;
+    private final AlertaOperativaService alertaOperativaService;
     private static final String PROVEEDOR_DEMO_CODIGO = "PROV-DEMO";
 
     @Transactional(readOnly = true)
@@ -617,7 +618,8 @@ public class ModeloOperativoService {
         asignacion.setFechaRetiradaConfirmada(null);
         asignacion.setEstadoAsignacion(EstadoAsignacionProductoSlot.ACTIVA);
         asignacion.setUpdatedAt(ahora);
-        asignacionProductoSlotRepository.save(asignacion);
+        asignacion = asignacionProductoSlotRepository.save(asignacion);
+        alertaOperativaService.evaluarAsignacionActiva(asignacion.getId());
 
         return obtenerSlotConfigurado(slot.getId());
     }

@@ -181,6 +181,7 @@ const tipoAlertaLabels: Record<string, string> = {
   ANOMALIA_VISUAL: "Anomalía visual",
   REVISION_MANUAL: "Revisión manual",
   PRODUCTO_PROXIMO_A_CADUCAR: "Producto próximo a caducar",
+  RETIRADA_PROGRAMADA_PENDIENTE: "Retirada programada pendiente",
   PRESENCIA_TRAS_RETIRADA_PROGRAMADA: "Presencia tras retirada programada"
 };
 

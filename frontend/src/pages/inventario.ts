@@ -1,6 +1,5 @@
 import { authFetch, isStructuralAdmin } from "../lib/api";
 import { requireAdminPanelAccess } from "../lib/auth-guard";
-import { imageFallbackText, normalizeImageUrl } from "../lib/image-paths";
 
 requireAdminPanelAccess();
 
@@ -34,7 +33,6 @@ type ProductoResumenResponse = {
   codigoInterno: string | null;
   nombre: string | null;
   descripcion: string | null;
-  imagenUrl: string | null;
   activo: boolean | null;
 };
 
@@ -101,7 +99,6 @@ type ProductoCreadoResponse = {
   codigoInterno: string;
   nombre: string;
   descripcion?: string | null;
-  imagenUrl?: string | null;
   activo?: boolean | null;
   proveedor?: ProveedorResumenResponse | null;
   stockDisponible?: boolean | null;
@@ -121,7 +118,6 @@ const productForm = document.querySelector<HTMLFormElement>("#product-form");
 const productCodeInput = document.querySelector<HTMLInputElement>("#product-code");
 const productNameInput = document.querySelector<HTMLInputElement>("#product-name");
 const productDescriptionInput = document.querySelector<HTMLTextAreaElement>("#product-description");
-const productImageInput = document.querySelector<HTMLInputElement>("#product-image-url");
 const productLinkDemoProviderInput = document.querySelector<HTMLInputElement>("#product-link-demo-provider");
 const productStockSelect = document.querySelector<HTMLSelectElement>("#product-stock");
 const productFormStatus = document.querySelector<HTMLElement>("#product-form-status");
@@ -140,7 +136,6 @@ const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-inventario
 const detalleResumen = document.querySelector<HTMLUListElement>("#detalle-inv-resumen");
 const detalleSlots = document.querySelector<HTMLUListElement>("#detalle-inv-ok");
 const detalleAsignacion = document.querySelector<HTMLUListElement>("#detalle-inv-gaps");
-const productImagePreview = document.querySelector<HTMLElement>("#product-image-preview");
 
 let empresa: EmpresaResponse | null = null;
 let secciones: SeccionResponse[] = [];
@@ -352,7 +347,6 @@ function setDetalleMessage(message: string): void {
   clearList(detalleSlots);
   clearList(detalleAsignacion);
   if (productActions) productActions.hidden = true;
-  renderProductImage(null);
   addListItem(detalleResumen, "Estado", message);
 }
 
@@ -373,36 +367,6 @@ function renderProductBadge(producto: ProductoResumenResponse | null | undefined
   badge.className = productoActivo(producto) ? "badge-ok" : "badge-inactive";
   badge.textContent = badgeProductoActivo(producto);
   return badge;
-}
-
-function renderProductImage(producto: ProductoResumenResponse | null | undefined): void {
-  if (!productImagePreview) return;
-
-  productImagePreview.innerHTML = "";
-  const imageUrl = normalizeImageUrl(producto?.imagenUrl);
-
-  if (!imageUrl) {
-    const placeholder = document.createElement("strong");
-    placeholder.textContent = "Sin imagen de producto";
-    productImagePreview.appendChild(placeholder);
-    return;
-  }
-
-  const img = document.createElement("img");
-  img.src = imageUrl;
-  img.alt = `Imagen de ${textoSeguro(producto?.nombre, "producto")}`;
-  img.addEventListener("error", () => {
-    productImagePreview.innerHTML = "";
-    const wrapper = document.createElement("div");
-    wrapper.className = "product-image-error";
-    const text = document.createElement("strong");
-    text.textContent = "Imagen no disponible";
-    const path = document.createElement("small");
-    path.textContent = imageFallbackText(producto?.imagenUrl);
-    wrapper.append(text, path);
-    productImagePreview.appendChild(wrapper);
-  });
-  productImagePreview.appendChild(img);
 }
 
 function renderSecciones(): void {
@@ -582,7 +546,6 @@ function renderDetalle(slotSeleccionado?: SlotConfiguradoResponse): void {
 
   if (!slot) {
     addListItem(detalleAsignacion, "Asignaci\u00f3n", "Sin slot seleccionado");
-    renderProductImage(null);
     renderProductActions(null);
     return;
   }
@@ -592,9 +555,7 @@ function renderDetalle(slotSeleccionado?: SlotConfiguradoResponse): void {
   addListItem(detalleAsignacion, "C\u00f3digo interno", textoSeguro(slot.productoEsperado?.codigoInterno));
   addListItem(detalleAsignacion, "Estado producto", badgeProductoActivo(slot.productoEsperado));
   addListItem(detalleAsignacion, "Descripci\u00f3n producto", textoSeguro(slot.productoEsperado?.descripcion, "Sin descripci\u00f3n"));
-  addListItem(detalleAsignacion, "Imagen producto", textoSeguro(slot.productoEsperado?.imagenUrl, "Sin imagen"));
   addListItem(detalleAsignacion, "Cantidad objetivo", textoSeguro(slot.cantidadObjetivo, "No indicada"));
-  renderProductImage(slot.productoEsperado);
   renderProductActions(slot);
 
   const asignacion = slot.asignacionActiva;
@@ -663,7 +624,6 @@ function abrirDialogoProducto(): void {
   if (productDialogTitle) productDialogTitle.textContent = "Nuevo producto";
   if (productSaveButton) productSaveButton.textContent = "Crear producto";
   if (productCodeInput) productCodeInput.readOnly = false;
-  if (productImageInput) productImageInput.value = "";
   if (productLinkDemoProviderInput) productLinkDemoProviderInput.disabled = false;
   if (productLinkDemoProviderInput) productLinkDemoProviderInput.checked = true;
   if (productStockSelect) productStockSelect.value = "true";
@@ -693,7 +653,6 @@ function abrirDialogoEditarProducto(): void {
   }
   if (productNameInput) productNameInput.value = producto.nombre ?? "";
   if (productDescriptionInput) productDescriptionInput.value = producto.descripcion ?? "";
-  if (productImageInput) productImageInput.value = producto.imagenUrl ?? "";
   if (productLinkDemoProviderInput) {
     productLinkDemoProviderInput.checked = Boolean(slot?.asignacionActiva?.proveedor);
     productLinkDemoProviderInput.disabled = true;
@@ -719,7 +678,6 @@ async function crearProductoDesdeFormulario(): Promise<void> {
   const codigoInterno = productCodeInput?.value.trim() ?? "";
   const nombre = productNameInput?.value.trim() ?? "";
   const descripcion = productDescriptionInput?.value.trim() ?? "";
-  const imagenUrl = productImageInput?.value.trim() ?? "";
 
   if (!codigoInterno || !nombre) {
     setProductFormStatus("Código interno y nombre son obligatorios.", "error");
@@ -732,7 +690,6 @@ async function crearProductoDesdeFormulario(): Promise<void> {
     codigoInterno,
     nombre,
     descripcion: descripcion || null,
-    imagenUrl: imagenUrl || null,
     vincularProveedorDemo: productLinkDemoProviderInput?.checked ?? true,
     stockDisponible: productStockSelect?.value !== "false"
   });
@@ -765,7 +722,6 @@ async function editarProductoDesdeFormulario(): Promise<void> {
 
   const nombre = productNameInput?.value.trim() ?? "";
   const descripcion = productDescriptionInput?.value.trim() ?? "";
-  const imagenUrl = productImageInput?.value.trim() ?? "";
   if (!nombre) {
     setProductFormStatus("El nombre es obligatorio.", "error");
     return;
@@ -776,7 +732,6 @@ async function editarProductoDesdeFormulario(): Promise<void> {
   const producto = await patchJson<ProductoCreadoResponse>(`/api/productos/${encodeURIComponent(String(productoActual.id))}`, {
     nombre,
     descripcion: descripcion || null,
-    imagenUrl: imagenUrl || null,
     stockDisponible: productStockSelect?.value !== "false"
   });
 

@@ -13,9 +13,6 @@ public record ActualizarProductoRequest(
         @Size(max = 2000, message = "La descripcion no puede superar 2000 caracteres")
         String descripcion,
 
-        @Size(max = 500, message = "La URL de imagen no puede superar 500 caracteres")
-        String imagenUrl,
-
         Boolean stockDisponible
 ) {
 }

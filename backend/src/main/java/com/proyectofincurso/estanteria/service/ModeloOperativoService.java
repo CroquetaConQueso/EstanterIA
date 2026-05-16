@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,7 +70,6 @@ public class ModeloOperativoService {
     private final ProveedorRepository proveedorRepository;
     private final TrabajadorRepository trabajadorRepository;
     private static final String PROVEEDOR_DEMO_CODIGO = "PROV-DEMO";
-    private static final Pattern RUTA_ABSOLUTA_SISTEMA = Pattern.compile("^[a-zA-Z]:[\\\\/].*");
 
     @Transactional(readOnly = true)
     public EmpresaResponse obtenerEmpresaActivaPorCodigo(String codigo) {
@@ -419,7 +417,6 @@ public class ModeloOperativoService {
         producto.setCodigoInterno(codigoInterno);
         producto.setNombre(normalizar(request.nombre()));
         producto.setDescripcion(normalizarNullable(request.descripcion()));
-        producto.setImagenUrl(normalizarImagenUrl(request.imagenUrl()));
         producto.setActivo(true);
         producto.setCreatedAt(ahora);
         producto.setUpdatedAt(ahora);
@@ -456,7 +453,6 @@ public class ModeloOperativoService {
 
         producto.setNombre(normalizar(request.nombre()));
         producto.setDescripcion(normalizarNullable(request.descripcion()));
-        producto.setImagenUrl(normalizarImagenUrl(request.imagenUrl()));
         producto.setUpdatedAt(Instant.now());
 
         ProductoProveedor productoProveedor = productoProveedorRepository
@@ -726,7 +722,6 @@ public class ModeloOperativoService {
                 producto.getCodigoInterno(),
                 producto.getNombre(),
                 producto.getDescripcion(),
-                producto.getImagenUrl(),
                 producto.getActivo()
         );
     }
@@ -738,7 +733,6 @@ public class ModeloOperativoService {
                 producto.getCodigoInterno(),
                 producto.getNombre(),
                 producto.getDescripcion(),
-                producto.getImagenUrl(),
                 producto.getActivo(),
                 productoProveedor != null ? toProveedorResumenResponse(productoProveedor.getProveedor()) : null,
                 productoProveedor != null ? productoProveedor.getStockDisponible() : null,
@@ -789,40 +783,4 @@ public class ModeloOperativoService {
         return normalizado == null || normalizado.isBlank() ? null : normalizado;
     }
 
-    private String normalizarImagenUrl(String valor) {
-        String normalizado = normalizarNullable(valor);
-        if (normalizado == null) {
-            return null;
-        }
-
-        String lower = normalizado.toLowerCase();
-        if (normalizado.contains("..")
-                || normalizado.startsWith("\\")
-                || normalizado.startsWith("//")
-                || RUTA_ABSOLUTA_SISTEMA.matcher(normalizado).matches()
-                || lower.startsWith("file:")
-                || lower.startsWith("ftp:")) {
-            throw ApiException.badRequest(
-                    "PRODUCTO_IMAGEN_URL_INVALIDA",
-                    "La URL de imagen del producto no es valida"
-            );
-        }
-
-        if (lower.startsWith("http://") || lower.startsWith("https://")) {
-            return normalizado;
-        }
-
-        if (normalizado.startsWith("/products/") || normalizado.startsWith("/captures/")) {
-            return normalizado;
-        }
-
-        if (normalizado.startsWith("products/") || normalizado.startsWith("captures/")) {
-            return "/" + normalizado;
-        }
-
-        throw ApiException.badRequest(
-                "PRODUCTO_IMAGEN_URL_INVALIDA",
-                "La imagen debe ser una URL http/https o una ruta publica interna"
-        );
-    }
 }

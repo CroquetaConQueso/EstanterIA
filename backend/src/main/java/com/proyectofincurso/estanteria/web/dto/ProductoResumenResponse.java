@@ -8,7 +8,6 @@ public record ProductoResumenResponse(
         String codigoInterno,
         String nombre,
         String descripcion,
-        String imagenUrl,
         Boolean activo
 ) {
 }

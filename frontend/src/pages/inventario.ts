@@ -271,7 +271,7 @@ function setRowMessage(message: string): void {
   tbody.innerHTML = "";
   const tr = document.createElement("tr");
   const td = document.createElement("td");
-  td.colSpan = 9;
+  td.colSpan = 8;
   td.textContent = message;
   tr.appendChild(td);
   tbody.appendChild(tr);
@@ -379,9 +379,11 @@ function renderTabla(): void {
 
   slots.forEach((slot) => {
     const tr = document.createElement("tr");
-    if (slot.id === selectedSlotId) {
-      tr.style.background = "#eef6ff";
-    }
+    tr.dataset.id = String(slot.id);
+    tr.tabIndex = 0;
+    tr.setAttribute("role", "button");
+    tr.setAttribute("aria-label", `Ver detalle del slot ${textoSeguro(slot.slotId, "sin identificador")}`);
+    if (slot.id === selectedSlotId) tr.classList.add("is-selected");
 
     const tdSeccion = document.createElement("td");
     tdSeccion.textContent = textoSeguro(configuracion.seccion?.nombre ?? configuracion.seccion?.codigo);
@@ -413,15 +415,7 @@ function renderTabla(): void {
     chip.textContent = estadoAsignacion(slot);
     tdEstado.appendChild(chip);
 
-    const tdAcciones = document.createElement("td");
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "btn ghost";
-    button.dataset.id = String(slot.id);
-    button.textContent = "Ver";
-    tdAcciones.appendChild(button);
-
-    tr.append(tdSeccion, tdEstanteria, tdSlot, tdProducto, tdProveedor, tdStock, tdFechas, tdEstado, tdAcciones);
+    tr.append(tdSeccion, tdEstanteria, tdSlot, tdProducto, tdProveedor, tdStock, tdFechas, tdEstado);
     tbody.appendChild(tr);
   });
 }
@@ -659,13 +653,27 @@ tbody?.addEventListener("click", (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
 
-  const button = target.closest<HTMLButtonElement>("button[data-id]");
-  if (!button) return;
-
-  const id = Number(button.dataset.id);
+  const row = target.closest<HTMLTableRowElement>("tr[data-id]");
+  const id = Number(row?.dataset.id);
   const slot = configuracionActual?.slots.find((item) => item.id === id);
   if (!slot) return;
 
+  selectedSlotId = slot.id;
+  renderDetalle(slot);
+  renderTabla();
+});
+
+tbody?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+
+  const row = target.closest<HTMLTableRowElement>("tr[data-id]");
+  const id = Number(row?.dataset.id);
+  const slot = configuracionActual?.slots.find((item) => item.id === id);
+  if (!slot) return;
+
+  event.preventDefault();
   selectedSlotId = slot.id;
   renderDetalle(slot);
   renderTabla();

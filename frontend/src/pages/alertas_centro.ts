@@ -104,7 +104,6 @@ const detallePanel = document.querySelector<HTMLElement>("#detalle-alerta-panel"
 const preview = document.querySelector<HTMLElement>("#alerta-preview");
 const btnResolver = document.querySelector<HTMLButtonElement>("#btn-resolver");
 const btnDescartar = document.querySelector<HTMLButtonElement>("#btn-descartar");
-const btnPlano = document.querySelector<HTMLButtonElement>("#btn-plano");
 const alertaActionStatus = document.querySelector<HTMLElement>("#alerta-action-status");
 
 const metricCritical = document.querySelector<HTMLElement>("#metric-critical");
@@ -235,7 +234,7 @@ function setRowMessage(message: string): void {
   tbody.innerHTML = "";
   const tr = document.createElement("tr");
   const td = document.createElement("td");
-  td.colSpan = 9;
+  td.colSpan = 7;
   td.textContent = message;
   tr.appendChild(td);
   tbody.appendChild(tr);
@@ -344,9 +343,6 @@ function renderDetail(alerta: AlertaResponse): void {
     setActionStatus("Esta alerta ya no esta abierta.", "info");
   }
 
-  if (btnPlano) {
-    btnPlano.disabled = !alerta.estanteria?.codigo;
-  }
 }
 
 function scrollDetalleSiHaceFalta(): void {
@@ -415,28 +411,13 @@ function renderTable(): void {
     const tdDetectado = document.createElement("td");
     tdDetectado.textContent = getDetectadoEsperado(alerta);
 
-    const tdResponsable = document.createElement("td");
-    tdResponsable.textContent = "No disponible";
-
     const tdEstado = document.createElement("td");
     const estadoChip = document.createElement("span");
     estadoChip.className = `status-chip ${claseEstado(alerta.estado)}`;
     estadoChip.textContent = etiquetaEstado(alerta.estado);
     tdEstado.appendChild(estadoChip);
 
-    const tdAcciones = document.createElement("td");
-    const actions = document.createElement("div");
-    const btnDetalle = document.createElement("button");
-    actions.className = "inline-actions";
-    btnDetalle.className = "btn small ghost";
-    btnDetalle.type = "button";
-    btnDetalle.textContent = "Ver";
-    btnDetalle.dataset.id = String(alerta.id);
-    btnDetalle.dataset.action = "detalle";
-    actions.appendChild(btnDetalle);
-    tdAcciones.appendChild(actions);
-
-    tr.append(tdHora, tdPrioridad, tdEstanteria, tdProducto, tdZona, tdDetectado, tdResponsable, tdEstado, tdAcciones);
+    tr.append(tdHora, tdPrioridad, tdEstanteria, tdProducto, tdZona, tdDetectado, tdEstado);
     tbody.appendChild(tr);
   });
 }
@@ -555,9 +536,8 @@ tbody?.addEventListener("click", (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
 
-  const button = target.closest<HTMLButtonElement>("button[data-action='detalle']");
   const row = target.closest<HTMLTableRowElement>("tr[data-id]");
-  const id = Number(button?.dataset.id ?? row?.dataset.id);
+  const id = Number(row?.dataset.id);
 
   if (!Number.isFinite(id)) return;
   selectAlert(id, true);
@@ -574,12 +554,6 @@ tbody?.addEventListener("keydown", (event) => {
 
   event.preventDefault();
   selectAlert(id, true);
-});
-
-btnPlano?.addEventListener("click", () => {
-  const alerta = alertas.find((item) => item.id === selectedId);
-  if (!alerta?.estanteria?.codigo) return;
-  window.location.href = "planos.html";
 });
 
 btnResolver?.addEventListener("click", () => {

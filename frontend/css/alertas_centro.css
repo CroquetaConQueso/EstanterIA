@@ -275,7 +275,7 @@ button, input, select {
 
 .table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 900px;
   border-collapse: collapse;
 }
 
@@ -305,12 +305,16 @@ button, input, select {
 
 .table tbody tr:hover {
   background: var(--gold);
-  cursor: crosshair;
+  cursor: pointer;
 }
 
 .table tbody tr.is-selected td {
-  background: var(--gold);
+  background: #efe2c9;
   color: var(--black);
+  box-shadow: inset 6px 0 0 var(--red);
+}
+
+.table tbody tr:focus-visible td {
   outline: 3px solid var(--red);
   outline-offset: -3px;
 }

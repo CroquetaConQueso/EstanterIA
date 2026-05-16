@@ -14,8 +14,10 @@ import com.proyectofincurso.estanteria.integration.vision.CapturePathNormalizer;
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaEstado;
 import com.proyectofincurso.estanteria.persistence.entity.Inspeccion;
 import com.proyectofincurso.estanteria.persistence.entity.InspeccionSlotResultado;
+import com.proyectofincurso.estanteria.persistence.repository.AlertaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.InspeccionRepository;
+import com.proyectofincurso.estanteria.persistence.repository.TareaOperativaRepository;
 import com.proyectofincurso.estanteria.web.dto.ImagenVisualResponse;
 import com.proyectofincurso.estanteria.web.dto.InspeccionDetalleResponse;
 import com.proyectofincurso.estanteria.web.dto.InspeccionItemResponse;
@@ -34,11 +36,15 @@ public class InspeccionService {
     private static final int IMAGEN_PATH_CAPACIDAD = 255;
     private static final String CAPTURES_PREFIX = "/captures/";
     private static final String CAPTURES_RELATIVE_PREFIX = "captures/";
+    private static final String MOTIVO_INSPECCION_CON_ALERTAS = "La inspecciÃ³n generÃ³ alertas operativas.";
+    private static final String MENSAJE_CONFLICTO_ELIMINACION = "No se puede eliminar esta inspecciÃ³n porque generÃ³ alertas operativas.";
     private static final Pattern SAFE_RELATIVE_PATH = Pattern.compile("^[a-zA-Z0-9/_\\-.]+$");
     private static final Set<String> ALLOWED_EXT = Set.of("jpg", "jpeg", "png", "webp");
 
     private final InspeccionRepository insRepo;
     private final EstanteriaRepository estanteriaRepository;
+    private final AlertaRepository alertaRepository;
+    private final TareaOperativaRepository tareaOperativaRepository;
     private final Path capturesRoot = CapturePathNormalizer.resolveCapturesRoot();
 
     @Transactional(readOnly = true)
@@ -58,6 +64,7 @@ public class InspeccionService {
     }
 
     private InspeccionItemResponse toResponse(Inspeccion ins) {
+        boolean eliminable = esEliminable(ins.getId());
         return new InspeccionItemResponse(
                 ins.getId(),
                 ins.getEstanteriaCodigo(),
@@ -70,11 +77,14 @@ public class InspeccionService {
                 ins.getVacios(),
                 ins.getAnomalias(),
                 ins.getModeloVersion(),
-                ins.getCapturadaEn()
+                ins.getCapturadaEn(),
+                eliminable,
+                eliminable ? null : MOTIVO_INSPECCION_CON_ALERTAS
         );
     }
 
     private InspeccionDetalleResponse toDetalleResponse(Inspeccion ins) {
+        boolean eliminable = esEliminable(ins.getId());
         return new InspeccionDetalleResponse(
                 ins.getId(),
                 ins.getEstanteriaCodigo(),
@@ -82,8 +92,15 @@ public class InspeccionService {
                 ins.getImagenPath(),
                 ins.getEstado(),
                 ins.getCreatedAt(),
-                toResultadoVisual(ins)
+                toResultadoVisual(ins),
+                eliminable,
+                eliminable ? null : MOTIVO_INSPECCION_CON_ALERTAS
         );
+    }
+
+    private boolean esEliminable(Long inspeccionId) {
+        return !alertaRepository.existsByInspeccionIdOrSlotResultadoInspeccionId(inspeccionId)
+                && !tareaOperativaRepository.existsByAlertaDeInspeccionId(inspeccionId);
     }
 
     private ResultadoVisualResponse toResultadoVisual(Inspeccion ins) {
@@ -281,6 +298,25 @@ public class InspeccionService {
                 ins.getCreatedAt()
         );
     }
+
+    @Transactional
+    public void eliminarInspeccion(Long id) {
+        Inspeccion ins = insRepo.findByIdConSlotsYEstanteria(id)
+                .orElseThrow(() -> ApiException.notFound(
+                        "INSPECCION_NOT_FOUND",
+                        "No existe la inspecciÃ³n solicitada"
+                ));
+
+        if (!esEliminable(id)) {
+            throw ApiException.conflict(
+                    "INSPECCION_CON_ALERTAS",
+                    MENSAJE_CONFLICTO_ELIMINACION
+            );
+        }
+
+        insRepo.delete(ins);
+    }
+
     @Transactional
     public InspeccionDetalleResponse crearInspeccionVisual(ResultadoVisualResponse resultadoVisual, String notas) {
         if (resultadoVisual == null || resultadoVisual.getEstanteriaCodigo() == null

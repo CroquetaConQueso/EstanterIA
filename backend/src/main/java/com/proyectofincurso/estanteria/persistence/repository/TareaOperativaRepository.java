@@ -14,6 +14,16 @@ public interface TareaOperativaRepository extends JpaRepository<TareaOperativa, 
 
     boolean existsByAlertaId(Long alertaId);
 
+    @Query("""
+            select count(tarea) > 0
+            from TareaOperativa tarea
+            join tarea.alerta alerta
+            left join alerta.inspeccionSlotResultado slotResultado
+            where alerta.inspeccion.id = :inspeccionId
+               or slotResultado.inspeccion.id = :inspeccionId
+            """)
+    boolean existsByAlertaDeInspeccionId(@Param("inspeccionId") Long inspeccionId);
+
     Optional<TareaOperativa> findByAlertaId(Long alertaId);
 
     @Query("""

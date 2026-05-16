@@ -23,4 +23,6 @@ public class InspeccionItemResponse {
     private Integer anomalias;
     private String modeloVersion;
     private Instant capturadaEn;
+    private Boolean eliminable;
+    private String motivoNoEliminable;
 }

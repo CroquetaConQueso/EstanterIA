@@ -13,6 +13,15 @@ import java.util.List;
 public interface AlertaRepository extends JpaRepository<Alerta, Long> {
 
     @Query("""
+            select count(alerta) > 0
+            from Alerta alerta
+            left join alerta.inspeccionSlotResultado slotResultado
+            where alerta.inspeccion.id = :inspeccionId
+               or slotResultado.inspeccion.id = :inspeccionId
+            """)
+    boolean existsByInspeccionIdOrSlotResultadoInspeccionId(@Param("inspeccionId") Long inspeccionId);
+
+    @Query("""
             select distinct alerta
             from Alerta alerta
             left join fetch alerta.inspeccion

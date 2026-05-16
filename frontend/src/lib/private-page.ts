@@ -1,3 +1,3 @@
-import { requireAuth } from "./auth-guard";
+import { requireAdminPanelAccess } from "./auth-guard";
 
-requireAuth();
+requireAdminPanelAccess();

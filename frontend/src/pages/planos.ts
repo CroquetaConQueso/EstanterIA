@@ -1,7 +1,7 @@
 import { authFetch, isStructuralAdmin } from "../lib/api";
-import { requireAuth } from "../lib/auth-guard";
+import { requireAdminPanelAccess } from "../lib/auth-guard";
 
-requireAuth();
+requireAdminPanelAccess();
 
 type Orientacion = "HORIZONTAL" | "VERTICAL";
 type EstadoVisual = "OCUPADO" | "VACIO" | "ANOMALIA" | "SIN_DATOS" | string;

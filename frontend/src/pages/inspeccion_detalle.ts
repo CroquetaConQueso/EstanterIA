@@ -1,8 +1,8 @@
 import { authFetch } from "../lib/api";
-import { requireAuth } from "../lib/auth-guard";
+import { requireAdminPanelAccess } from "../lib/auth-guard";
 import { imageFallbackText, normalizeImageUrl } from "../lib/image-paths";
 
-requireAuth();
+requireAdminPanelAccess();
 
 type EstadoInspeccion = "CREADA" | "ACTUALIZADA" | "LISTA" | string;
 type EstadoGeneralVisual = "OK" | "HUECOS_VACIOS" | "ANOMALIAS" | "MIXTO" | string;

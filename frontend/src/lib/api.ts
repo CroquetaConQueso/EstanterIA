@@ -2,7 +2,7 @@ export function getAuthToken(): string | null {
   return localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
 }
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
+export function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const payload = token.split(".")[1];
   if (!payload) return null;
 
@@ -16,15 +16,23 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 }
 
 export function getAuthRole(): string | null {
-  const storedRole = localStorage.getItem("auth_role") || sessionStorage.getItem("auth_role");
-  if (storedRole) return storedRole;
-
   const token = getAuthToken();
-  if (!token) return null;
+  if (token) {
+    const payload = decodeJwtPayload(token);
+    const role = payload?.role;
+    if (typeof role === "string" && role) return role;
+  }
 
+  return localStorage.getItem("auth_role") || sessionStorage.getItem("auth_role");
+}
+
+export function isTokenExpired(token: string): boolean {
   const payload = decodeJwtPayload(token);
-  const role = payload?.role;
-  return typeof role === "string" && role ? role : null;
+  const exp = payload?.exp;
+
+  if (typeof exp !== "number") return true;
+
+  return Date.now() >= exp * 1000;
 }
 
 export function isStructuralAdmin(): boolean {

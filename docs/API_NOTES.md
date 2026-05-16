@@ -77,6 +77,8 @@ Variables principales:
 - Publicos: login, registro y recuperacion de password.
 - Autenticados: lecturas operativas, perfil, planos, inspecciones, inventario, alertas y tareas segun flujo existente.
 - ADMIN/SUPERADMIN: escrituras estructurales, creacion de productos, creacion/edicion de tareas manuales y cierre administrativo de alertas.
+- Panel web principal: reservado a ADMIN/SUPERADMIN. WORKER se mantiene en backend para asignacion de tareas, trazabilidad, pruebas de permisos y futura interfaz operativa separada.
+- Credenciales demo: si hace falta restaurarlas, arrancar temporalmente con `app.demo.seed.reset-passwords=true` y volver a dejarlo en `false`.
 
 No se han cambiado reglas de negocio para generar esta documentacion.
 

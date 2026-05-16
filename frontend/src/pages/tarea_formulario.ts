@@ -1,7 +1,7 @@
 import { authFetch, isStructuralAdmin } from "../lib/api";
-import { requireAuth } from "../lib/auth-guard";
+import { requireAdminPanelAccess } from "../lib/auth-guard";
 
-requireAuth();
+requireAdminPanelAccess();
 
 type TipoTarea = "REPOSICION" | "REVISION_VISUAL" | "VERIFICACION_MANUAL" | "REVISION_CADUCIDAD" | "RETIRADA_PRODUCTO";
 type Prioridad = "BAJA" | "MEDIA" | "ALTA" | "CRITICA";

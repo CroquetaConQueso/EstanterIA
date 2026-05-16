@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Acceso reservado &middot; Suite Tienda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+  <link href="../css/acceso_trabajador.css" rel="stylesheet" />
+</head>
+<body>
+<main class="page">
+  <section class="access-card" aria-labelledby="access-title">
+    <div class="brand-mark">
+      <img src="../img/iconoFAV.png" alt="Suite Tienda" />
+      <span>Suite<span>Tienda</span></span>
+    </div>
+
+    <p class="eyebrow">Panel web principal</p>
+    <h1 id="access-title">Acceso reservado a administraci&oacute;n</h1>
+    <p class="lead">
+      Tu cuenta tiene rol de trabajador. Esta versi&oacute;n web est&aacute; dise&ntilde;ada para administradores y gerentes.
+    </p>
+    <p class="secondary">
+      Las tareas asignadas a trabajadores se gestionar&aacute;n desde una interfaz operativa separada.
+    </p>
+
+    <div class="actions">
+      <button class="btn danger" id="btn-worker-logout" type="button">Cerrar sesi&oacute;n</button>
+      <a class="btn ghost" href="login.html" id="worker-login-link">Volver a login</a>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="/src/pages/acceso_trabajador.ts"></script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 package com.proyectofincurso.estanteria.service;
 
 import java.time.Instant;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -8,6 +10,7 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.proyectofincurso.estanteria.integration.vision.CapturePathNormalizer;
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaEstado;
 import com.proyectofincurso.estanteria.persistence.entity.Inspeccion;
 import com.proyectofincurso.estanteria.persistence.entity.InspeccionSlotResultado;
@@ -29,11 +32,14 @@ import lombok.RequiredArgsConstructor;
 public class InspeccionService {
 
     private static final int IMAGEN_PATH_CAPACIDAD = 255;
+    private static final String CAPTURES_PREFIX = "/captures/";
+    private static final String CAPTURES_RELATIVE_PREFIX = "captures/";
     private static final Pattern SAFE_RELATIVE_PATH = Pattern.compile("^[a-zA-Z0-9/_\\-.]+$");
     private static final Set<String> ALLOWED_EXT = Set.of("jpg", "jpeg", "png", "webp");
 
     private final InspeccionRepository insRepo;
     private final EstanteriaRepository estanteriaRepository;
+    private final Path capturesRoot = CapturePathNormalizer.resolveCapturesRoot();
 
     @Transactional(readOnly = true)
     public List<InspeccionItemResponse> obtenerInspecciones() {
@@ -123,6 +129,11 @@ public class InspeccionService {
             return null;
         }
 
+        String capturaPublica = verificarCapturaPublica(imagenPath);
+        if (capturaPublica != null) {
+            return capturaPublica;
+        }
+
         if (imagenPath.length() > IMAGEN_PATH_CAPACIDAD) {
             throw ApiException.badRequest(
                     "INVALID_IMAGE_PATH",
@@ -175,6 +186,63 @@ public class InspeccionService {
         }
 
         return imagenPath;
+    }
+
+    private String verificarCapturaPublica(String imagenPath) {
+        String normalizado = imagenPath.trim().replace("\\", "/");
+        while (normalizado.startsWith("./")) {
+            normalizado = normalizado.substring(2);
+        }
+
+        if (normalizado.startsWith(CAPTURES_RELATIVE_PREFIX)) {
+            normalizado = CAPTURES_PREFIX + normalizado.substring(CAPTURES_RELATIVE_PREFIX.length());
+        }
+        if (!normalizado.startsWith(CAPTURES_PREFIX)) {
+            return null;
+        }
+
+        String relativa = normalizado.substring(CAPTURES_PREFIX.length());
+        if (relativa.isBlank() || relativa.contains("..") || relativa.startsWith("/") || relativa.contains(":")
+                || !SAFE_RELATIVE_PATH.matcher(relativa).matches()) {
+            throw ApiException.badRequest(
+                    "INVALID_IMAGE_PATH",
+                    "La ruta de captura no es valida"
+            );
+        }
+
+        int dot = relativa.lastIndexOf('.');
+        if (dot <= 0 || dot == relativa.length() - 1) {
+            throw ApiException.badRequest(
+                    "INVALID_IMAGE_PATH",
+                    "imagenPath invalido: falta extension"
+            );
+        }
+
+        String ext = relativa.substring(dot + 1).toLowerCase();
+        if (!ALLOWED_EXT.contains(ext)) {
+            throw ApiException.badRequest(
+                    "INVALID_IMAGE_PATH",
+                    "imagenPath invalido: extension no permitida"
+            );
+        }
+
+        Path capturaPath = capturesRoot.resolve(relativa).normalize();
+        if (!capturaPath.startsWith(capturesRoot) || !Files.isRegularFile(capturaPath)) {
+            throw ApiException.badRequest(
+                    "INVALID_IMAGE_PATH",
+                    "La imagen seleccionada no existe"
+            );
+        }
+
+        String rutaPublica = CAPTURES_PREFIX + relativa;
+        if (rutaPublica.length() > IMAGEN_PATH_CAPACIDAD) {
+            throw ApiException.badRequest(
+                    "INVALID_IMAGE_PATH",
+                    "El path de la imagen es demasiado largo, solo se permiten 255 caracteres"
+            );
+        }
+
+        return rutaPublica;
     }
 
     public String verificarDatos(String estanteriaCodigo, String imagenPath) {

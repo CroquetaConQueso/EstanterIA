@@ -76,9 +76,23 @@
             <p class="micro" id="insp-estanteria-help">No necesitas escribir códigos manualmente.</p>
           </div>
 
-          <div class="field">
-            <label for="insp-imagen">Ruta de imagen (opcional)</label>
-            <input type="text" id="insp-imagen" name="imagenPath" placeholder="/captures/capture_000012.png" maxlength="500" />
+          <div class="field capture-field">
+            <div class="capture-label-row">
+              <label for="insp-captura">Imagen asociada opcional</label>
+              <button class="btn small" type="button" id="insp-capturas-refresh" disabled>Actualizar capturas</button>
+            </div>
+            <select id="insp-captura" name="imagenPath" disabled>
+              <option value="">Selecciona una estanteria para cargar capturas</option>
+            </select>
+            <p class="micro" id="insp-capturas-help">Sin imagen asociada.</p>
+
+            <div class="capture-preview" id="insp-captura-preview" aria-live="polite">
+              <img id="insp-captura-preview-img" alt="Vista previa de la captura seleccionada" hidden />
+              <div class="capture-preview-copy">
+                <strong id="insp-captura-preview-title">Sin imagen asociada.</strong>
+                <span id="insp-captura-preview-path"></span>
+              </div>
+            </div>
           </div>
 
           <div class="field">

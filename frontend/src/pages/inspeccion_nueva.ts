@@ -1,5 +1,6 @@
 import { authFetch } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
+import { imageFallbackText, normalizeImageUrl } from "../lib/image-paths";
 
 requireAuth();
 
@@ -31,6 +32,14 @@ type EstanteriaResumenResponse = {
   nombre: string;
 };
 
+type CapturaResponse = {
+  fileName: string;
+  relativePath: string;
+  imageUrl: string;
+  sizeBytes: number;
+  createdAt: string;
+};
+
 type ApiErrorResponse = {
   status?: number;
   error?: string;
@@ -42,7 +51,13 @@ const form = document.querySelector<HTMLFormElement>("#form-inspeccion-nueva");
 const seccionSelect = document.querySelector<HTMLSelectElement>("#insp-seccion");
 const estanteriaSelect = document.querySelector<HTMLSelectElement>("#insp-estanteria");
 const estanteriaHelp = document.querySelector<HTMLElement>("#insp-estanteria-help");
-const imagenInput = document.querySelector<HTMLInputElement>("#insp-imagen");
+const capturaSelect = document.querySelector<HTMLSelectElement>("#insp-captura");
+const capturasRefreshButton = document.querySelector<HTMLButtonElement>("#insp-capturas-refresh");
+const capturasHelp = document.querySelector<HTMLElement>("#insp-capturas-help");
+const capturaPreview = document.querySelector<HTMLElement>("#insp-captura-preview");
+const capturaPreviewImg = document.querySelector<HTMLImageElement>("#insp-captura-preview-img");
+const capturaPreviewTitle = document.querySelector<HTMLElement>("#insp-captura-preview-title");
+const capturaPreviewPath = document.querySelector<HTMLElement>("#insp-captura-preview-path");
 const notasInput = document.querySelector<HTMLTextAreaElement>("#insp-notas");
 
 const errorEl = document.querySelector<HTMLElement>("#insp-error");
@@ -50,6 +65,8 @@ const successEl = document.querySelector<HTMLElement>("#insp-success");
 
 const API_URL = "/api/inspeccion_nueva";
 const EMPRESA_CODIGO = "EMP-DEMO";
+
+let capturasDisponibles: CapturaResponse[] = [];
 
 function setError(msg: string | null): void {
   if (!errorEl) return;
@@ -96,6 +113,71 @@ function setSelectOptions(
     el.textContent = option.label;
     select.appendChild(el);
   });
+}
+
+function setCapturasHelp(message: string): void {
+  if (capturasHelp) capturasHelp.textContent = message;
+}
+
+function formatCaptureLabel(captura: CapturaResponse): string {
+  const createdAt = new Date(captura.createdAt);
+  const fecha = Number.isNaN(createdAt.getTime())
+    ? ""
+    : ` · ${createdAt.toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}`;
+  return `${captura.fileName}${fecha}`;
+}
+
+function getSelectedCaptura(): CapturaResponse | null {
+  const selectedUrl = capturaSelect?.value ?? "";
+  if (!selectedUrl) return null;
+  return capturasDisponibles.find((captura) => captura.imageUrl === selectedUrl) ?? null;
+}
+
+function setCapturePreview(captura: CapturaResponse | null): void {
+  capturaPreview?.classList.toggle("has-image", Boolean(captura));
+
+  if (!captura) {
+    if (capturaPreviewImg) {
+      capturaPreviewImg.hidden = true;
+      capturaPreviewImg.removeAttribute("src");
+    }
+    if (capturaPreviewTitle) capturaPreviewTitle.textContent = "Sin imagen asociada.";
+    if (capturaPreviewPath) capturaPreviewPath.textContent = "";
+    return;
+  }
+
+  const imageUrl = normalizeImageUrl(captura.imageUrl);
+  if (!imageUrl) {
+    if (capturaPreviewImg) capturaPreviewImg.hidden = true;
+    if (capturaPreviewTitle) capturaPreviewTitle.textContent = "Imagen no disponible";
+    if (capturaPreviewPath) capturaPreviewPath.textContent = imageFallbackText(captura.imageUrl);
+    return;
+  }
+
+  if (capturaPreviewImg) {
+    capturaPreviewImg.hidden = true;
+    capturaPreviewImg.onload = () => {
+      capturaPreviewImg.hidden = false;
+    };
+    capturaPreviewImg.onerror = () => {
+      capturaPreviewImg.hidden = true;
+      if (capturaPreviewTitle) capturaPreviewTitle.textContent = "Imagen no disponible";
+      if (capturaPreviewPath) capturaPreviewPath.textContent = imageFallbackText(captura.imageUrl);
+    };
+    capturaPreviewImg.src = imageUrl;
+  }
+
+  if (capturaPreviewTitle) capturaPreviewTitle.textContent = captura.fileName;
+  if (capturaPreviewPath) capturaPreviewPath.textContent = captura.imageUrl;
+}
+
+function resetCapturas(message = "Sin imagen asociada."): void {
+  capturasDisponibles = [];
+  setSelectOptions(capturaSelect, "Sin imagen", []);
+  if (capturaSelect) capturaSelect.disabled = true;
+  if (capturasRefreshButton) capturasRefreshButton.disabled = !estanteriaSelect?.value;
+  setCapturasHelp(message);
+  setCapturePreview(null);
 }
 
 function validateClient(estanteriaCodigo: string, imagenPath: string, notas: string): Record<string, string> {
@@ -149,12 +231,12 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 function buildPayload(): CrearInspeccionRequest {
   const notas = notasInput?.value.trim() ?? "";
-  const imagenPath = imagenInput?.value.trim() ?? "";
+  const captura = getSelectedCaptura();
 
   return {
     estanteriaCodigo: estanteriaSelect?.value.trim() ?? "",
     notas: notas || null,
-    imagenPath: imagenPath || null
+    imagenPath: captura?.imageUrl ?? null
   };
 }
 
@@ -194,6 +276,7 @@ async function cargarEstanteriasDeSeccion(seccionId: string): Promise<void> {
 
   setSelectOptions(estanteriaSelect, "Cargando estanterías...", []);
   estanteriaSelect.disabled = true;
+  resetCapturas("Selecciona una estanteria para cargar capturas.");
 
   if (!seccionId) {
     setSelectOptions(estanteriaSelect, "Selecciona primero una sección", []);
@@ -227,15 +310,71 @@ async function cargarEstanteriasDeSeccion(seccionId: string): Promise<void> {
   }
 }
 
+async function cargarCapturasDeEstanteria(estanteriaCodigo: string): Promise<void> {
+  if (!capturaSelect) return;
+
+  if (!estanteriaCodigo) {
+    resetCapturas("Selecciona una estanteria para cargar capturas.");
+    return;
+  }
+
+  capturasDisponibles = [];
+  setSelectOptions(capturaSelect, "Cargando capturas...", []);
+  capturaSelect.disabled = true;
+  if (capturasRefreshButton) capturasRefreshButton.disabled = true;
+  setCapturasHelp("Cargando capturas disponibles...");
+  setCapturePreview(null);
+
+  try {
+    const capturas = await fetchJson<CapturaResponse[]>(
+      `/api/capturas?estanteriaCodigo=${encodeURIComponent(estanteriaCodigo)}`
+    );
+
+    capturasDisponibles = capturas;
+    setSelectOptions(
+      capturaSelect,
+      "Sin imagen",
+      capturas.map((captura) => ({
+        value: captura.imageUrl,
+        label: formatCaptureLabel(captura)
+      }))
+    );
+    capturaSelect.disabled = false;
+
+    if (capturas.length === 0) {
+      setCapturasHelp("No hay capturas disponibles para esta estantería.");
+      return;
+    }
+
+    setCapturasHelp(`${capturas.length} captura${capturas.length === 1 ? "" : "s"} disponible${capturas.length === 1 ? "" : "s"}.`);
+  } catch (err) {
+    resetCapturas("No se pudieron cargar las capturas disponibles.");
+    setError(err instanceof Error ? err.message : "No se pudieron cargar las capturas disponibles.");
+  } finally {
+    if (capturasRefreshButton) capturasRefreshButton.disabled = !estanteriaCodigo;
+  }
+}
+
 seccionSelect?.addEventListener("change", () => {
   setError(null);
   setSuccess(null);
   void cargarEstanteriasDeSeccion(seccionSelect.value);
 });
 
-imagenInput?.addEventListener("input", () => setError(null));
 notasInput?.addEventListener("input", () => setError(null));
-estanteriaSelect?.addEventListener("change", () => setError(null));
+estanteriaSelect?.addEventListener("change", () => {
+  setError(null);
+  setSuccess(null);
+  void cargarCapturasDeEstanteria(estanteriaSelect.value);
+});
+capturaSelect?.addEventListener("change", () => {
+  setError(null);
+  setCapturePreview(getSelectedCaptura());
+});
+capturasRefreshButton?.addEventListener("click", () => {
+  setError(null);
+  void cargarCapturasDeEstanteria(estanteriaSelect?.value ?? "");
+});
 
 form?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -291,5 +430,6 @@ form?.addEventListener("submit", async (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  resetCapturas("Selecciona una estanteria para cargar capturas.");
   void cargarSecciones();
 });

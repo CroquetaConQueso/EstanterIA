@@ -423,6 +423,12 @@ select {
   letter-spacing: 1px;
 }
 
+.product-form .field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .product-form input,
 .product-form textarea,
 .product-form select {
@@ -500,5 +506,9 @@ select {
 
   .detail-shell {
     position: static;
+  }
+
+  .product-form .field-grid {
+    grid-template-columns: 1fr;
   }
 }

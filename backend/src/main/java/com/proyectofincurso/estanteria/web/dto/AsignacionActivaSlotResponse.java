@@ -6,6 +6,8 @@ import java.time.LocalDate;
 
 public record AsignacionActivaSlotResponse(
         Long id,
+        Long productoProveedorId,
+        ProductoResumenResponse productoAsignado,
         ProveedorResumenResponse proveedor,
         String claveProductoProveedor,
         Boolean stockDisponible,

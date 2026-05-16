@@ -9,6 +9,9 @@ import java.util.Optional;
 
 public interface ProductoProveedorRepository extends JpaRepository<ProductoProveedor, Long> {
     @EntityGraph(attributePaths = {"producto", "proveedor"})
+    List<ProductoProveedor> findByActivoTrueOrderByProductoNombreAscProveedorNombreAsc();
+
+    @EntityGraph(attributePaths = {"producto", "proveedor"})
     List<ProductoProveedor> findByProductoIdAndActivoTrueOrderByProveedorNombreAsc(Long productoId);
 
     Optional<ProductoProveedor> findByProductoIdAndProveedorId(Long productoId, Long proveedorId);

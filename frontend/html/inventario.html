@@ -116,7 +116,7 @@
 
           <div class="detail-grid">
             <div class="detail-block">
-              <h3>Slots configurados</h3>
+              <h3>Producto esperado</h3>
               <ul id="detalle-inv-ok">
                 <!-- Rellenado por /src/pages/inventario.ts -->
               </ul>
@@ -138,6 +138,14 @@
             </button>
             <button class="btn primary" id="btn-reactivate-product" type="button">
               Reactivar producto
+            </button>
+          </div>
+          <div class="product-actions" id="assignment-actions" hidden>
+            <button class="btn ghost" id="btn-edit-assignment" type="button">
+              Crear asignación activa
+            </button>
+            <button class="btn danger" id="btn-retire-assignment" type="button">
+              Retirar asignación
             </button>
           </div>
           <p class="form-status" id="inventory-action-status" role="status" aria-live="polite"></p>
@@ -208,6 +216,52 @@
           <div class="dialog-actions">
             <button class="btn danger" id="btn-confirm-deactivate-product" type="button">
               Desactivar producto
+            </button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog class="product-dialog" id="assignment-dialog" aria-labelledby="assignment-dialog-title">
+        <form class="product-form" id="assignment-form" method="dialog">
+          <div class="dialog-head">
+            <div>
+              <p class="eyebrow">Inventario operativo</p>
+              <h2 id="assignment-dialog-title">Crear asignación activa</h2>
+            </div>
+            <button class="btn ghost compact" id="btn-close-assignment-dialog" type="button">Cerrar</button>
+          </div>
+
+          <p class="help" id="assignment-dialog-help">
+            La asignación activa representa qué producto/proveedor está colocado ahora en el slot.
+          </p>
+
+          <label>
+            Producto / proveedor
+            <select id="assignment-product-provider" required></select>
+            <span class="field-help">No se crean proveedores nuevos desde este formulario.</span>
+          </label>
+
+          <div class="field-grid">
+            <label>
+              Fecha colocación
+              <input id="assignment-placement-date" type="date" />
+            </label>
+            <label>
+              Fecha caducidad
+              <input id="assignment-expiry-date" type="date" />
+            </label>
+          </div>
+
+          <label>
+            Fecha retirada programada
+            <input id="assignment-planned-removal-date" type="date" />
+          </label>
+
+          <p class="form-status" id="assignment-form-status" role="status" aria-live="polite"></p>
+
+          <div class="dialog-actions">
+            <button class="btn primary" id="btn-save-assignment" type="submit">
+              Guardar asignación
             </button>
           </div>
         </form>

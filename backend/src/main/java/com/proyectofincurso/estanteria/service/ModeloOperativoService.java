@@ -765,7 +765,11 @@ public class ModeloOperativoService {
             );
         }
 
-        if (lower.startsWith("http://") || lower.startsWith("https://") || normalizado.startsWith("/")) {
+        if (lower.startsWith("http://") || lower.startsWith("https://")) {
+            return normalizado;
+        }
+
+        if (normalizado.startsWith("/products/") || normalizado.startsWith("/captures/")) {
             return normalizado;
         }
 

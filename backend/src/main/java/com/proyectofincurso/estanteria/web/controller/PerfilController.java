@@ -1,9 +1,13 @@
 package com.proyectofincurso.estanteria.web.controller;
 
+import com.proyectofincurso.estanteria.config.OpenApiConfig;
 import com.proyectofincurso.estanteria.service.PerfilService;
 import com.proyectofincurso.estanteria.web.dto.ActualizarPerfilRequest;
 import com.proyectofincurso.estanteria.web.dto.PerfilResponse;
 import com.proyectofincurso.estanteria.web.error.ApiException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -18,16 +22,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/perfil")
 @RequiredArgsConstructor
+@Tag(name = "Perfil", description = "Perfil del usuario autenticado")
+@SecurityRequirement(name = OpenApiConfig.SECURITY_SCHEME_BEARER)
 public class PerfilController {
 
     private final PerfilService perfilService;
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Obtener perfil", description = "Requiere autenticacion. Devuelve cuenta, rol, empresa y trabajador vinculado.")
     public PerfilResponse obtenerPerfil(@AuthenticationPrincipal Jwt jwt) {
         return perfilService.obtenerPerfilActual(extraerUserId(jwt));
     }
 
     @PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Actualizar perfil", description = "Requiere autenticacion. Actualiza username/email del propio usuario y fuerza nuevo login.")
     public PerfilResponse actualizarPerfil(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ActualizarPerfilRequest request

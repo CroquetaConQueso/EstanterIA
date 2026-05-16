@@ -2,12 +2,14 @@ package com.proyectofincurso.estanteria.web.dto;
 
 import com.proyectofincurso.estanteria.persistence.entity.PrioridadAlerta;
 import com.proyectofincurso.estanteria.persistence.entity.TipoTareaOperativa;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 
+@Schema(description = "Payload para crear una tarea operativa manual")
 public record CrearTareaManualRequest(
         @NotNull TipoTareaOperativa tipoTarea,
         @NotNull PrioridadAlerta prioridad,

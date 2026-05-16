@@ -1,5 +1,6 @@
 package com.proyectofincurso.estanteria.web.controller;
 
+import com.proyectofincurso.estanteria.config.OpenApiConfig;
 import com.proyectofincurso.estanteria.service.ModeloOperativoService;
 import com.proyectofincurso.estanteria.service.AlertaOperativaService;
 import com.proyectofincurso.estanteria.web.dto.AlertaResponse;
@@ -9,6 +10,9 @@ import com.proyectofincurso.estanteria.web.dto.CrearSeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoResponsableResponse;
 import com.proyectofincurso.estanteria.web.dto.SeccionResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +32,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/secciones")
 @RequiredArgsConstructor
+@Tag(name = "Secciones", description = "Secciones, zonas operativas y responsables")
+@SecurityRequirement(name = OpenApiConfig.SECURITY_SCHEME_BEARER)
 public class SeccionController {
 
     private final ModeloOperativoService modeloOperativoService;
@@ -36,6 +42,7 @@ public class SeccionController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Crear seccion", description = "Requiere ADMIN/SUPERADMIN. Crea una seccion operativa para una empresa.")
     public SeccionResponse crearSeccion(@Valid @RequestBody CrearSeccionRequest request) {
         return modeloOperativoService.crearSeccion(request);
     }
@@ -43,6 +50,7 @@ public class SeccionController {
     @PatchMapping(value = "/{seccionId}", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Actualizar seccion", description = "Requiere ADMIN/SUPERADMIN. Actualiza codigo, nombre o descripcion de una seccion.")
     public SeccionResponse actualizarSeccion(@PathVariable Long seccionId,
                                              @Valid @RequestBody ActualizarSeccionRequest request) {
         return modeloOperativoService.actualizarSeccion(seccionId, request);
@@ -51,17 +59,20 @@ public class SeccionController {
     @PatchMapping(value = "/{seccionId}/responsable-principal", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Asignar responsable principal", description = "Requiere ADMIN/SUPERADMIN. Sustituye el responsable principal de la seccion.")
     public PlanoResponsableResponse asignarResponsablePrincipal(@PathVariable Long seccionId,
                                                                 @Valid @RequestBody AsignarResponsablePrincipalRequest request) {
         return modeloOperativoService.asignarResponsablePrincipal(seccionId, request.trabajadorId());
     }
 
     @GetMapping(value = "/{seccionId}/estanterias", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Listar estanterias de seccion", description = "Requiere autenticacion. Devuelve estanterias activas de una seccion.")
     public List<EstanteriaResumenResponse> obtenerEstanterias(@PathVariable Long seccionId) {
         return modeloOperativoService.obtenerEstanteriasDeSeccion(seccionId);
     }
 
     @GetMapping(value = "/{seccionId}/alertas/abiertas", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Listar alertas abiertas de seccion", description = "Requiere autenticacion. Devuelve alertas abiertas agregadas por seccion.")
     public List<AlertaResponse> obtenerAlertasAbiertas(@PathVariable Long seccionId) {
         return alertaOperativaService.obtenerAlertasAbiertasDeSeccion(seccionId);
     }

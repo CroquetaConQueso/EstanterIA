@@ -1,11 +1,13 @@
 package com.proyectofincurso.estanteria.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Slot configurado dentro de una estanteria")
 public record CrearEstanteriaSlotRequest(
         @NotBlank(message = "El identificador de slot es obligatorio")
         @Size(max = 50, message = "El identificador de slot no puede superar 50 caracteres")

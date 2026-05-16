@@ -133,7 +133,8 @@ def predict_image(
     save_annotated: bool = False,
 ) -> PredictionResponse:
     model = get_model()
-    image = cv2.imread(image_path)
+    resolved_image_path = resolve_image_path(image_path)
+    image = cv2.imread(str(resolved_image_path))
 
     if image is None:
         raise ValueError(f"No se pudo leer la imagen: {image_path}")
@@ -153,8 +154,8 @@ def predict_image(
     ]
     resumen = build_resumen(slots)
 
-    image_name = Path(image_path).name
-    capture_relative_path = get_capture_relative_path(image_path)
+    image_name = resolved_image_path.name
+    capture_relative_path = get_capture_relative_path(str(resolved_image_path))
     public_path = f"{CAPTURES_PUBLIC_PATH.rstrip('/')}/{capture_relative_path}"
     captured_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -169,6 +170,29 @@ def predict_image(
         resumen=resumen,
         slots=slots,
     )
+
+
+def resolve_image_path(image_path: str) -> Path:
+    normalized = image_path.strip().replace("\\", "/")
+    captures_prefix = f"{CAPTURES_PUBLIC_PATH.rstrip('/')}/"
+
+    if normalized.startswith(captures_prefix):
+        relative_path = normalized[len(captures_prefix):].lstrip("/")
+        return RAW_DIR.joinpath(*relative_path.split("/")).resolve()
+
+    if normalized.startswith("captures/"):
+        relative_path = normalized[len("captures/"):].lstrip("/")
+        return RAW_DIR.joinpath(*relative_path.split("/")).resolve()
+
+    path = Path(image_path)
+    if path.is_absolute():
+        return path
+
+    raw_candidate = RAW_DIR.joinpath(*normalized.lstrip("/").split("/")).resolve()
+    if raw_candidate.exists():
+        return raw_candidate
+
+    return path
 
 
 def get_capture_relative_path(image_path: str) -> str:

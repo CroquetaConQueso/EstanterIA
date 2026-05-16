@@ -3,7 +3,7 @@
 -- No crea ni modifica tablas: presupone que el esquema operativo ya existe.
 
 INSERT INTO empresa (codigo, nombre, descripcion, activa, created_at, updated_at)
-SELECT 'EMP-DEMO', 'Empresa demo EstanterIA', 'Empresa local para probar el modelo operativo.', true, now(), now()
+SELECT 'EMP-DEMO', 'Empresa demo', 'Empresa demo para validacion funcional de EstanterIA.', true, now(), now()
 WHERE NOT EXISTS (
     SELECT 1 FROM empresa WHERE codigo = 'EMP-DEMO'
 );
@@ -18,6 +18,18 @@ FROM empresa
 WHERE codigo = 'EMP-DEMO'
   AND NOT EXISTS (
       SELECT 1 FROM trabajador WHERE email_contacto = 'laura.encargada@example.com'
+  );
+
+INSERT INTO trabajador (
+    empresa_id, nombre, apellidos, email_contacto, telefono_contacto,
+    tipo_trabajador, activo, created_at, updated_at
+)
+SELECT empresa_id, 'Mario', 'Reponedor Demo', 'mario.reponedor@example.com', '+34000000002',
+       'TRABAJADOR', true, now(), now()
+FROM empresa
+WHERE codigo = 'EMP-DEMO'
+  AND NOT EXISTS (
+      SELECT 1 FROM trabajador WHERE email_contacto = 'mario.reponedor@example.com'
   );
 
 INSERT INTO seccion (empresa_id, codigo, nombre, descripcion, activa, created_at, updated_at)
@@ -51,20 +63,28 @@ WHERE codigo = 'SEC-DESPENSA'
   );
 
 INSERT INTO producto (producto_uuid, codigo_interno, nombre, descripcion, activo, created_at, updated_at)
-SELECT '11111111-1111-1111-1111-111111111111', 'PROD-LENTEJAS', 'Lentejas', 'Producto demo de despensa.', true, now(), now()
-WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo_interno = 'PROD-LENTEJAS');
+SELECT '11111111-1111-1111-1111-111111111111', 'PROD-COMIDA-GATO', 'Comida de Gato', 'Producto demo para el primer hueco de la estanteria principal.', true, now(), now()
+WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo_interno = 'PROD-COMIDA-GATO');
 
 INSERT INTO producto (producto_uuid, codigo_interno, nombre, descripcion, activo, created_at, updated_at)
-SELECT '22222222-2222-2222-2222-222222222222', 'PROD-ARROZ', 'Arroz', 'Producto demo de despensa.', true, now(), now()
+SELECT '22222222-2222-2222-2222-222222222222', 'PROD-ARROZ', 'Arroz', 'Producto demo para el segundo hueco de la estanteria principal.', true, now(), now()
 WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo_interno = 'PROD-ARROZ');
 
 INSERT INTO producto (producto_uuid, codigo_interno, nombre, descripcion, activo, created_at, updated_at)
-SELECT '33333333-3333-3333-3333-333333333333', 'PROD-GARBANZOS', 'Garbanzos', 'Producto demo de despensa.', true, now(), now()
-WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo_interno = 'PROD-GARBANZOS');
+SELECT '33333333-3333-3333-3333-333333333333', 'PROD-MACARRONES', 'Macarrones', 'Producto demo para el tercer hueco de la estanteria principal.', true, now(), now()
+WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo_interno = 'PROD-MACARRONES');
 
 INSERT INTO producto (producto_uuid, codigo_interno, nombre, descripcion, activo, created_at, updated_at)
-SELECT '44444444-4444-4444-4444-444444444444', 'PROD-PASTA', 'Pasta', 'Producto demo de despensa.', true, now(), now()
-WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo_interno = 'PROD-PASTA');
+SELECT '44444444-4444-4444-4444-444444444444', 'PROD-LENTEJAS', 'Lentejas', 'Producto demo para el cuarto hueco de la estanteria principal.', true, now(), now()
+WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo_interno = 'PROD-LENTEJAS');
+
+INSERT INTO producto (producto_uuid, codigo_interno, nombre, descripcion, activo, created_at, updated_at)
+SELECT '55555555-5555-5555-5555-555555555555', 'PROD-AGUA', 'Agua', 'Producto demo adicional.', true, now(), now()
+WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo_interno = 'PROD-AGUA');
+
+INSERT INTO producto (producto_uuid, codigo_interno, nombre, descripcion, activo, created_at, updated_at)
+SELECT '66666666-6666-6666-6666-666666666666', 'PROD-LECHE', 'Leche', 'Producto demo adicional.', true, now(), now()
+WHERE NOT EXISTS (SELECT 1 FROM producto WHERE codigo_interno = 'PROD-LECHE');
 
 INSERT INTO proveedor (codigo, nombre, descripcion, activo, created_at, updated_at)
 SELECT 'PROV-DEMO', 'Proveedor demo', 'Proveedor local para asignaciones demo.', true, now(), now()
@@ -80,7 +100,7 @@ SELECT p.producto_id, pr.proveedor_id, concat('PROV-DEMO-', p.codigo_interno), t
 FROM producto p
 CROSS JOIN proveedor pr
 WHERE pr.codigo = 'PROV-DEMO'
-  AND p.codigo_interno IN ('PROD-LENTEJAS', 'PROD-ARROZ', 'PROD-GARBANZOS', 'PROD-PASTA')
+  AND p.codigo_interno IN ('PROD-COMIDA-GATO', 'PROD-ARROZ', 'PROD-MACARRONES', 'PROD-LENTEJAS', 'PROD-AGUA', 'PROD-LECHE')
   AND NOT EXISTS (
       SELECT 1
       FROM producto_proveedor pp
@@ -97,10 +117,10 @@ SELECT e.estanteria_id, datos.slot_id, datos.orden, p.producto_id,
 FROM estanteria e
 JOIN (
     VALUES
-        ('slot_1', 1, 'PROD-LENTEJAS'),
+        ('slot_1', 1, 'PROD-COMIDA-GATO'),
         ('slot_2', 2, 'PROD-ARROZ'),
-        ('slot_3', 3, 'PROD-GARBANZOS'),
-        ('slot_4', 4, 'PROD-PASTA')
+        ('slot_3', 3, 'PROD-MACARRONES'),
+        ('slot_4', 4, 'PROD-LENTEJAS')
 ) AS datos(slot_id, orden, codigo_producto) ON true
 JOIN producto p ON p.codigo_interno = datos.codigo_producto
 WHERE e.codigo = 'EST-001'

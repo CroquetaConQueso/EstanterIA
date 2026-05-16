@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
     Optional<Empresa> findByCodigoAndActivaTrue(String codigo);
+
+    Optional<Empresa> findByCodigoIgnoreCase(String codigo);
 }

@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
     Optional<Proveedor> findByCodigoAndActivoTrue(String codigo);
+
+    Optional<Proveedor> findByCodigoIgnoreCase(String codigo);
 }

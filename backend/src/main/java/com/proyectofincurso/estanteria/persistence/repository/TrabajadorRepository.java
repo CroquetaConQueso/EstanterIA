@@ -12,4 +12,6 @@ public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
     List<Trabajador> findByActivoTrueOrderByApellidosAscNombreAsc();
 
     Optional<Trabajador> findByIdAndActivoTrue(Long id);
+
+    Optional<Trabajador> findByEmailContactoIgnoreCase(String emailContacto);
 }

@@ -14,5 +14,7 @@ public interface PlanoRepository extends JpaRepository<Plano, Long> {
     @EntityGraph(attributePaths = {"empresa"})
     Optional<Plano> findWithEmpresaByCodigo(String codigo);
 
+    Optional<Plano> findByCodigoIgnoreCase(String codigo);
+
     List<Plano> findByEmpresaCodigoAndActivoTrueOrderByNombreAsc(String codigoEmpresa);
 }

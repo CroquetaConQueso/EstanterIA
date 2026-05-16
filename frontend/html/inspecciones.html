@@ -49,13 +49,6 @@
 
     <div class="filters-inline">
       <label>
-        Inspección
-        <select id="filtro-inspeccion">
-          <option value="">Todas</option>
-        </select>
-      </label>
-
-      <label>
         Sección
         <select id="filtro-seccion">
           <option value="">Todas</option>
@@ -107,10 +100,23 @@
         Haz click en una fila para actualizar el detalle. Usa “Abrir completo” para la pantalla dedicada.
       </p>
 
+      <div class="bulk-actions" id="bulk-actions" hidden>
+        <span id="selection-count">0 inspecciones seleccionadas</span>
+        <button class="btn danger" id="btn-eliminar-seleccionadas" type="button" disabled>
+          Eliminar seleccionadas
+        </button>
+      </div>
+
       <div class="table-shell">
         <table class="table">
           <thead>
             <tr>
+              <th class="check-col">
+                <label class="check-label" title="Seleccionar visibles">
+                  <input type="checkbox" id="select-visible-inspections" />
+                  <span class="sr-only">Seleccionar visibles</span>
+                </label>
+              </th>
               <th>Fecha</th>
               <th>Sección</th>
               <th>Estantería</th>
@@ -155,12 +161,7 @@
         <a class="btn ghost" id="detalle-completo-link" href="inspeccion_detalle.html" hidden>
           Abrir completo
         </a>
-        <button class="btn danger" id="btn-eliminar-inspeccion" type="button" hidden>
-          Eliminar inspección
-        </button>
       </p>
-
-      <p class="delete-reason" id="detalle-delete-reason" hidden></p>
 
       <p class="form-error" id="detalle-error" role="alert" aria-live="polite" hidden></p>
     </aside>
@@ -168,10 +169,10 @@
 
   <dialog class="confirm-dialog" id="delete-inspection-dialog">
     <form method="dialog" class="confirm-dialog__panel">
-      <h2>Eliminar inspección</h2>
-      <p>Esta acción eliminará la inspección seleccionada si no generó alertas operativas.</p>
+      <h2>Eliminar inspecciones</h2>
+      <p>Esta acción eliminará las inspecciones seleccionadas que sean eliminables. No se eliminarán inspecciones con alertas o tareas asociadas.</p>
       <label>
-        Escribe BORRAR INSPECCION para confirmar.
+        Escribe ELIMINAR para confirmar.
         <input type="text" id="delete-confirm-input" autocomplete="off" />
       </label>
       <menu>

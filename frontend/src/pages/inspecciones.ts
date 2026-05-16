@@ -83,13 +83,16 @@ type ApiErrorResponse = {
 };
 
 const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-inspecciones");
-const filtroInspeccion = document.querySelector<HTMLSelectElement>("#filtro-inspeccion");
 const filtroSeccion = document.querySelector<HTMLSelectElement>("#filtro-seccion");
 const filtroPlano = document.querySelector<HTMLInputElement>("#filtro-plano");
 const filtroEstado = document.querySelector<HTMLSelectElement>("#filtro-estado");
 const filtroFechaDesde = document.querySelector<HTMLInputElement>("#filtro-fecha-desde");
 const filtroFechaHasta = document.querySelector<HTMLInputElement>("#filtro-fecha-hasta");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar-filtros");
+const selectVisibleCheckbox = document.querySelector<HTMLInputElement>("#select-visible-inspections");
+const bulkActions = document.querySelector<HTMLElement>("#bulk-actions");
+const selectionCount = document.querySelector<HTMLElement>("#selection-count");
+const btnEliminarSeleccionadas = document.querySelector<HTMLButtonElement>("#btn-eliminar-seleccionadas");
 
 const errorEl = document.querySelector<HTMLElement>("#inspecciones-error");
 const successEl = document.querySelector<HTMLElement>("#inspecciones-success");
@@ -100,8 +103,6 @@ const detalleVisual = document.querySelector<HTMLUListElement>("#detalle-visual"
 const detalleSlots = document.querySelector<HTMLUListElement>("#detalle-slots");
 const detalleError = document.querySelector<HTMLElement>("#detalle-error");
 const detalleCompletoLink = document.querySelector<HTMLAnchorElement>("#detalle-completo-link");
-const btnEliminarInspeccion = document.querySelector<HTMLButtonElement>("#btn-eliminar-inspeccion");
-const detalleDeleteReason = document.querySelector<HTMLElement>("#detalle-delete-reason");
 const deleteDialog = document.querySelector<HTMLDialogElement>("#delete-inspection-dialog");
 const deleteConfirmInput = document.querySelector<HTMLInputElement>("#delete-confirm-input");
 const btnCancelDelete = document.querySelector<HTMLButtonElement>("#btn-cancel-delete");
@@ -110,11 +111,11 @@ const btnConfirmDelete = document.querySelector<HTMLButtonElement>("#btn-confirm
 let inspecciones: InspeccionResponse[] = [];
 let estanteriasPorCodigo = new Map<string, EstanteriaConSeccion>();
 let selectedInspeccionId: number | null = null;
-let detalleActual: InspeccionResponse | null = null;
+let selectedInspectionIds = new Set<number>();
 
 const API_URL = "/api/inspecciones";
 const EMPRESA_CODIGO = "EMP-DEMO";
-const CONFIRM_DELETE_TEXT = "BORRAR INSPECCION";
+const CONFIRM_DELETE_TEXT = "ELIMINAR";
 const puedeEliminarInspecciones = isStructuralAdmin();
 
 function setError(msg: string | null) {
@@ -154,19 +155,6 @@ function setDetalleError(msg: string | null) {
 
     detalleError.textContent = msg;
     detalleError.removeAttribute("hidden");
-}
-
-function setDeleteReason(msg: string | null) {
-    if (!detalleDeleteReason) return;
-
-    if (!msg) {
-        detalleDeleteReason.textContent = "";
-        detalleDeleteReason.setAttribute("hidden", "");
-        return;
-    }
-
-    detalleDeleteReason.textContent = msg;
-    detalleDeleteReason.removeAttribute("hidden");
 }
 
 function clearElement(el: Element | null) {
@@ -218,10 +206,6 @@ function formatFecha(value: string | null | undefined): string {
         dateStyle: "short",
         timeStyle: "short"
     }).format(fecha);
-}
-
-function formatInspeccionOption(ins: InspeccionResponse): string {
-    return `#${ins.id} · ${ins.estanteriaCodigo} · ${formatFecha(ins.capturadaEn ?? ins.createdAt)}`;
 }
 
 function getFechaFiltro(ins: InspeccionResponse): Date | null {
@@ -371,35 +355,63 @@ async function cargarMapaSeccionesEstanterias(): Promise<void> {
     );
 }
 
-function renderFiltroInspeccion(): void {
-    setSelectOptions(
-        filtroInspeccion,
-        "Todas",
-        inspecciones.map((ins) => ({
-            value: String(ins.id),
-            label: formatInspeccionOption(ins)
-        }))
-    );
-
-    if (filtroInspeccion && selectedInspeccionId !== null) {
-        filtroInspeccion.value = String(selectedInspeccionId);
-    }
-}
-
 function limpiarDetalle(): void {
-    detalleActual = null;
     selectedInspeccionId = null;
     clearElement(detalleResumen);
     clearElement(detalleVisual);
     clearElement(detalleSlots);
-    setDeleteReason(null);
     if (detalleCompletoLink) detalleCompletoLink.setAttribute("hidden", "");
-    if (btnEliminarInspeccion) btnEliminarInspeccion.setAttribute("hidden", "");
     if (photoPlaceholder) {
         photoPlaceholder.innerHTML = "";
         const span = document.createElement("span");
         span.textContent = "Vista de estantería";
         photoPlaceholder.appendChild(span);
+    }
+}
+
+function isInspectionDeletable(ins: InspeccionResponse): boolean {
+    return ins.eliminable !== false;
+}
+
+function getSelectedInspecciones(): InspeccionResponse[] {
+    return inspecciones.filter((ins) => selectedInspectionIds.has(ins.id));
+}
+
+function getSelectedNoEliminables(): InspeccionResponse[] {
+    return getSelectedInspecciones().filter((ins) => !isInspectionDeletable(ins));
+}
+
+function limpiarSeleccion(): void {
+    selectedInspectionIds = new Set<number>();
+    updateSelectionActions();
+}
+
+function updateSelectionActions(): void {
+    const selectedCount = selectedInspectionIds.size;
+
+    if (bulkActions) {
+        if (puedeEliminarInspecciones) {
+            bulkActions.removeAttribute("hidden");
+        } else {
+            bulkActions.setAttribute("hidden", "");
+        }
+    }
+
+    if (selectionCount) {
+        selectionCount.textContent = `${selectedCount} ${selectedCount === 1 ? "inspección seleccionada" : "inspecciones seleccionadas"}`;
+    }
+
+    if (btnEliminarSeleccionadas) {
+        btnEliminarSeleccionadas.disabled = !puedeEliminarInspecciones || selectedCount === 0;
+    }
+
+    const visibles = getInspeccionesFiltradas();
+    const visiblesSeleccionadas = visibles.filter((ins) => selectedInspectionIds.has(ins.id));
+
+    if (selectVisibleCheckbox) {
+        selectVisibleCheckbox.checked = visibles.length > 0 && visiblesSeleccionadas.length === visibles.length;
+        selectVisibleCheckbox.indeterminate = visiblesSeleccionadas.length > 0 && visiblesSeleccionadas.length < visibles.length;
+        selectVisibleCheckbox.disabled = visibles.length === 0;
     }
 }
 
@@ -441,30 +453,8 @@ function renderPhoto(ins: InspeccionResponse) {
     photoPlaceholder.appendChild(img);
 }
 
-function renderDeleteAction(ins: InspeccionResponse): void {
-    if (!btnEliminarInspeccion) return;
-
-    if (!puedeEliminarInspecciones) {
-        btnEliminarInspeccion.setAttribute("hidden", "");
-        setDeleteReason(null);
-        return;
-    }
-
-    btnEliminarInspeccion.removeAttribute("hidden");
-
-    if (ins.eliminable === false) {
-        btnEliminarInspeccion.disabled = true;
-        setDeleteReason(ins.motivoNoEliminable || "No se puede eliminar porque generó alertas operativas.");
-        return;
-    }
-
-    btnEliminarInspeccion.disabled = false;
-    setDeleteReason(null);
-}
-
 function renderDetalle(ins: InspeccionResponse) {
     setDetalleError(null);
-    detalleActual = ins;
 
     clearElement(detalleResumen);
     clearElement(detalleVisual);
@@ -515,7 +505,6 @@ function renderDetalle(ins: InspeccionResponse) {
     }
 
     renderPhoto(ins);
-    renderDeleteAction(ins);
 }
 
 async function renderDetalleDesdeBackend(id: number) {
@@ -532,7 +521,6 @@ async function renderDetalleDesdeBackend(id: number) {
 }
 
 function getInspeccionesFiltradas(): InspeccionResponse[] {
-    const inspeccionId = filtroInspeccion?.value ?? "";
     const texto = filtroPlano?.value.trim().toLowerCase() ?? "";
     const estado = filtroEstado?.value ?? "";
     const seccionId = filtroSeccion?.value ?? "";
@@ -543,7 +531,6 @@ function getInspeccionesFiltradas(): InspeccionResponse[] {
         const resumen = getResumenPersistido(ins);
         const fecha = getFechaFiltro(ins);
         const info = getEstanteriaInfo(ins.estanteriaCodigo);
-        const coincideInspeccion = !inspeccionId || String(ins.id) === inspeccionId;
         const coincideSeccion = !seccionId || String(info?.seccion.id ?? "") === seccionId;
         const coincideTexto =
             !texto ||
@@ -561,7 +548,7 @@ function getInspeccionesFiltradas(): InspeccionResponse[] {
         const coincideDesde = !desde || (fecha !== null && fecha.getTime() >= desde.getTime());
         const coincideHasta = !hasta || (fecha !== null && fecha.getTime() <= hasta.getTime());
 
-        return coincideInspeccion && coincideSeccion && coincideTexto && coincideEstado && coincideDesde && coincideHasta;
+        return coincideSeccion && coincideTexto && coincideEstado && coincideDesde && coincideHasta;
     });
 }
 
@@ -575,10 +562,11 @@ function renderTabla() {
         setError(errorRango);
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 7;
+        td.colSpan = 8;
         td.textContent = "Corrige el rango de fechas para aplicar el filtro";
         tr.appendChild(td);
         tbody.appendChild(tr);
+        updateSelectionActions();
         return;
     }
 
@@ -590,10 +578,11 @@ function renderTabla() {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
 
-        td.colSpan = 7;
+        td.colSpan = 8;
         td.textContent = "No hay inspecciones para mostrar";
         tr.appendChild(td);
         tbody.appendChild(tr);
+        updateSelectionActions();
         return;
     }
 
@@ -603,6 +592,7 @@ function renderTabla() {
         const tr = document.createElement("tr");
         tr.tabIndex = 0;
         tr.classList.toggle("is-selected", selectedInspeccionId === ins.id);
+        tr.classList.toggle("is-checked", selectedInspectionIds.has(ins.id));
         tr.addEventListener("click", () => {
             void renderDetalleDesdeBackend(ins.id);
         });
@@ -612,6 +602,25 @@ function renderTabla() {
                 void renderDetalleDesdeBackend(ins.id);
             }
         });
+
+        const tdCheck = document.createElement("td");
+        tdCheck.className = "check-col";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = selectedInspectionIds.has(ins.id);
+        checkbox.setAttribute("aria-label", `Seleccionar inspección #${ins.id}`);
+        checkbox.addEventListener("click", (event) => event.stopPropagation());
+        checkbox.addEventListener("keydown", (event) => event.stopPropagation());
+        checkbox.addEventListener("change", (event) => {
+            event.stopPropagation();
+            if (checkbox.checked) {
+                selectedInspectionIds.add(ins.id);
+            } else {
+                selectedInspectionIds.delete(ins.id);
+            }
+            renderTabla();
+        });
+        tdCheck.appendChild(checkbox);
 
         const tdFecha = document.createElement("td");
         tdFecha.textContent = formatFecha(ins.capturadaEn ?? ins.createdAt);
@@ -644,6 +653,7 @@ function renderTabla() {
         tdAcciones.append(enlaceDetalle);
 
         tr.append(
+            tdCheck,
             tdFecha,
             tdSeccion,
             tdEstanteria,
@@ -655,6 +665,8 @@ function renderTabla() {
 
         tbody.appendChild(tr);
     });
+
+    updateSelectionActions();
 }
 
 async function cargarInspecciones() {
@@ -669,7 +681,7 @@ async function cargarInspecciones() {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
-        renderFiltroInspeccion();
+        limpiarSeleccion();
         renderTabla();
 
         const nuevaInspeccionId = sessionStorage.getItem("nuevaInspeccionId");
@@ -697,52 +709,36 @@ async function cargarInspecciones() {
 
 function onFilterChange() {
     setSuccess(null);
-    const inspeccionId = Number(filtroInspeccion?.value);
-    selectedInspeccionId = Number.isFinite(inspeccionId) && inspeccionId > 0 ? inspeccionId : null;
     renderTabla();
 }
 
-function onInspeccionFilterChange() {
-    setSuccess(null);
-    const inspeccionId = Number(filtroInspeccion?.value);
-
-    if (Number.isFinite(inspeccionId) && inspeccionId > 0) {
-        if (filtroSeccion) filtroSeccion.value = "";
-        if (filtroPlano) filtroPlano.value = "";
-        if (filtroEstado) filtroEstado.value = "";
-        if (filtroFechaDesde) filtroFechaDesde.value = "";
-        if (filtroFechaHasta) filtroFechaHasta.value = "";
-        void renderDetalleDesdeBackend(inspeccionId);
-        return;
-    }
-
-    selectedInspeccionId = null;
-    renderTabla();
-
-    const primera = getInspeccionesFiltradas()[0];
-    if (primera) {
-        void renderDetalleDesdeBackend(primera.id);
-    } else {
-        limpiarDetalle();
-        setDetalleError("No hay detalle disponible para los filtros actuales");
-    }
+function updateDeleteConfirmButton(): void {
+    if (!btnConfirmDelete) return;
+    btnConfirmDelete.disabled = (deleteConfirmInput?.value.trim() ?? "") !== CONFIRM_DELETE_TEXT;
 }
 
-function abrirConfirmacionEliminacion(): void {
+function abrirConfirmacionEliminacionMultiple(): void {
     setError(null);
     setSuccess(null);
 
-    if (!detalleActual) {
-        setDetalleError("Selecciona una inspección antes de eliminar.");
+    if (!puedeEliminarInspecciones) {
+        setError("No tienes permisos para eliminar inspecciones.");
         return;
     }
 
-    if (detalleActual.eliminable === false) {
-        setDetalleError(detalleActual.motivoNoEliminable || "No se puede eliminar porque generó alertas operativas.");
+    if (selectedInspectionIds.size === 0) {
+        setError("Selecciona al menos una inspección antes de eliminar.");
+        return;
+    }
+
+    const noEliminables = getSelectedNoEliminables();
+    if (noEliminables.length > 0) {
+        setError(`Hay ${noEliminables.length} ${noEliminables.length === 1 ? "inspección seleccionada" : "inspecciones seleccionadas"} que no se pueden eliminar porque generaron alertas operativas.`);
         return;
     }
 
     if (deleteConfirmInput) deleteConfirmInput.value = "";
+    updateDeleteConfirmButton();
 
     if (deleteDialog?.showModal) {
         deleteDialog.showModal();
@@ -753,25 +749,36 @@ function abrirConfirmacionEliminacion(): void {
     setDetalleError("No se pudo abrir la confirmación de eliminación.");
 }
 
-async function confirmarEliminacion(): Promise<void> {
-    if (!detalleActual) return;
-
+async function confirmarEliminacionMultiple(): Promise<void> {
     const confirmacion = deleteConfirmInput?.value.trim() ?? "";
     if (confirmacion !== CONFIRM_DELETE_TEXT) {
-        setDetalleError(`Debes escribir exactamente ${CONFIRM_DELETE_TEXT} para eliminar.`);
+        setError(`Debes escribir exactamente ${CONFIRM_DELETE_TEXT} para eliminar.`);
         return;
     }
 
-    const id = detalleActual.id;
+    const ids = Array.from(selectedInspectionIds);
+    if (ids.length === 0) return;
+
     btnConfirmDelete?.setAttribute("disabled", "");
 
     try {
-        await deleteInspeccion(id);
+        const detalles = await Promise.all(ids.map((id) => fetchInspeccionDetalle(id)));
+        const noEliminables = detalles.filter((ins) => !isInspectionDeletable(ins));
+
+        if (noEliminables.length > 0) {
+            deleteDialog?.close();
+            setError(`Hay ${noEliminables.length} ${noEliminables.length === 1 ? "inspección seleccionada" : "inspecciones seleccionadas"} que no se pueden eliminar porque generaron alertas operativas.`);
+            await cargarInspecciones();
+            return;
+        }
+
+        for (const id of ids) {
+            await deleteInspeccion(id);
+        }
         deleteDialog?.close();
-        inspecciones = inspecciones.filter((ins) => ins.id !== id);
-        renderFiltroInspeccion();
-        if (filtroInspeccion) filtroInspeccion.value = "";
-        setSuccess(`Inspección #${id} eliminada correctamente.`);
+        inspecciones = inspecciones.filter((ins) => !selectedInspectionIds.has(ins.id));
+        limpiarSeleccion();
+        setSuccess("Inspecciones eliminadas correctamente.");
         setError(null);
 
         const siguiente = getInspeccionesFiltradas()[0] ?? null;
@@ -784,13 +791,13 @@ async function confirmarEliminacion(): Promise<void> {
         }
     } catch (err) {
         deleteDialog?.close();
-        setError(err instanceof Error ? err.message : "No se pudo eliminar la inspección");
+        setError(err instanceof Error ? err.message : "No se pudieron eliminar las inspecciones seleccionadas");
+        void cargarInspecciones();
     } finally {
-        btnConfirmDelete?.removeAttribute("disabled");
+        updateDeleteConfirmButton();
     }
 }
 
-filtroInspeccion?.addEventListener("change", onInspeccionFilterChange);
 filtroSeccion?.addEventListener("change", onFilterChange);
 filtroPlano?.addEventListener("input", onFilterChange);
 filtroEstado?.addEventListener("change", onFilterChange);
@@ -798,7 +805,6 @@ filtroFechaDesde?.addEventListener("change", onFilterChange);
 filtroFechaHasta?.addEventListener("change", onFilterChange);
 
 btnLimpiar?.addEventListener("click", () => {
-    if (filtroInspeccion) filtroInspeccion.value = "";
     if (filtroSeccion) filtroSeccion.value = "";
     if (filtroPlano) filtroPlano.value = "";
     if (filtroEstado) filtroEstado.value = "";
@@ -808,6 +814,7 @@ btnLimpiar?.addEventListener("click", () => {
     setError(null);
     setSuccess(null);
     selectedInspeccionId = null;
+    limpiarSeleccion();
     renderTabla();
 
     const primera = getInspeccionesFiltradas()[0];
@@ -819,10 +826,21 @@ btnLimpiar?.addEventListener("click", () => {
     }
 });
 
-btnEliminarInspeccion?.addEventListener("click", abrirConfirmacionEliminacion);
+selectVisibleCheckbox?.addEventListener("change", () => {
+    const visibles = getInspeccionesFiltradas();
+    if (selectVisibleCheckbox.checked) {
+        visibles.forEach((ins) => selectedInspectionIds.add(ins.id));
+    } else {
+        visibles.forEach((ins) => selectedInspectionIds.delete(ins.id));
+    }
+    renderTabla();
+});
+
+btnEliminarSeleccionadas?.addEventListener("click", abrirConfirmacionEliminacionMultiple);
 btnCancelDelete?.addEventListener("click", () => deleteDialog?.close());
+deleteConfirmInput?.addEventListener("input", updateDeleteConfirmButton);
 btnConfirmDelete?.addEventListener("click", () => {
-    void confirmarEliminacion();
+    void confirmarEliminacionMultiple();
 });
 
 document.addEventListener("DOMContentLoaded", () => {

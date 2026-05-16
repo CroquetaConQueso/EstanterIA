@@ -164,6 +164,14 @@ function claseEstado(estado: EstadoTareaOperativa): string {
   return "pendiente";
 }
 
+function clasePrioridad(prioridad: Prioridad): string {
+  if (prioridad === "CRITICA") return "critica";
+  if (prioridad === "ALTA") return "alta";
+  if (prioridad === "MEDIA") return "media";
+  if (prioridad === "BAJA") return "baja";
+  return "media";
+}
+
 function formatFecha(value: string | null | undefined): string {
   if (!value) return "Sin fecha";
   const fecha = new Date(value);
@@ -399,7 +407,15 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
   chip.className = `status-chip ${claseEstado(tarea.estadoTarea)}`;
   chip.textContent = etiquetaEstado(tarea.estadoTarea);
 
-  head.append(titleGroup, chip);
+  const priorityChip = document.createElement("span");
+  priorityChip.className = `priority-chip ${clasePrioridad(tarea.prioridad)}`;
+  priorityChip.textContent = tarea.prioridad;
+
+  const badges = document.createElement("div");
+  badges.className = "task-badges";
+  badges.append(priorityChip, chip);
+
+  head.append(titleGroup, badges);
 
   const body = document.createElement("div");
   body.className = "task-body";
@@ -407,7 +423,7 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
   const meta = document.createElement("div");
   meta.className = "task-meta";
 
-  addMeta(meta, "Acción", `${etiquetaTipo(tarea.tipoTarea)} / ${tarea.prioridad}`, true);
+  addMeta(meta, "Acción", etiquetaTipo(tarea.tipoTarea), true);
   addMeta(meta, "Estantería", estanteriaTarea(tarea));
   addMeta(meta, "Sección", seccionTarea(tarea));
   addMeta(meta, "Slot", slotTarea(tarea));

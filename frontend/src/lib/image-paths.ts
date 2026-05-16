@@ -6,6 +6,7 @@ type ImportMetaWithEnv = ImportMeta & {
 
 const DEFAULT_API_BASE_URL = "http://localhost:8080";
 const CAPTURES_PREFIX = "/captures/";
+const PRODUCTS_PREFIX = "/products/";
 
 export function getApiBaseUrl(): string {
   const configured = (import.meta as ImportMetaWithEnv).env?.VITE_API_BASE_URL?.trim();
@@ -34,6 +35,10 @@ export function normalizeImageUrl(path: string | null | undefined): string | nul
 
   if (normalized.startsWith("captures/")) {
     normalized = `/${normalized}`;
+  }
+
+  if (normalized.startsWith("products/")) {
+    normalized = `${PRODUCTS_PREFIX}${normalized.slice("products/".length)}`;
   }
 
   if (!normalized.startsWith("/")) {

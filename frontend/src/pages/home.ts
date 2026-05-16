@@ -558,6 +558,25 @@ function esPrioridadFuerte(prioridad: Prioridad): boolean {
   return prioridad === "ALTA" || prioridad === "CRITICA";
 }
 
+function clasePrioridad(prioridad: string): string {
+  if (prioridad === "CRITICA") return "critica";
+  if (prioridad === "ALTA") return "alta";
+  if (prioridad === "MEDIA") return "media";
+  if (prioridad === "BAJA") return "baja";
+  return "neutra";
+}
+
+function claseBadgeActividad(item: ActividadItem): string {
+  if (item.tipo === "Alerta") return `badge-priority ${clasePrioridad(item.estado)}`;
+  return item.destacado ? "badge-gap" : "badge-ok";
+}
+
+function claseTipoActividad(tipo: ActividadItem["tipo"]): string {
+  if (tipo === "Alerta") return "alerta";
+  if (tipo === "Inspección") return "inspeccion";
+  return "tarea";
+}
+
 function nombreTrabajador(trabajador: TrabajadorResumenResponse | null | undefined): string {
   if (!trabajador) return "Sin trabajador asignado";
   return [trabajador.nombre, trabajador.apellidos].filter(Boolean).join(" ") || `Trabajador #${trabajador.id}`;
@@ -727,12 +746,12 @@ function renderEstadoEstanterias(estados: EstadoEstanteria[], errorParcial: stri
     actions.className = "shelf-actions";
 
     const planosLink = document.createElement("a");
-    planosLink.className = "btn ghost";
+    planosLink.className = "btn shelf-action primary";
     planosLink.href = "planos.html";
     planosLink.textContent = "Ver plano";
 
     const inspeccionesLink = document.createElement("a");
-    inspeccionesLink.className = "btn ghost";
+    inspeccionesLink.className = "btn shelf-action gold";
     inspeccionesLink.href = "inspecciones.html";
     inspeccionesLink.textContent = "Ver inspecciones";
     actions.append(planosLink, inspeccionesLink);
@@ -828,14 +847,17 @@ function renderActividad(alertas: AlertaResponse[], inspecciones: InspeccionItem
     tdEstanteria.textContent = item.estanteria;
 
     const tdResumen = document.createElement("td");
-    tdResumen.textContent = item.resumen;
+    const resumenLabel = document.createElement("span");
+    resumenLabel.className = `action-label ${claseTipoActividad(item.tipo)}`;
+    resumenLabel.textContent = item.resumen;
+    tdResumen.appendChild(resumenLabel);
 
     const tdContexto = document.createElement("td");
     tdContexto.textContent = item.contexto;
 
     const tdEstado = document.createElement("td");
     const badge = document.createElement("span");
-    badge.className = item.destacado ? "badge-gap" : "badge-ok";
+    badge.className = claseBadgeActividad(item);
     badge.textContent = item.estado;
     tdEstado.appendChild(badge);
 

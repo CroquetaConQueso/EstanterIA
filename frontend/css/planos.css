@@ -237,7 +237,7 @@ button {
   margin: 18px 0 0;
   padding: 0;
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .plan-item {
@@ -258,7 +258,7 @@ button {
   width: 100%;
   border: 0;
   background: transparent;
-  padding: 16px;
+  padding: 18px;
   color: var(--black);
   text-align: left;
   cursor: pointer;
@@ -266,9 +266,9 @@ button {
 
 .tree-rack-list {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   margin: 0;
-  padding: 0 12px 14px 28px;
+  padding: 0 14px 16px 30px;
   list-style: none;
 }
 
@@ -288,7 +288,7 @@ button {
   background: transparent;
   color: var(--black);
   cursor: pointer;
-  padding: 12px;
+  padding: 14px;
   text-align: left;
 }
 
@@ -301,17 +301,52 @@ button {
 
 .plan-title,
 .plan-meta {
-  display: block;
+  display: grid;
+  min-width: 0;
 }
 
 .plan-title {
-  font-size: 1.1rem;
+  gap: 4px;
+  font-size: 1.08rem;
+  line-height: 1.15;
+}
+
+.plan-title strong {
+  font-size: 1.16rem;
+  overflow-wrap: anywhere;
+}
+
+.plan-title span {
+  color: var(--muted);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .plan-meta {
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 12px;
   font-family: 'Courier New', Courier, monospace;
+  font-size: 0.86rem;
+  line-height: 1.35;
   text-transform: none;
+  overflow-wrap: anywhere;
+}
+
+.plan-meta span:last-child {
+  color: var(--red);
+  font-weight: 900;
+}
+
+.tree-rack-button .plan-title strong {
+  font-size: 1rem;
+}
+
+.tree-rack-button .plan-title span {
+  color: var(--black);
+  font-family: inherit;
+  font-size: 0.95rem;
 }
 
 .card {

@@ -71,6 +71,108 @@ type TareaOperativaResponse = {
   updatedAt?: string | null;
 };
 
+type Orientacion = "HORIZONTAL" | "VERTICAL" | string;
+type EstadoVisualSlot = "OCUPADO" | "VACIO" | "ANOMALIA" | "SIN_DATOS" | string;
+
+type ProductoResumenResponse = {
+  id: number;
+  productoUuid: string | null;
+  codigoInterno: string | null;
+  nombre: string | null;
+  descripcion: string | null;
+};
+
+type PlanoResponsableResponse = {
+  trabajadorId: number;
+  nombre: string | null;
+  apellidos: string | null;
+  tipoTrabajador: string | null;
+  responsablePrincipal: boolean | null;
+};
+
+type PlanoZonaOperativaResponse = {
+  id: number;
+  seccion: SeccionResponse;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  responsables: PlanoResponsableResponse[];
+};
+
+type PlanoUltimaInspeccionResponse = {
+  id: number;
+  createdAt: string | null;
+  capturadaEn: string | null;
+  estadoGeneralVisual: string | null;
+  ocupados: number | null;
+  vacios: number | null;
+  anomalias: number | null;
+};
+
+type PlanoAlertaResumenResponse = {
+  id: number;
+  tipo: string;
+  prioridad: string;
+  mensaje: string;
+  slotId: string | null;
+};
+
+type PlanoTareaResumenResponse = {
+  id: number;
+  tipoTarea: string;
+  estadoTarea: string;
+  prioridad: string;
+  titulo: string;
+  slotId: string | null;
+};
+
+type PlanoSlotOperativoResponse = {
+  slotId: string;
+  orden: number;
+  productoEsperado: ProductoResumenResponse | null;
+  estadoVisual: EstadoVisualSlot;
+  confianza: number | null;
+  tieneAlertaAbierta: boolean;
+  tiposAlertas: string[];
+};
+
+type PlanoEstanteriaOperativaResponse = {
+  layoutId: number;
+  zonaId: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  orientacion: Orientacion;
+  estanteria: EstanteriaResumenResponse;
+  ultimaInspeccion: PlanoUltimaInspeccionResponse | null;
+  slots: PlanoSlotOperativoResponse[];
+  alertasAbiertas: PlanoAlertaResumenResponse[];
+  tareasActivas: PlanoTareaResumenResponse[];
+};
+
+type PlanoOperativoResponse = {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+  ancho: number;
+  alto: number;
+  zonas: PlanoZonaOperativaResponse[];
+  estanterias: PlanoEstanteriaOperativaResponse[];
+};
+
+type PlanoResumenResponse = {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+  ancho: number;
+  alto: number;
+  activo: boolean | null;
+};
+
 type SeccionResponse = {
   id: number;
   codigo: string;
@@ -119,6 +221,7 @@ type ActividadItem = {
 };
 
 const CODIGO_EMPRESA_DEMO = "EMP-DEMO";
+const CODIGO_PLANO_DEMO = "PLANO-DEMO";
 
 const metricAlertasAbiertas = document.querySelector<HTMLElement>("#metric-alertas-abiertas");
 const metricTareasPendientes = document.querySelector<HTMLElement>("#metric-tareas-pendientes");
@@ -127,6 +230,24 @@ const metricCaducidades = document.querySelector<HTMLElement>("#metric-caducidad
 const metricEstanteriasAccion = document.querySelector<HTMLElement>("#metric-estanterias-accion");
 const tbodyResumen = document.querySelector<HTMLTableSectionElement>("#tbody-resumen");
 const estadoEstanterias = document.querySelector<HTMLElement>("#estado-estanterias");
+const homePlanoNombre = document.querySelector<HTMLElement>("#home-plano-nombre");
+const homePlanoCodigo = document.querySelector<HTMLElement>("#home-plano-codigo");
+const homePlanoPreview = document.querySelector<HTMLElement>("#home-plano-preview");
+const homePlanoStage = document.querySelector<HTMLElement>("#home-plano-stage");
+const homePlanoPrev = document.querySelector<HTMLButtonElement>("#home-plano-prev");
+const homePlanoNext = document.querySelector<HTMLButtonElement>("#home-plano-next");
+const homePlanoNav = document.querySelector<HTMLElement>("#home-plano-nav");
+const homePlanoZonas = document.querySelector<HTMLElement>("#home-plano-zonas");
+const homePlanoEstanterias = document.querySelector<HTMLElement>("#home-plano-estanterias");
+const homePlanoAlertas = document.querySelector<HTMLElement>("#home-plano-alertas");
+const homePlanoTareas = document.querySelector<HTMLElement>("#home-plano-tareas");
+const homePlanoStatus = document.querySelector<HTMLElement>("#home-plano-status");
+const homePlanoLink = document.querySelector<HTMLAnchorElement>("#home-plano-link");
+const quickPlanosLink = document.querySelector<HTMLButtonElement>("#quick-planos-link");
+
+let planosDisponibles: PlanoResumenResponse[] = [];
+let planoSeleccionadoIndex = 0;
+let planoOperativoActual: PlanoOperativoResponse | null = null;
 
 const tipoLabels: Record<string, string> = {
   HUECO_VACIO: "Hueco vacío",
@@ -208,6 +329,232 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 function setMetric(element: HTMLElement | null, value: string): void {
   if (element) element.textContent = value;
+}
+
+function setTexto(element: HTMLElement | null, value: string): void {
+  if (element) element.textContent = value;
+}
+
+function claseEstado(estado: string | null | undefined): string {
+  const base = estado ?? "SIN_DATOS";
+  return `state-${base.toLowerCase().replaceAll("_", "-")}`;
+}
+
+function crearPlanoUrl(codigo: string): string {
+  return `/html/planos.html?codigo=${encodeURIComponent(codigo)}`;
+}
+
+function actualizarEnlacesPlano(codigo: string): void {
+  const url = crearPlanoUrl(codigo);
+  if (homePlanoLink) homePlanoLink.href = url;
+  if (quickPlanosLink) {
+    quickPlanosLink.onclick = () => {
+      window.location.href = url;
+    };
+  }
+}
+
+function seleccionarIndiceInicial(planos: PlanoResumenResponse[]): number {
+  const demoIndex = planos.findIndex((plano) => plano.codigo === CODIGO_PLANO_DEMO);
+  if (demoIndex >= 0) return demoIndex;
+
+  const activoIndex = planos.findIndex((plano) => plano.activo !== false);
+  return activoIndex >= 0 ? activoIndex : 0;
+}
+
+function setPlanPreviewMessage(message: string): void {
+  if (!homePlanoStage) return;
+  homePlanoStage.innerHTML = "";
+
+  const empty = document.createElement("span");
+  empty.textContent = message;
+  homePlanoStage.appendChild(empty);
+}
+
+function renderSinPlanos(): void {
+  planoOperativoActual = null;
+  setTexto(homePlanoNombre, "Sin planos configurados");
+  setTexto(homePlanoCodigo, "EMP-DEMO no tiene planos disponibles");
+  setTexto(homePlanoStatus, "No hay planos configurados.");
+  setTexto(homePlanoZonas, "-");
+  setTexto(homePlanoEstanterias, "-");
+  setTexto(homePlanoAlertas, "-");
+  setTexto(homePlanoTareas, "-");
+  setPlanPreviewMessage("No hay planos configurados.");
+
+  if (homePlanoLink) {
+    homePlanoLink.href = "/html/editor.html";
+    homePlanoLink.textContent = "Crear plano";
+  }
+  if (quickPlanosLink) {
+    quickPlanosLink.onclick = () => {
+      window.location.href = "/html/editor.html";
+    };
+  }
+  if (homePlanoNav) homePlanoNav.hidden = true;
+}
+
+function renderErrorPlano(message: string): void {
+  planoOperativoActual = null;
+  setTexto(homePlanoNombre, "Plano operativo no disponible");
+  setTexto(homePlanoCodigo, "No se pudo cargar la miniatura");
+  setTexto(homePlanoStatus, message);
+  setTexto(homePlanoZonas, "-");
+  setTexto(homePlanoEstanterias, "-");
+  setTexto(homePlanoAlertas, "-");
+  setTexto(homePlanoTareas, "-");
+  setPlanPreviewMessage(message);
+}
+
+function crearElementoPlano(className: string, x: number, y: number, width: number, height: number, scale: number): HTMLDivElement {
+  const element = document.createElement("div");
+  element.className = className;
+  element.style.left = `${x * scale}px`;
+  element.style.top = `${y * scale}px`;
+  element.style.width = `${Math.max(width * scale, 1)}px`;
+  element.style.height = `${Math.max(height * scale, 1)}px`;
+  return element;
+}
+
+function totalAlertasPlano(plano: PlanoOperativoResponse): number {
+  return plano.estanterias.reduce((total, estanteria) => total + estanteria.alertasAbiertas.length, 0);
+}
+
+function totalTareasPlano(plano: PlanoOperativoResponse): number {
+  return plano.estanterias.reduce((total, estanteria) => total + estanteria.tareasActivas.length, 0);
+}
+
+function renderPlanoPreview(plano: PlanoOperativoResponse | null): void {
+  if (!homePlanoPreview || !homePlanoStage || !plano) return;
+
+  const previewWidth = homePlanoPreview.clientWidth || 520;
+  const previewHeight = homePlanoPreview.clientHeight || 220;
+  const planoAncho = Math.max(plano.ancho, 1);
+  const planoAlto = Math.max(plano.alto, 1);
+  const scale = Math.min(previewWidth / planoAncho, previewHeight / planoAlto);
+  const scaledWidth = planoAncho * scale;
+  const scaledHeight = planoAlto * scale;
+
+  homePlanoStage.innerHTML = "";
+  const surface = document.createElement("div");
+  surface.className = "mini-plan-surface";
+  surface.style.width = `${scaledWidth}px`;
+  surface.style.height = `${scaledHeight}px`;
+  surface.style.left = `${(previewWidth - scaledWidth) / 2}px`;
+  surface.style.top = `${(previewHeight - scaledHeight) / 2}px`;
+
+  if (plano.zonas.length === 0 && plano.estanterias.length === 0) {
+    const empty = document.createElement("span");
+    empty.textContent = "Plano sin zonas ni estanterias.";
+    surface.appendChild(empty);
+    homePlanoStage.appendChild(surface);
+    return;
+  }
+
+  plano.zonas.forEach((zona) => {
+    const zonaNode = crearElementoPlano("mini-zone", zona.x, zona.y, zona.width, zona.height, scale);
+    const label = document.createElement("span");
+    label.className = "mini-zone-label";
+    label.textContent = zona.seccion.nombre || zona.seccion.codigo;
+    zonaNode.appendChild(label);
+    surface.appendChild(zonaNode);
+  });
+
+  plano.estanterias.forEach((estanteria) => {
+    const rackWidth = estanteria.width * scale;
+    const rackHeight = estanteria.height * scale;
+    const tieneAlertas = estanteria.alertasAbiertas.length > 0;
+    const rack = crearElementoPlano(
+      `mini-rack ${claseEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual)}${tieneAlertas ? " has-alert" : ""}`,
+      estanteria.x,
+      estanteria.y,
+      estanteria.width,
+      estanteria.height,
+      scale
+    );
+
+    const title = document.createElement("strong");
+    title.textContent = estanteria.estanteria.codigo;
+    rack.appendChild(title);
+
+    const puedeMostrarSlots = estanteria.slots.length > 0 && rackWidth >= 58 && rackHeight >= 34;
+    if (puedeMostrarSlots) {
+      const slots = document.createElement("span");
+      slots.className = `mini-rack-slots ${estanteria.orientacion.toLowerCase()}`;
+      estanteria.slots.forEach((slot) => {
+        const slotNode = document.createElement("span");
+        slotNode.className = `mini-slot ${claseEstado(slot.estadoVisual)}${slot.tieneAlertaAbierta ? " has-slot-alert" : ""}`;
+        slotNode.title = `${slot.slotId}: ${etiquetaEstadoVisual(slot.estadoVisual)}`;
+        slots.appendChild(slotNode);
+      });
+      rack.appendChild(slots);
+    }
+
+    surface.appendChild(rack);
+  });
+
+  homePlanoStage.appendChild(surface);
+}
+
+function renderPlanoOperativo(plano: PlanoOperativoResponse): void {
+  planoOperativoActual = plano;
+  setTexto(homePlanoNombre, plano.nombre);
+  setTexto(homePlanoCodigo, `${plano.codigo} - ${plano.ancho}x${plano.alto}`);
+  setTexto(homePlanoZonas, String(plano.zonas.length));
+  setTexto(homePlanoEstanterias, String(plano.estanterias.length));
+  setTexto(homePlanoAlertas, String(totalAlertasPlano(plano)));
+  setTexto(homePlanoTareas, String(totalTareasPlano(plano)));
+  setTexto(homePlanoStatus, plano.descripcion ?? "Miniatura operativa solo lectura.");
+  if (homePlanoLink) homePlanoLink.textContent = "Ir a Planos";
+  actualizarEnlacesPlano(plano.codigo);
+  renderPlanoPreview(plano);
+}
+
+function actualizarNavegacionPlanos(): void {
+  const hayVarios = planosDisponibles.length > 1;
+  if (homePlanoNav) homePlanoNav.hidden = !hayVarios;
+  if (homePlanoPrev) homePlanoPrev.disabled = !hayVarios;
+  if (homePlanoNext) homePlanoNext.disabled = !hayVarios;
+}
+
+async function cargarPlanoHome(codigo: string): Promise<void> {
+  setTexto(homePlanoStatus, "Cargando plano operativo...");
+  setPlanPreviewMessage("Cargando plano operativo...");
+
+  try {
+    const plano = await fetchJson<PlanoOperativoResponse>(`/api/planos/${encodeURIComponent(codigo)}/operativo`);
+    renderPlanoOperativo(plano);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "No se pudo cargar el plano operativo.";
+    renderErrorPlano(message);
+  }
+}
+
+async function seleccionarPlanoHome(index: number): Promise<void> {
+  if (planosDisponibles.length === 0) {
+    renderSinPlanos();
+    return;
+  }
+
+  planoSeleccionadoIndex = (index + planosDisponibles.length) % planosDisponibles.length;
+  actualizarNavegacionPlanos();
+  await cargarPlanoHome(planosDisponibles[planoSeleccionadoIndex].codigo);
+}
+
+async function cargarPlanosHome(): Promise<void> {
+  try {
+    planosDisponibles = await fetchJson<PlanoResumenResponse[]>(`/api/empresas/${encodeURIComponent(CODIGO_EMPRESA_DEMO)}/planos`);
+
+    if (planosDisponibles.length === 0) {
+      renderSinPlanos();
+      return;
+    }
+
+    await seleccionarPlanoHome(seleccionarIndiceInicial(planosDisponibles));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "No se pudieron cargar los planos disponibles.";
+    renderErrorPlano(message);
+  }
 }
 
 function initSlider(): void {
@@ -599,5 +946,13 @@ async function cargarDashboard(): Promise<void> {
 
 document.addEventListener("DOMContentLoaded", () => {
   initSlider();
+  homePlanoPrev?.addEventListener("click", () => {
+    void seleccionarPlanoHome(planoSeleccionadoIndex - 1);
+  });
+  homePlanoNext?.addEventListener("click", () => {
+    void seleccionarPlanoHome(planoSeleccionadoIndex + 1);
+  });
+  window.addEventListener("resize", () => renderPlanoPreview(planoOperativoActual));
+  void cargarPlanosHome();
   void cargarDashboard();
 });

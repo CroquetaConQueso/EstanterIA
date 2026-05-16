@@ -445,7 +445,7 @@ function renderPlanoPreview(plano: PlanoOperativoResponse | null): void {
 
   if (plano.zonas.length === 0 && plano.estanterias.length === 0) {
     const empty = document.createElement("span");
-    empty.textContent = "Plano sin zonas ni estanterias.";
+    empty.textContent = "Plano sin zonas ni estanterías.";
     surface.appendChild(empty);
     homePlanoStage.appendChild(surface);
     return;
@@ -504,7 +504,7 @@ function renderPlanoOperativo(plano: PlanoOperativoResponse): void {
   setTexto(homePlanoEstanterias, String(plano.estanterias.length));
   setTexto(homePlanoAlertas, String(totalAlertasPlano(plano)));
   setTexto(homePlanoTareas, String(totalTareasPlano(plano)));
-  setTexto(homePlanoStatus, plano.descripcion ?? "Miniatura operativa solo lectura.");
+  setTexto(homePlanoStatus, "Miniatura operativa solo lectura. Usa los controles para cambiar de plano.");
   if (homePlanoLink) homePlanoLink.textContent = "Ir a Planos";
   actualizarEnlacesPlano(plano.codigo);
   renderPlanoPreview(plano);
@@ -555,44 +555,6 @@ async function cargarPlanosHome(): Promise<void> {
     const message = err instanceof Error ? err.message : "No se pudieron cargar los planos disponibles.";
     renderErrorPlano(message);
   }
-}
-
-function initSlider(): void {
-  const track = document.getElementById("slider-track");
-  const btnPrev = document.getElementById("slider-prev");
-  const btnNext = document.getElementById("slider-next");
-  const dotsContainer = document.getElementById("slider-dots");
-
-  if (!track || !btnPrev || !btnNext || !dotsContainer) return;
-
-  const sliderTrack = track;
-  const slides = Array.from(track.children);
-  const total = slides.length;
-  let current = 0;
-
-  dotsContainer.innerHTML = "";
-  slides.forEach((_, idx) => {
-    const dot = document.createElement("button");
-    dot.className = `slider-dot${idx === 0 ? " is-active" : ""}`;
-    dot.type = "button";
-    dot.addEventListener("click", () => goTo(idx));
-    dotsContainer.appendChild(dot);
-  });
-
-  const dots = Array.from(dotsContainer.children);
-
-  function update(): void {
-    sliderTrack.style.transform = `translateX(${-current * 100}%)`;
-    dots.forEach((dot, index) => dot.classList.toggle("is-active", index === current));
-  }
-
-  function goTo(index: number): void {
-    current = (index + total) % total;
-    update();
-  }
-
-  btnPrev.addEventListener("click", () => goTo(current - 1));
-  btnNext.addEventListener("click", () => goTo(current + 1));
 }
 
 function esTareaActiva(tarea: TareaOperativaResponse): boolean {
@@ -945,7 +907,6 @@ async function cargarDashboard(): Promise<void> {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  initSlider();
   homePlanoPrev?.addEventListener("click", () => {
     void seleccionarPlanoHome(planoSeleccionadoIndex - 1);
   });

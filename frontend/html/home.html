@@ -25,7 +25,7 @@
             <a class="nav-link" href="inventario.html">Inventario</a>
             <a class="nav-link" href="alertas_centro.html">Alertas</a>
             <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
-            <a class="nav-link" href="vision.html">Vision</a>
+            <a class="nav-link" href="vision.html">Visión</a>
           </nav>
         </div>
         <div class="right">
@@ -39,7 +39,7 @@
         <h1>Dashboard operativo</h1>
         <p>
           Lectura ejecutiva del estado actual de EstanterIA: alertas, tareas,
-          estanterias operativas e inspecciones recientes.
+          estanterías operativas e inspecciones recientes.
         </p>
       </header>
 
@@ -59,11 +59,11 @@
               <dd id="metric-tareas-progreso">Cargando...</dd>
             </div>
             <div>
-              <dt>Proximos a caducar</dt>
+              <dt>Próximos a caducar</dt>
               <dd id="metric-caducidades">Cargando...</dd>
             </div>
             <div>
-              <dt>Estanterias con accion</dt>
+              <dt>Estanterías con acción</dt>
               <dd id="metric-estanterias-accion">Cargando...</dd>
             </div>
           </dl>
@@ -76,9 +76,9 @@
               <h2 id="home-plano-nombre">Cargando plano...</h2>
               <p id="home-plano-codigo">Consultando planos de EMP-DEMO</p>
             </div>
-            <div class="plan-preview-actions" id="home-plano-nav" aria-label="Navegacion de planos">
-              <button class="icon-btn" id="home-plano-prev" type="button" aria-label="Plano anterior">Anterior</button>
-              <button class="icon-btn" id="home-plano-next" type="button" aria-label="Plano siguiente">Siguiente</button>
+            <div class="plan-preview-actions" id="home-plano-nav" aria-label="Navegación de planos">
+              <button class="icon-btn" id="home-plano-prev" type="button" aria-label="Plano anterior" title="Plano anterior">‹</button>
+              <button class="icon-btn" id="home-plano-next" type="button" aria-label="Plano siguiente" title="Plano siguiente">›</button>
             </div>
           </div>
 
@@ -95,7 +95,7 @@
                 <dd id="home-plano-zonas">-</dd>
               </div>
               <div>
-                <dt>Estanterias</dt>
+                <dt>Estanterías</dt>
                 <dd id="home-plano-estanterias">-</dd>
               </div>
               <div>
@@ -117,12 +117,12 @@
         <article class="card">
           <h2>Planos y estado visual</h2>
           <p>
-            Consulta el plano operativo seleccionado con su ultimo estado visual,
+            Consulta el plano operativo seleccionado con su último estado visual,
             slots y alertas asociadas.
           </p>
           <ul>
             <li>Lectura espacial por zonas.</li>
-            <li>Resumen de ocupados, vacios y anomalias.</li>
+            <li>Resumen de ocupados, vacíos y anomalías.</li>
             <li>Acceso directo al plano activo.</li>
           </ul>
           <button
@@ -135,15 +135,15 @@
         </article>
 
         <article class="card">
-          <h2>Ultimas inspecciones</h2>
+          <h2>Últimas inspecciones</h2>
           <p>
-            Revisa el historico de inspecciones visuales por slots y sus
+            Revisa el histórico de inspecciones visuales por slots y sus
             resultados persistidos en backend.
           </p>
           <ul>
             <li>Listado ordenado por fecha.</li>
-            <li>Estado general visual por estanteria.</li>
-            <li>Acceso directo al detalle de cada inspeccion.</li>
+            <li>Estado general visual por estantería.</li>
+            <li>Acceso directo al detalle de cada inspección.</li>
           </ul>
           <button
             class="btn primary"
@@ -156,11 +156,11 @@
         <article class="card">
           <h2>Inventario operativo</h2>
           <p>
-            Consulta la configuracion real de slots, productos esperados,
+            Consulta la configuración real de slots, productos esperados,
             proveedores y asignaciones activas.
           </p>
           <ul>
-            <li>Slots configurados por estanteria.</li>
+            <li>Slots configurados por estantería.</li>
             <li>Producto esperado y proveedor asociado.</li>
             <li>Fechas de caducidad y retirada.</li>
           </ul>
@@ -175,15 +175,15 @@
 
       <section class="shelf-status">
         <div class="summary-head">
-          <h2>Estado de estanterias</h2>
+          <h2>Estado de estanterías</h2>
           <p>
-            Semaforo operativo construido desde alertas abiertas, tareas activas,
-            inspecciones recientes y estanterias configuradas en EMP-DEMO.
+            Semáforo operativo construido desde alertas abiertas, tareas activas,
+            inspecciones recientes y estanterías configuradas en EMP-DEMO.
           </p>
         </div>
         <div class="shelf-grid" id="estado-estanterias">
           <article class="shelf-card neutral">
-            <h3>Cargando estanterias...</h3>
+            <h3>Cargando estanterías...</h3>
             <p>Consultando modelo operativo y actividad reciente.</p>
           </article>
         </div>
@@ -194,7 +194,7 @@
           <h2>Actividad reciente</h2>
           <p>
             Alertas, inspecciones y tareas ordenadas por fecha para orientar
-            la siguiente accion operativa.
+            la siguiente acción operativa.
           </p>
         </div>
 
@@ -204,7 +204,7 @@
               <tr>
                 <th>Tipo</th>
                 <th>Fecha</th>
-                <th>Estanteria</th>
+                <th>Estantería</th>
                 <th>Resumen</th>
                 <th>Contexto</th>
                 <th>Estado</th>

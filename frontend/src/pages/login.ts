@@ -7,6 +7,9 @@ type ApiErrorResponse = {
   fieldErrors?: Record<string, string>;
 };
 
+const WORKER_ACCESS_URL = "/html/acceso_trabajador.html";
+const ADMIN_HOME_URL = "/html/home.html";
+
 const form = document.querySelector<HTMLFormElement>("#form-login");
 const emailInput = document.querySelector<HTMLInputElement>("#login-email");
 const passwordInput = document.querySelector<HTMLInputElement>("#login-password");
@@ -58,6 +61,10 @@ function getLoginErrorMessage(data: ApiErrorResponse | null, status: number): st
   return data?.message ?? `Error HTTP ${status}`;
 }
 
+function getRedirectUrl(role: string): string {
+  return role.toUpperCase() === "WORKER" ? WORKER_ACCESS_URL : ADMIN_HOME_URL;
+}
+
 if (form && emailInput && passwordInput) {
   emailInput.addEventListener("input", () => setError(null));
   passwordInput.addEventListener("input", () => setError(null));
@@ -99,7 +106,7 @@ if (form && emailInput && passwordInput) {
       storage.setItem("auth_user", data.userName);
       storage.setItem("auth_role", data.role);
 
-      window.location.href = "/html/home.html";
+      window.location.href = getRedirectUrl(data.role);
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally {

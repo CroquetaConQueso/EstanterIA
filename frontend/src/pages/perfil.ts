@@ -1,7 +1,7 @@
 import { authFetch, clearAuthSession } from "../lib/api";
-import { requireAuth } from "../lib/auth-guard";
+import { requireAdminPanelAccess } from "../lib/auth-guard";
 
-requireAuth();
+requireAdminPanelAccess();
 
 type PerfilEmpresa = {
   id: number;

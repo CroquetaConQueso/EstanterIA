@@ -1,8 +1,8 @@
 ﻿import { authFetch } from "../lib/api";
-import { requireAuth } from "../lib/auth-guard";
+import { requireAdminPanelAccess } from "../lib/auth-guard";
 import { isStructuralAdmin } from "../lib/api";
 
-requireAuth();
+requireAdminPanelAccess();
 
 type EditorMode = "select" | "zone" | "rack";
 type SelectedElement = { type: "zone"; uid: string } | { type: "rack"; uid: string } | null;

@@ -1,7 +1,7 @@
 import { authFetch } from "../lib/api";
-import { requireAuth } from "../lib/auth-guard";
+import { requireAdminPanelAccess } from "../lib/auth-guard";
 
-requireAuth();
+requireAdminPanelAccess();
 
 type Prioridad = "BAJA" | "MEDIA" | "ALTA" | "CRITICA" | string;
 type EstadoTarea = "PENDIENTE" | "EN_PROGRESO" | "RESUELTA" | "CANCELADA" | string;

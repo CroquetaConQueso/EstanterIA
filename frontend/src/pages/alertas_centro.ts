@@ -1,8 +1,8 @@
 import { authFetch, isStructuralAdmin } from "../lib/api";
-import { requireAuth } from "../lib/auth-guard";
+import { requireAdminPanelAccess } from "../lib/auth-guard";
 import { imageFallbackText, normalizeImageUrl } from "../lib/image-paths";
 
-requireAuth();
+requireAdminPanelAccess();
 
 type TipoAlerta =
   | "HUECO_VACIO"

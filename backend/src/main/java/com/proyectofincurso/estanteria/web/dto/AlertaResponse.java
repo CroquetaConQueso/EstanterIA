@@ -16,6 +16,8 @@ public record AlertaResponse(
         String mensaje,
         Instant createdAt,
         Instant resueltaAt,
+        Long inspeccionId,
+        String imagenPath,
         SeccionResponse seccion,
         EstanteriaResumenResponse estanteria,
         AlertaSlotResponse slot,

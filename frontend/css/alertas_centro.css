@@ -392,6 +392,34 @@ button, input, select {
   letter-spacing: 2px;
 }
 
+.photo-placeholder.has-image {
+  padding: 0;
+  background: var(--black);
+  border-style: solid;
+}
+
+.alert-image {
+  display: block;
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  background: var(--black);
+}
+
+.image-placeholder,
+.image-error {
+  display: grid;
+  gap: 10px;
+  text-transform: none;
+}
+
+.image-placeholder small,
+.image-error small {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
 .detail-list {
   list-style: none;
   padding: 0;

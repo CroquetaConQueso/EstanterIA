@@ -36,6 +36,7 @@ public class AlertaController {
     }
 
     @PostMapping(value = "/alertas/evaluar-caducidad", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Evaluar caducidad", description = "Requiere ADMIN/SUPERADMIN. Evalua caducidades y genera alertas operativas.")
     public EvaluacionCaducidadResponse evaluarCaducidad() {
         return alertaOperativaService.evaluarCaducidad();

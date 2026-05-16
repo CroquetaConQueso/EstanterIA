@@ -213,6 +213,11 @@
           <label>Slots configurados</label>
           <div class="slot-editor" id="element-slots-container"></div>
         </div>
+        <div class="rack-status-actions" id="rack-status-actions" hidden>
+          <p class="hint" id="rack-status-text"></p>
+          <button class="btn danger" id="btn-deactivate-rack" type="button">Desactivar estantería</button>
+          <button class="btn primary" id="btn-reactivate-rack" type="button">Reactivar estantería</button>
+        </div>
         <p class="hint inline-status" id="element-edit-status"></p>
         <div class="form-actions">
           <button class="btn primary" id="btn-apply-element" type="button">Aplicar cambios</button>
@@ -298,6 +303,28 @@
     <div class="form-actions">
       <button class="btn primary" id="btn-create-rack" type="submit">Crear y usar estantería</button>
       <button class="btn" id="btn-cancel-rack-dialog" type="button">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="editor-dialog" id="rack-deactivate-dialog">
+  <form class="dialog-card" method="dialog">
+    <div class="dialog-head">
+      <div>
+        <p class="eyebrow">Estantería</p>
+        <h2>Desactivar estantería</h2>
+      </div>
+      <button class="dialog-close" id="btn-cancel-rack-deactivate" type="button" aria-label="Cancelar">×</button>
+    </div>
+    <p class="hint">
+      Esta estantería dejará de estar disponible para nuevas inspecciones y configuraciones. Se conservará el histórico operativo.
+    </p>
+    <p class="hint">
+      La estantería se desactivará para nuevas operaciones, pero seguirá visible en el plano hasta que edites el layout.
+    </p>
+    <div class="form-actions">
+      <button class="btn danger" id="btn-confirm-rack-deactivate" type="button">Desactivar estantería</button>
+      <button class="btn" id="btn-close-rack-deactivate" type="button">Cancelar</button>
     </div>
   </form>
 </dialog>

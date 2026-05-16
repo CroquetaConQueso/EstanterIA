@@ -198,6 +198,11 @@ public class ModeloOperativoService {
 
     @Transactional(readOnly = true)
     public List<EstanteriaResumenResponse> obtenerEstanteriasDeSeccion(Long seccionId) {
+        return obtenerEstanteriasDeSeccion(seccionId, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EstanteriaResumenResponse> obtenerEstanteriasDeSeccion(Long seccionId, boolean incluirInactivas) {
         if (!seccionRepository.existsById(seccionId)) {
             throw ApiException.notFound(
                     "SECCION_NOT_FOUND",
@@ -205,7 +210,11 @@ public class ModeloOperativoService {
             );
         }
 
-        return estanteriaRepository.findBySeccionIdAndActivaTrueOrderByCodigoAsc(seccionId).stream()
+        List<Estanteria> estanterias = incluirInactivas
+                ? estanteriaRepository.findBySeccionIdOrderByCodigoAsc(seccionId)
+                : estanteriaRepository.findBySeccionIdAndActivaTrueOrderByCodigoAsc(seccionId);
+
+        return estanterias.stream()
                 .map(this::toEstanteriaResumenResponse)
                 .toList();
     }
@@ -344,6 +353,40 @@ public class ModeloOperativoService {
         return obtenerConfiguracionDeEstanteria(estanteria.getCodigo());
     }
 
+    @Transactional
+    public EstanteriaConfiguracionResponse desactivarEstanteria(String codigo) {
+        Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoIgnoreCase(normalizar(codigo))
+                .orElseThrow(() -> ApiException.notFound(
+                        "ESTANTERIA_NOT_FOUND",
+                        "No existe una estanteria con el codigo indicado"
+                ));
+
+        if (!Boolean.FALSE.equals(estanteria.getActiva())) {
+            estanteria.setActiva(false);
+            estanteria.setUpdatedAt(Instant.now());
+            estanteriaRepository.save(estanteria);
+        }
+
+        return obtenerConfiguracionDeEstanteria(estanteria.getCodigo());
+    }
+
+    @Transactional
+    public EstanteriaConfiguracionResponse reactivarEstanteria(String codigo) {
+        Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoIgnoreCase(normalizar(codigo))
+                .orElseThrow(() -> ApiException.notFound(
+                        "ESTANTERIA_NOT_FOUND",
+                        "No existe una estanteria con el codigo indicado"
+                ));
+
+        if (!Boolean.TRUE.equals(estanteria.getActiva())) {
+            estanteria.setActiva(true);
+            estanteria.setUpdatedAt(Instant.now());
+            estanteriaRepository.save(estanteria);
+        }
+
+        return obtenerConfiguracionDeEstanteria(estanteria.getCodigo());
+    }
+
     @Transactional(readOnly = true)
     public List<ProductoResumenResponse> obtenerProductosActivos() {
         return obtenerProductos(false);
@@ -471,10 +514,10 @@ public class ModeloOperativoService {
 
     @Transactional(readOnly = true)
     public EstanteriaConfiguracionResponse obtenerConfiguracionDeEstanteria(String codigo) {
-        Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoAndActivaTrue(codigo)
+        Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoIgnoreCase(normalizar(codigo))
                 .orElseThrow(() -> ApiException.notFound(
                         "ESTANTERIA_NOT_FOUND",
-                        "No existe una estanteria activa con el codigo indicado"
+                        "No existe una estanteria con el codigo indicado"
                 ));
 
         List<EstanteriaSlotConfiguracion> slots = slotConfiguracionRepository

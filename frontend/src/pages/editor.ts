@@ -132,6 +132,7 @@ type LocalRack = {
   seccionId: number;
   estanteriaCodigo: string;
   estanteriaNombre: string;
+  estanteriaActiva: boolean | null;
   x: number;
   y: number;
   width: number;
@@ -262,6 +263,10 @@ const elementResponsibleNote = document.querySelector<HTMLElement>("#element-res
 const elementSlotsField = document.querySelector<HTMLElement>("#element-slots-field");
 const elementSlotsContainer = document.querySelector<HTMLElement>("#element-slots-container");
 const elementEditStatus = document.querySelector<HTMLElement>("#element-edit-status");
+const rackStatusActions = document.querySelector<HTMLElement>("#rack-status-actions");
+const rackStatusText = document.querySelector<HTMLElement>("#rack-status-text");
+const btnDeactivateRack = document.querySelector<HTMLButtonElement>("#btn-deactivate-rack");
+const btnReactivateRack = document.querySelector<HTMLButtonElement>("#btn-reactivate-rack");
 const btnApplyElement = document.querySelector<HTMLButtonElement>("#btn-apply-element");
 const btnDeleteElement = document.querySelector<HTMLButtonElement>("#btn-delete-element");
 const toolFeedback = document.querySelector<HTMLElement>("#tool-feedback");
@@ -289,6 +294,10 @@ const btnCloseSectionDialog = document.querySelector<HTMLButtonElement>("#btn-cl
 const btnCancelSectionDialog = document.querySelector<HTMLButtonElement>("#btn-cancel-section-dialog");
 const btnCloseRackDialog = document.querySelector<HTMLButtonElement>("#btn-close-rack-dialog");
 const btnCancelRackDialog = document.querySelector<HTMLButtonElement>("#btn-cancel-rack-dialog");
+const rackDeactivateDialog = document.querySelector<HTMLDialogElement>("#rack-deactivate-dialog");
+const btnCancelRackDeactivate = document.querySelector<HTMLButtonElement>("#btn-cancel-rack-deactivate");
+const btnCloseRackDeactivate = document.querySelector<HTMLButtonElement>("#btn-close-rack-deactivate");
+const btnConfirmRackDeactivate = document.querySelector<HTMLButtonElement>("#btn-confirm-rack-deactivate");
 
 let mode: EditorMode = "select";
 let selected: SelectedElement = null;
@@ -339,6 +348,8 @@ function applyStructuralPermissions(): void {
   btnCreateRack?.setAttribute("disabled", "true");
   btnApplyElement?.setAttribute("disabled", "true");
   btnDeleteElement?.setAttribute("disabled", "true");
+  btnDeactivateRack?.setAttribute("disabled", "true");
+  btnReactivateRack?.setAttribute("disabled", "true");
   document.querySelectorAll<HTMLButtonElement>(".tool").forEach((button) => {
     if (button.dataset.mode !== "select") button.disabled = true;
   });
@@ -403,6 +414,25 @@ function selectedRack(): LocalRack | null {
   if (selected?.type !== "rack") return null;
   const selectedUid = selected.uid;
   return racks.find((rack) => rack.uid === selectedUid) ?? null;
+}
+
+function rackActivo(rack: LocalRack): boolean {
+  const config = rackConfigurations.get(rack.estanteriaCodigo);
+  if (config?.activa !== undefined && config.activa !== null) return config.activa;
+
+  const estanteria = estanteriasSeccion.find((item) => item.codigo === rack.estanteriaCodigo);
+  if (estanteria?.activa !== undefined && estanteria.activa !== null) return estanteria.activa;
+
+  return rack.estanteriaActiva !== false;
+}
+
+function setRackEstadoLocal(codigo: string, activa: boolean): void {
+  racks = racks.map((rack) => rack.estanteriaCodigo === codigo
+    ? { ...rack, estanteriaActiva: activa }
+    : rack);
+  estanteriasSeccion = estanteriasSeccion.map((estanteria) => estanteria.codigo === codigo
+    ? { ...estanteria, activa }
+    : estanteria);
 }
 
 function selectedSeccionId(): number | null {
@@ -548,7 +578,7 @@ function renderCanvas(): void {
   racks.forEach((rack) => {
     const node = document.createElement("button");
     node.type = "button";
-    node.className = `rack-node ${rack.orientacion.toLowerCase()}${selected?.type === "rack" && selected.uid === rack.uid ? " is-selected" : ""}${dragging?.type === "rack" && dragging.uid === rack.uid ? " is-dragging" : ""}`;
+    node.className = `rack-node ${rack.orientacion.toLowerCase()}${selected?.type === "rack" && selected.uid === rack.uid ? " is-selected" : ""}${dragging?.type === "rack" && dragging.uid === rack.uid ? " is-dragging" : ""}${rackActivo(rack) ? "" : " is-inactive"}`;
     node.dataset.uid = rack.uid;
     node.textContent = rack.estanteriaCodigo;
     node.addEventListener("click", (event) => {
@@ -584,7 +614,8 @@ function renderLists(): void {
       rackList.appendChild(listItem("No hay estanterías colocadas.", false, () => undefined));
     } else {
       racks.forEach((rack) => {
-        rackList.appendChild(listItem(`${rack.estanteriaCodigo} · ${rack.orientacion}`, selected?.type === "rack" && selected.uid === rack.uid, () => {
+        const estado = rackActivo(rack) ? "Activa" : "Inactiva";
+        rackList.appendChild(listItem(`${rack.estanteriaCodigo} · ${rack.orientacion} · ${estado}`, selected?.type === "rack" && selected.uid === rack.uid, () => {
           selected = { type: "rack", uid: rack.uid };
           render();
         }));
@@ -610,6 +641,7 @@ function renderSelectionPanel(): void {
     setText(selectionSummary, "No hay ningún elemento seleccionado.");
     formElemento?.classList.remove("is-visible");
     if (elementResponsibleField) elementResponsibleField.style.display = "none";
+    if (rackStatusActions) rackStatusActions.setAttribute("hidden", "");
     setText(elementResponsibleNote, "");
     if (elementEditStatus) elementEditStatus.textContent = "";
     return;
@@ -632,6 +664,7 @@ function renderSelectionPanel(): void {
       ? "No hay trabajadores activos disponibles; puedes guardar la zona sin responsable."
       : "El responsable se guarda en la sección/zona, no en las estanterías.");
     if (elementSlotsField) elementSlotsField.style.display = "none";
+    if (rackStatusActions) rackStatusActions.setAttribute("hidden", "");
     if (elementSlotsContainer) elementSlotsContainer.innerHTML = "";
     return;
   }
@@ -639,7 +672,8 @@ function renderSelectionPanel(): void {
   if (rack) {
     const zoneForRack = findZoneForRack(rack);
     const responsable = zoneForRack ? responsableLabelForSeccion(zoneForRack.seccionId) : "Sin responsable asignado";
-    setText(selectionSummary, `Estantería: ${rack.estanteriaCodigo} · Responsable de zona: ${responsable}`);
+    const activo = rackActivo(rack);
+    setText(selectionSummary, `Estantería: ${rack.estanteriaCodigo} · ${activo ? "Activa" : "Inactiva"} · Responsable de zona: ${responsable}`);
     if (elementCode) elementCode.value = rack.estanteriaCodigo;
     if (elementName) elementName.value = rack.estanteriaNombre;
     const config = rackConfigurations.get(rack.estanteriaCodigo);
@@ -652,6 +686,12 @@ function renderSelectionPanel(): void {
     renderTrabajadorOptions(elementResponsible);
     if (elementSlotsField) elementSlotsField.style.display = "grid";
     renderElementSlots(config?.slots ?? []);
+    if (rackStatusActions) rackStatusActions.removeAttribute("hidden");
+    setText(rackStatusText, activo
+      ? "Estantería activa para nuevas operaciones."
+      : "Estantería inactiva: se conserva en este plano por histórico, pero no estará disponible para nuevas operaciones.");
+    if (btnDeactivateRack) btnDeactivateRack.hidden = !activo || !puedeConfigurarEstructura;
+    if (btnReactivateRack) btnReactivateRack.hidden = activo || !puedeConfigurarEstructura;
     if (!config) void cargarConfiguracionRack(rack.estanteriaCodigo);
   }
 }
@@ -756,6 +796,7 @@ async function cargarConfiguracionRack(codigo: string): Promise<void> {
   try {
     const config = await fetchJson<EstanteriaConfiguracionResponse>(`/api/estanterias/${encodeURIComponent(codigo)}/configuracion`);
     rackConfigurations.set(codigo, config);
+    setRackEstadoLocal(config.codigo, config.activa !== false);
     const rack = selectedRack();
     if (rack?.estanteriaCodigo === codigo) {
       renderSelectionPanel();
@@ -1000,6 +1041,7 @@ async function cargarPlano(codigo: string): Promise<void> {
       seccionId: zone.seccionId,
       estanteriaCodigo: layout.estanteria.codigo,
       estanteriaNombre: layout.estanteria.nombre,
+      estanteriaActiva: layout.estanteria.activa,
       x: layout.x,
       y: layout.y,
       width: layout.width,
@@ -1355,6 +1397,7 @@ function addRack(box: { x: number; y: number; width: number; height: number }): 
     seccionId,
     estanteriaCodigo: estanteria.codigo,
     estanteriaNombre: estanteria.nombre,
+    estanteriaActiva: estanteria.activa,
     orientacion: orientacionSelect?.value === "VERTICAL" ? "VERTICAL" : "HORIZONTAL",
     ...box
   };
@@ -1479,6 +1522,7 @@ async function persistirEstanteria(rack: LocalRack): Promise<void> {
       body: JSON.stringify(payload)
     });
     rack.estanteriaNombre = updated.nombre;
+    rack.estanteriaActiva = updated.activa;
     rackConfigurations.set(updated.codigo, updated);
     estanteriasSeccion = estanteriasSeccion.map((item) => item.codigo === updated.codigo
       ? { id: updated.id, codigo: updated.codigo, nombre: updated.nombre, descripcion: updated.descripcion, activa: updated.activa }
@@ -1489,6 +1533,78 @@ async function persistirEstanteria(rack: LocalRack): Promise<void> {
     setInlineStatus(elementEditStatus, err instanceof Error ? err.message : "No se pudo guardar la estantería.", "error");
   } finally {
     render();
+  }
+}
+
+function abrirConfirmacionDesactivarEstanteria(): void {
+  if (!requireStructuralAdmin()) return;
+  const rack = selectedRack();
+  if (!rack) {
+    setInlineStatus(elementEditStatus, "Selecciona una estantería antes de desactivarla.", "error");
+    return;
+  }
+  openDialog(rackDeactivateDialog);
+}
+
+async function cambiarEstadoEstanteria(rack: LocalRack, activa: boolean): Promise<void> {
+  const endpoint = activa ? "reactivar" : "desactivar";
+  const updated = await fetchJson<EstanteriaConfiguracionResponse>(
+    `/api/estanterias/${encodeURIComponent(rack.estanteriaCodigo)}/${endpoint}`,
+    { method: "PATCH" }
+  );
+
+  const activaActual = updated.activa !== false;
+  rack.estanteriaNombre = updated.nombre;
+  rack.estanteriaActiva = activaActual;
+  rackConfigurations.set(updated.codigo, updated);
+  setRackEstadoLocal(updated.codigo, activaActual);
+  await cargarEstanteriasDeSeccion(activaActual ? updated.codigo : undefined);
+  setStatus(
+    activaActual
+      ? "Estantería reactivada. Ya está disponible para nuevas operaciones."
+      : "Estantería desactivada. Se conserva el histórico operativo.",
+    "ok"
+  );
+  setInlineStatus(
+    elementEditStatus,
+    activaActual
+      ? "Estantería reactivada."
+      : "La estantería seguirá visible en el plano hasta que edites el layout.",
+    "ok"
+  );
+  render();
+}
+
+async function confirmarDesactivarEstanteria(): Promise<void> {
+  const rack = selectedRack();
+  if (!rack) return;
+
+  btnConfirmRackDeactivate?.setAttribute("disabled", "true");
+  try {
+    await cambiarEstadoEstanteria(rack, false);
+    closeDialog(rackDeactivateDialog);
+  } catch (err) {
+    setInlineStatus(elementEditStatus, err instanceof Error ? err.message : "No se pudo desactivar la estantería.", "error");
+  } finally {
+    btnConfirmRackDeactivate?.removeAttribute("disabled");
+  }
+}
+
+async function reactivarEstanteriaSeleccionada(): Promise<void> {
+  if (!requireStructuralAdmin()) return;
+  const rack = selectedRack();
+  if (!rack) {
+    setInlineStatus(elementEditStatus, "Selecciona una estantería antes de reactivarla.", "error");
+    return;
+  }
+
+  btnReactivateRack?.setAttribute("disabled", "true");
+  try {
+    await cambiarEstadoEstanteria(rack, true);
+  } catch (err) {
+    setInlineStatus(elementEditStatus, err instanceof Error ? err.message : "No se pudo reactivar la estantería.", "error");
+  } finally {
+    btnReactivateRack?.removeAttribute("disabled");
   }
 }
 
@@ -1719,6 +1835,15 @@ function bindEvents(): void {
   });
   btnApplyElement?.addEventListener("click", applySelectedElement);
   btnDeleteElement?.addEventListener("click", deleteSelectedElement);
+  btnDeactivateRack?.addEventListener("click", abrirConfirmacionDesactivarEstanteria);
+  btnReactivateRack?.addEventListener("click", () => {
+    void reactivarEstanteriaSeleccionada();
+  });
+  btnCancelRackDeactivate?.addEventListener("click", () => closeDialog(rackDeactivateDialog));
+  btnCloseRackDeactivate?.addEventListener("click", () => closeDialog(rackDeactivateDialog));
+  btnConfirmRackDeactivate?.addEventListener("click", () => {
+    void confirmarDesactivarEstanteria();
+  });
   anchoInput?.addEventListener("change", render);
   altoInput?.addEventListener("change", render);
   canvas?.addEventListener("click", () => {

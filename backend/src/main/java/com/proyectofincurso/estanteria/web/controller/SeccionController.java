@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -66,9 +67,11 @@ public class SeccionController {
     }
 
     @GetMapping(value = "/{seccionId}/estanterias", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar estanterias de seccion", description = "Requiere autenticacion. Devuelve estanterias activas de una seccion.")
-    public List<EstanteriaResumenResponse> obtenerEstanterias(@PathVariable Long seccionId) {
-        return modeloOperativoService.obtenerEstanteriasDeSeccion(seccionId);
+    @Operation(summary = "Listar estanterias de seccion", description = "Requiere autenticacion. Por defecto devuelve estanterias activas de una seccion.")
+    public List<EstanteriaResumenResponse> obtenerEstanterias(
+            @PathVariable Long seccionId,
+            @RequestParam(name = "incluirInactivas", defaultValue = "false") boolean incluirInactivas) {
+        return modeloOperativoService.obtenerEstanteriasDeSeccion(seccionId, incluirInactivas);
     }
 
     @GetMapping(value = "/{seccionId}/alertas/abiertas", produces = MediaType.APPLICATION_JSON_VALUE)

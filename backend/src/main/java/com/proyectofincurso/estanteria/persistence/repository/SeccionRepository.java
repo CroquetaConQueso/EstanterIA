@@ -11,6 +11,8 @@ public interface SeccionRepository extends JpaRepository<Seccion, Long> {
 
     Optional<Seccion> findByIdAndActivaTrue(Long id);
 
+    Optional<Seccion> findByEmpresaIdAndCodigoIgnoreCase(Long empresaId, String codigo);
+
     boolean existsByEmpresaIdAndCodigoIgnoreCase(Long empresaId, String codigo);
 
     boolean existsByEmpresaIdAndCodigoIgnoreCaseAndIdNot(Long empresaId, String codigo, Long id);

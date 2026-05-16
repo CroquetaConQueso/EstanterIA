@@ -9,6 +9,8 @@ import java.util.List;
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
     Optional<Producto> findByCodigoInternoAndActivoTrue(String codigoInterno);
 
+    Optional<Producto> findByCodigoInternoIgnoreCase(String codigoInterno);
+
     boolean existsByCodigoInternoIgnoreCase(String codigoInterno);
 
     List<Producto> findByActivoTrueOrderByNombreAsc();

@@ -12,6 +12,8 @@ public interface EstanteriaRepository extends JpaRepository<Estanteria, Long> {
 
     Optional<Estanteria> findByCodigoAndActivaTrue(String codigo);
 
+    Optional<Estanteria> findByCodigoIgnoreCase(String codigo);
+
     boolean existsByCodigoIgnoreCase(String codigo);
 
     boolean existsByCodigoIgnoreCaseAndIdNot(String codigo, Long id);

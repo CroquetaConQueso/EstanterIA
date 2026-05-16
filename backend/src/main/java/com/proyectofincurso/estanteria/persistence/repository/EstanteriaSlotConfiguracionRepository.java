@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface EstanteriaSlotConfiguracionRepository extends JpaRepository<EstanteriaSlotConfiguracion, Long> {
     @Query("""
@@ -20,6 +21,8 @@ public interface EstanteriaSlotConfiguracionRepository extends JpaRepository<Est
     List<EstanteriaSlotConfiguracion> findActivosByEstanteriaIdOrdenados(@Param("estanteriaId") Long estanteriaId);
 
     List<EstanteriaSlotConfiguracion> findByEstanteriaId(Long estanteriaId);
+
+    Optional<EstanteriaSlotConfiguracion> findByEstanteriaIdAndSlotIdIgnoreCase(Long estanteriaId, String slotId);
 
     @Query("""
             select slot

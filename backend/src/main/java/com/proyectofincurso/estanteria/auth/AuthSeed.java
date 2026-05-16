@@ -9,7 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(name = "app.auth.seed.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "app.auth.seed.enabled", havingValue = "true")
 public class AuthSeed implements CommandLineRunner {
 
     private final UserAccountRepository repo;

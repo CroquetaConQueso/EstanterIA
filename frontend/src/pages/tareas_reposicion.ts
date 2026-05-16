@@ -616,6 +616,8 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
     actions.appendChild(crearBoton("Asignar", "asignar", tarea.id, "btn ghost"));
     actions.appendChild(crearBoton("Resolver", "RESUELTA", tarea.id, "btn primary"));
     actions.appendChild(crearBoton("Cancelar", "CANCELADA", tarea.id, "btn ghost"));
+  } else if (puedeGestionarTareas && (tarea.estadoTarea === "RESUELTA" || tarea.estadoTarea === "CANCELADA")) {
+    actions.appendChild(crearBoton("Reabrir tarea", "reabrir", tarea.id, "btn warn"));
   }
 
   article.append(head, body, actions);
@@ -745,6 +747,18 @@ async function cambiarEstado(id: number, estado: EstadoTareaOperativa): Promise<
   await cargarTareas();
 }
 
+async function reabrirTarea(id: number): Promise<void> {
+  setTaskFeedback(null);
+  const confirmed = window.confirm("La tarea volverá a estado PENDIENTE. No se modificará ninguna alerta asociada.");
+  if (!confirmed) return;
+
+  await fetchJson<TareaOperativaResponse>(`${API_TAREAS}/${encodeURIComponent(String(id))}/reabrir`, {
+    method: "PATCH"
+  });
+  await cargarTareas();
+  setTaskFeedback("Tarea reabierta. Puede verla en tareas pendientes.");
+}
+
 async function asignarTarea(id: number): Promise<void> {
   setTaskFeedback(null);
   const trabajadorId = Number(trabajadorSelect?.value);
@@ -777,7 +791,9 @@ tasksGrid?.addEventListener("click", (event) => {
 
   const operation = action === "asignar"
     ? asignarTarea(id)
-    : cambiarEstado(id, action as EstadoTareaOperativa);
+    : action === "reabrir"
+      ? reabrirTarea(id)
+      : cambiarEstado(id, action as EstadoTareaOperativa);
 
   void operation.catch((err: unknown) => {
     setTaskFeedback(err instanceof Error ? err.message : "No se pudo actualizar la tarea");

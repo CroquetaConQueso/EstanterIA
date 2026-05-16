@@ -84,4 +84,11 @@ public class TareaOperativaController {
                                                 @Valid @RequestBody TareaEstadoRequest request) {
         return tareaOperativaService.cambiarEstado(id, request.estado());
     }
+
+    @PatchMapping(value = "/{id}/reabrir", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Reabrir tarea", description = "Requiere ADMIN/SUPERADMIN. Devuelve una tarea resuelta o cancelada a pendiente sin modificar alertas.")
+    public TareaOperativaResponse reabrirTarea(@PathVariable Long id) {
+        return tareaOperativaService.reabrirTarea(id);
+    }
 }

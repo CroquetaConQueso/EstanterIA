@@ -1,6 +1,7 @@
 package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.config.OpenApiConfig;
+import com.proyectofincurso.estanteria.persistence.entity.EstadoDisponibilidadTrabajador;
 import com.proyectofincurso.estanteria.persistence.entity.Trabajador;
 import com.proyectofincurso.estanteria.persistence.repository.TrabajadorRepository;
 import com.proyectofincurso.estanteria.service.AlertaOperativaService;
@@ -31,7 +32,7 @@ public class TrabajadorController {
     @GetMapping(value = "/activos", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Listar trabajadores activos", description = "Requiere autenticacion. Devuelve trabajadores activos para asignaciones y responsables.")
     public List<TrabajadorActivoResponse> listarTrabajadoresActivos() {
-        return trabajadorRepository.findByActivoTrueOrderByApellidosAscNombreAsc()
+        return trabajadorRepository.findActivosDisponiblesOrderByApellidosAscNombreAsc(EstadoDisponibilidadTrabajador.DISPONIBLE)
                 .stream()
                 .map(this::toTrabajadorActivoResponse)
                 .toList();
@@ -48,8 +49,16 @@ public class TrabajadorController {
                 trabajador.getId(),
                 trabajador.getNombre(),
                 trabajador.getApellidos(),
+                trabajador.getEmailContacto(),
                 trabajador.getTipoTrabajador(),
+                estadoDisponibilidad(trabajador),
                 trabajador.getActivo()
         );
+    }
+
+    private EstadoDisponibilidadTrabajador estadoDisponibilidad(Trabajador trabajador) {
+        return trabajador.getEstadoDisponibilidad() == null
+                ? EstadoDisponibilidadTrabajador.DISPONIBLE
+                : trabajador.getEstadoDisponibilidad();
     }
 }

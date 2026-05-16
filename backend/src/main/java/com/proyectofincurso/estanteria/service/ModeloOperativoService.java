@@ -2,6 +2,7 @@ package com.proyectofincurso.estanteria.service;
 
 import com.proyectofincurso.estanteria.persistence.entity.AsignacionProductoSlot;
 import com.proyectofincurso.estanteria.persistence.entity.Empresa;
+import com.proyectofincurso.estanteria.persistence.entity.EstadoDisponibilidadTrabajador;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoAsignacionProductoSlot;
 import com.proyectofincurso.estanteria.persistence.entity.Estanteria;
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaSlotConfiguracion;
@@ -11,6 +12,7 @@ import com.proyectofincurso.estanteria.persistence.entity.Proveedor;
 import com.proyectofincurso.estanteria.persistence.entity.Seccion;
 import com.proyectofincurso.estanteria.persistence.entity.SeccionEncargado;
 import com.proyectofincurso.estanteria.persistence.entity.Trabajador;
+import com.proyectofincurso.estanteria.persistence.entity.TrabajadorEstanteria;
 import com.proyectofincurso.estanteria.persistence.repository.AsignacionProductoSlotRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EmpresaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaRepository;
@@ -21,6 +23,7 @@ import com.proyectofincurso.estanteria.persistence.repository.ProveedorRepositor
 import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.TrabajadorRepository;
+import com.proyectofincurso.estanteria.persistence.repository.TrabajadorEstanteriaRepository;
 import com.proyectofincurso.estanteria.web.dto.AsignacionActivaSlotResponse;
 import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaSlotRequest;
@@ -42,6 +45,7 @@ import com.proyectofincurso.estanteria.web.dto.ProveedorResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.SeccionResponse;
 import com.proyectofincurso.estanteria.web.dto.SlotConfiguradoResponse;
 import com.proyectofincurso.estanteria.web.dto.TrabajadorResumenResponse;
+import com.proyectofincurso.estanteria.web.dto.TrabajadorAsignadoEstanteriaResponse;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -72,6 +76,7 @@ public class ModeloOperativoService {
     private final ProductoProveedorRepository productoProveedorRepository;
     private final ProveedorRepository proveedorRepository;
     private final TrabajadorRepository trabajadorRepository;
+    private final TrabajadorEstanteriaRepository trabajadorEstanteriaRepository;
     private final AlertaOperativaService alertaOperativaService;
     private static final String PROVEEDOR_DEMO_CODIGO = "PROV-DEMO";
 
@@ -265,6 +270,104 @@ public class ModeloOperativoService {
         return estanterias.stream()
                 .map(this::toEstanteriaResumenResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TrabajadorAsignadoEstanteriaResponse> obtenerTrabajadoresAsignadosEstanteria(String codigo) {
+        Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoIgnoreCase(normalizar(codigo))
+                .orElseThrow(() -> ApiException.notFound(
+                        "ESTANTERIA_NOT_FOUND",
+                        "No existe una estanteria con el codigo indicado"
+                ));
+
+        return trabajadorEstanteriaRepository
+                .findByEstanteriaCodigoIgnoreCaseAndActivaTrueOrderByTrabajadorApellidosAscTrabajadorNombreAsc(estanteria.getCodigo())
+                .stream()
+                .map(asignacion -> toTrabajadorAsignadoEstanteriaResponse(asignacion.getTrabajador()))
+                .toList();
+    }
+
+    @Transactional
+    public TrabajadorAsignadoEstanteriaResponse asignarTrabajadorEstanteria(String codigo, Long trabajadorId) {
+        Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoIgnoreCase(normalizar(codigo))
+                .orElseThrow(() -> ApiException.notFound(
+                        "ESTANTERIA_NOT_FOUND",
+                        "No existe una estanteria con el codigo indicado"
+                ));
+        if (!Boolean.TRUE.equals(estanteria.getActiva())) {
+            throw ApiException.conflict(
+                    "ESTANTERIA_INACTIVA",
+                    "No se puede asignar trabajadores a una estanteria inactiva."
+            );
+        }
+
+        Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "TRABAJADOR_NOT_FOUND",
+                        "No existe el trabajador indicado"
+                ));
+        validarTrabajadorAsignable(estanteria, trabajador);
+
+        Instant ahora = Instant.now();
+        TrabajadorEstanteria asignacion = trabajadorEstanteriaRepository
+                .findByEstanteriaIdAndTrabajadorId(estanteria.getId(), trabajador.getId())
+                .orElseGet(() -> {
+                    TrabajadorEstanteria nueva = new TrabajadorEstanteria();
+                    nueva.setEstanteria(estanteria);
+                    nueva.setTrabajador(trabajador);
+                    nueva.setCreatedAt(ahora);
+                    return nueva;
+                });
+        asignacion.setActiva(true);
+        asignacion.setUpdatedAt(ahora);
+        trabajadorEstanteriaRepository.save(asignacion);
+
+        return toTrabajadorAsignadoEstanteriaResponse(trabajador);
+    }
+
+    @Transactional
+    public TrabajadorAsignadoEstanteriaResponse desasignarTrabajadorEstanteria(String codigo, Long trabajadorId) {
+        Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoIgnoreCase(normalizar(codigo))
+                .orElseThrow(() -> ApiException.notFound(
+                        "ESTANTERIA_NOT_FOUND",
+                        "No existe una estanteria con el codigo indicado"
+                ));
+        TrabajadorEstanteria asignacion = trabajadorEstanteriaRepository
+                .findByEstanteriaIdAndTrabajadorId(estanteria.getId(), trabajadorId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "TRABAJADOR_ESTANTERIA_NOT_FOUND",
+                        "No existe una asignacion activa para ese trabajador y estanteria"
+                ));
+        asignacion.setActiva(false);
+        asignacion.setUpdatedAt(Instant.now());
+        trabajadorEstanteriaRepository.save(asignacion);
+
+        return toTrabajadorAsignadoEstanteriaResponse(asignacion.getTrabajador());
+    }
+
+    private void validarTrabajadorAsignable(Estanteria estanteria, Trabajador trabajador) {
+        if (!Boolean.TRUE.equals(trabajador.getActivo())) {
+            throw ApiException.conflict(
+                    "TRABAJADOR_INACTIVO",
+                    "No se puede asignar un trabajador inactivo."
+            );
+        }
+
+        if (estadoDisponibilidad(trabajador) != EstadoDisponibilidadTrabajador.DISPONIBLE) {
+            throw ApiException.conflict(
+                    "TRABAJADOR_NO_DISPONIBLE",
+                    "No se puede asignar un trabajador no disponible."
+            );
+        }
+
+        Long empresaEstanteriaId = estanteria.getSeccion().getEmpresa().getId();
+        Long empresaTrabajadorId = trabajador.getEmpresa() == null ? null : trabajador.getEmpresa().getId();
+        if (empresaEstanteriaId != null && empresaTrabajadorId != null && !empresaEstanteriaId.equals(empresaTrabajadorId)) {
+            throw ApiException.conflict(
+                    "TRABAJADOR_EMPRESA_DISTINTA",
+                    "El trabajador no pertenece a la misma empresa que la estanteria."
+            );
+        }
     }
 
     @Transactional
@@ -958,6 +1061,24 @@ public class ModeloOperativoService {
                 trabajador.getTipoTrabajador(),
                 seccionEncargado.getResponsablePrincipal()
         );
+    }
+
+    private TrabajadorAsignadoEstanteriaResponse toTrabajadorAsignadoEstanteriaResponse(Trabajador trabajador) {
+        return new TrabajadorAsignadoEstanteriaResponse(
+                trabajador.getId(),
+                trabajador.getNombre(),
+                trabajador.getApellidos(),
+                trabajador.getEmailContacto(),
+                trabajador.getTipoTrabajador(),
+                estadoDisponibilidad(trabajador),
+                trabajador.getActivo()
+        );
+    }
+
+    private EstadoDisponibilidadTrabajador estadoDisponibilidad(Trabajador trabajador) {
+        return trabajador.getEstadoDisponibilidad() == null
+                ? EstadoDisponibilidadTrabajador.DISPONIBLE
+                : trabajador.getEstadoDisponibilidad();
     }
 
     private String normalizar(String valor) {

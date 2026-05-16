@@ -37,6 +37,7 @@ type ProductoResumenResponse = {
   codigoInterno: string | null;
   nombre: string | null;
   descripcion: string | null;
+  activo?: boolean | null;
 };
 
 type TrabajadorActivoResponse = {
@@ -597,7 +598,7 @@ function renderLists(): void {
   if (zoneList) {
     zoneList.innerHTML = "";
     if (zones.length === 0) {
-      zoneList.appendChild(listItem("No hay zonas creadas.", false, () => undefined));
+      zoneList.appendChild(listItem("Este plano todavía no tiene zonas.", false, () => undefined));
     } else {
       zones.forEach((zone) => {
         zoneList.appendChild(listItem(`${zone.seccionNombre} · ${zone.width}x${zone.height}`, selected?.type === "zone" && selected.uid === zone.uid, () => {
@@ -611,7 +612,7 @@ function renderLists(): void {
   if (rackList) {
     rackList.innerHTML = "";
     if (racks.length === 0) {
-      rackList.appendChild(listItem("No hay estanterías colocadas.", false, () => undefined));
+      rackList.appendChild(listItem("Este plano todavía no tiene estanterías colocadas.", false, () => undefined));
     } else {
       racks.forEach((rack) => {
         const estado = rackActivo(rack) ? "Activa" : "Inactiva";
@@ -818,6 +819,30 @@ function productoLabel(producto: ProductoResumenResponse): string {
   return `${codigo}${producto.nombre ?? "Producto sin nombre"}`;
 }
 
+function renderProductoOptions(select: HTMLSelectElement, productoActual?: ProductoResumenResponse | null): void {
+  select.innerHTML = "";
+
+  if (productos.length === 0 && !productoActual?.id) {
+    select.appendChild(option("", "No hay productos activos"));
+    return;
+  }
+
+  productos.forEach((item) => select.appendChild(option(String(item.id), productoLabel(item))));
+
+  if (!productoActual?.id) return;
+
+  const actualId = String(productoActual.id);
+  const existeEnActivos = productos.some((item) => item.id === productoActual.id);
+  if (!existeEnActivos) {
+    const actual = option(actualId, `${productoLabel(productoActual)} · asignado actualmente no disponible`);
+    actual.dataset.currentUnavailable = "true";
+    actual.disabled = true;
+    select.insertBefore(actual, select.firstChild);
+  }
+
+  select.value = actualId;
+}
+
 function responsableLabelForSeccion(seccionId: number): string {
   const responsableId = responsablePrincipalPorSeccionId.get(seccionId);
   if (!responsableId) return "Sin responsable asignado";
@@ -907,11 +932,7 @@ function renderInlineSlots(): void {
     const producto = document.createElement("select");
     producto.dataset.field = "productoId";
     producto.setAttribute("aria-label", `Producto esperado ${index}`);
-    if (productos.length === 0) {
-      producto.appendChild(option("", "No hay productos activos"));
-    } else {
-      productos.forEach((item) => producto.appendChild(option(String(item.id), productoLabel(item))));
-    }
+    renderProductoOptions(producto);
 
     const cantidad = document.createElement("input");
     cantidad.type = "number";
@@ -965,15 +986,7 @@ function renderElementSlots(slots: SlotConfiguradoResponse[]): void {
     const producto = document.createElement("select");
     producto.dataset.field = "productoId";
     producto.setAttribute("aria-label", `Producto esperado ${slot.orden}`);
-    if (productos.length === 0) {
-      producto.appendChild(option("", "No hay productos activos"));
-    } else {
-      productos.forEach((item) => producto.appendChild(option(String(item.id), productoLabel(item))));
-      const productoId = slot.productoEsperado?.id;
-      if (productoId && productos.some((item) => item.id === productoId)) {
-        producto.value = String(productoId);
-      }
-    }
+    renderProductoOptions(producto, slot.productoEsperado);
 
     const cantidad = document.createElement("input");
     cantidad.type = "number";
@@ -1177,21 +1190,37 @@ function buildEstanteriaPayload(): CrearEstanteriaPayload | string {
   };
 }
 
-function buildActualizarEstanteriaPayload(): ActualizarEstanteriaPayload | string {
-  const nombre = textValue(elementName);
-  if (!nombre) return "El nombre de estantería es obligatorio.";
-  if (productos.length === 0) return "No hay productos activos para asignar a los slots.";
-
+function readElementSlotRows(): Array<{ slotId: string; orden: number; productoId: number; cantidadObjetivo: number }> {
   const rows = Array.from(elementSlotsContainer?.querySelectorAll<HTMLElement>(".slot-row") ?? []);
-  if (rows.length === 0) return "La estantería debe tener al menos un slot configurado.";
-
-  const slots = rows.map((row) => {
+  return rows.map((row) => {
     const slotId = row.querySelector<HTMLInputElement>("[data-field='slotId']")?.value.trim() ?? "";
     const orden = Number(row.querySelector<HTMLInputElement>("[data-field='orden']")?.value);
     const productoId = Number(row.querySelector<HTMLSelectElement>("[data-field='productoId']")?.value);
     const cantidadObjetivo = Number(row.querySelector<HTMLInputElement>("[data-field='cantidadObjetivo']")?.value);
-    return { slotId, orden, productoId, cantidadObjetivo, activo: true };
+    return { slotId, orden, productoId, cantidadObjetivo };
   });
+}
+
+function slotsConfigCambiados(config: EstanteriaConfiguracionResponse): boolean {
+  const slots = readElementSlotRows();
+  if (slots.length !== config.slots.length) return true;
+
+  return slots.some((slot, index) => {
+    const actual = config.slots[index];
+    if (!actual) return true;
+    return slot.slotId !== actual.slotId
+      || slot.orden !== actual.orden
+      || slot.productoId !== actual.productoEsperado?.id
+      || slot.cantidadObjetivo !== (actual.cantidadObjetivo ?? 0);
+  });
+}
+
+function buildActualizarEstanteriaPayload(): ActualizarEstanteriaPayload | string {
+  const nombre = textValue(elementName);
+  if (!nombre) return "El nombre de estantería es obligatorio.";
+
+  const slots = readElementSlotRows().map((slot) => ({ ...slot, activo: true }));
+  if (slots.length === 0) return "La estantería debe tener al menos un slot configurado.";
 
   if (slots.some((slot) => !slot.slotId)) return "Todos los slots deben tener identificador.";
   if (slots.some((slot) => !Number.isFinite(slot.orden) || slot.orden <= 0)) return "Todos los slots deben tener orden mayor que cero.";
@@ -1475,7 +1504,26 @@ function applySelectedElement(): void {
     rack.orientacion = elementOrientation?.value === "VERTICAL" ? "VERTICAL" : "HORIZONTAL";
     const nextName = textValue(elementName);
     if (nextName) rack.estanteriaNombre = nextName;
-    void persistirEstanteria(rack);
+
+    const config = rackConfigurations.get(rack.estanteriaCodigo);
+    if (!config) {
+      setInlineStatus(elementEditStatus, "Espera a que se carguen los slots reales de la estantería antes de guardar su configuración.", "error");
+      render();
+      return;
+    }
+
+    const nombreCambiado = nextName !== config.nombre;
+    const descripcionCambiada = nullableText(elementDescription) !== (config.descripcion ?? null);
+    const slotsCambiados = slotsConfigCambiados(config);
+
+    if (nombreCambiado || descripcionCambiada || slotsCambiados) {
+      void persistirEstanteria(rack);
+      return;
+    }
+
+    setStatus("Cambios de layout aplicados. Guarda el plano para persistir posición, tamaño u orientación.", "ok");
+    setInlineStatus(elementEditStatus, "No se enviaron cambios de slots porque la configuración de la estantería no cambió.", "ok");
+    render();
   }
 }
 

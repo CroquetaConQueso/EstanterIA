@@ -295,6 +295,40 @@ select {
   gap: 8px;
 }
 
+.product-image-preview {
+  min-height: 180px;
+  margin-top: 18px;
+  padding: 16px;
+  border: var(--border-heavy);
+  background: repeating-linear-gradient(45deg, rgba(17,17,17,0.08) 0px, rgba(17,17,17,0.08) 8px, transparent 8px, transparent 16px), var(--paper);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.product-image-preview img {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  background: var(--white);
+}
+
+.product-image-error {
+  display: grid;
+  gap: 8px;
+  color: var(--red);
+  text-transform: none;
+}
+
+.product-image-error small {
+  color: var(--muted);
+  font-family: 'Courier New', Courier, monospace;
+  overflow-wrap: anywhere;
+}
+
 .detail-shell {
   padding: 24px;
   align-self: start;
@@ -432,6 +466,14 @@ select {
   background: var(--paper);
   color: var(--black);
   padding: 12px;
+}
+
+.field-help {
+  color: var(--muted);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-transform: none;
 }
 
 .product-form textarea {

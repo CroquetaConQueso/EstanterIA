@@ -8,7 +8,6 @@ public record ProductoCreadoResponse(
         String codigoInterno,
         String nombre,
         String descripcion,
-        String imagenUrl,
         Boolean activo,
         ProveedorResumenResponse proveedor,
         Boolean stockDisponible,

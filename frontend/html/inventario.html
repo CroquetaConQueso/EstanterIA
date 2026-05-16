@@ -109,10 +109,6 @@
             datos temporales de la asignación activa.
           </p>
 
-          <div class="product-image-preview" id="product-image-preview">
-            <strong>Sin imagen de producto</strong>
-          </div>
-
           <div class="detail-block">
             <h3>Resumen</h3>
             <ul id="detalle-inv-resumen"></ul>
@@ -173,15 +169,10 @@
             <textarea id="product-description" rows="3" maxlength="2000" placeholder="Producto lácteo básico"></textarea>
           </label>
 
-          <label>
-            Imagen del producto (opcional)
-            <input id="product-image-url" type="text" maxlength="500" placeholder="/products/arroz.png o https://..." />
-            <span class="field-help">Introduce una URL pública o ruta servida por la aplicación. No se suben archivos en esta versión.</span>
-          </label>
-
           <label class="check-row">
             <input id="product-link-demo-provider" type="checkbox" checked />
-            Vincular a proveedor demo
+            Registrar stock demo para este producto
+            <span class="field-help">Permite mostrar si el producto tiene stock disponible en Inventario, Alertas y Tareas. Si no se activa, el producto puede aparecer como "Sin dato de stock".</span>
           </label>
 
           <label>

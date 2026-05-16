@@ -39,9 +39,6 @@ public class Producto {
     @Column(name = "descripcion", columnDefinition = "text")
     private String descripcion;
 
-    @Column(name = "imagen_url", length = 500)
-    private String imagenUrl;
-
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
 

@@ -81,11 +81,3 @@ Variables principales:
 - Credenciales demo: si hace falta restaurarlas, arrancar temporalmente con `app.demo.seed.reset-passwords=true` y volver a dejarlo en `false`.
 
 No se han cambiado reglas de negocio para generar esta documentacion.
-
-## Imagenes de producto
-
-- Las imagenes de producto se sirven desde `/products/**`.
-- La carpeta fisica esperada es `data/products` en la raiz del proyecto.
-- No hay upload de archivos en esta version: coloca manualmente el archivo, por ejemplo `data/products/prod-arroz.png`.
-- En `Producto.imagenUrl` se debe guardar la ruta publica, por ejemplo `/products/prod-arroz.png`.
-- Tambien se aceptan URLs externas `http://` o `https://`; no se validan ni descargan desde backend.

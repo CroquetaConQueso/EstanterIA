@@ -767,6 +767,32 @@ a {
   padding: 0 14px;
 }
 
+.shelf-actions .shelf-action {
+  border: var(--border-heavy);
+  font-family: inherit;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 4px 4px 0 var(--black);
+}
+
+.shelf-actions .shelf-action.primary {
+  background: var(--red);
+  color: var(--gold);
+  text-shadow: 1px 1px 0 var(--black);
+}
+
+.shelf-actions .shelf-action.gold {
+  background: var(--gold);
+  color: var(--black);
+}
+
+.shelf-actions .shelf-action:hover,
+.shelf-actions .shelf-action:focus-visible {
+  background: var(--black);
+  color: var(--gold);
+}
+
 .summary-table {
   width: 100%;
   border-collapse: collapse;
@@ -792,13 +818,42 @@ a {
   text-transform: none;
 }
 
+.action-label {
+  display: inline-block;
+  padding: 5px 10px;
+  border: var(--border-light);
+  box-shadow: 2px 2px 0 var(--black);
+  font-family: 'Arial Black', Impact, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.action-label.alerta {
+  background: var(--red);
+  color: var(--white);
+}
+
+.action-label.tarea {
+  background: var(--gold);
+  color: var(--black);
+}
+
+.action-label.inspeccion {
+  background: var(--paper);
+  color: var(--black);
+}
+
 .badge-ok,
-.badge-gap {
+.badge-gap,
+.badge-priority {
   display: inline-block;
   padding: 4px 10px;
   border: var(--border-light);
   box-shadow: 2px 2px 0 var(--black);
   font-family: 'Arial Black', Impact, sans-serif;
+  font-weight: 900;
   text-transform: uppercase;
 }
 
@@ -810,6 +865,31 @@ a {
 .badge-gap {
   background: var(--red);
   color: var(--white);
+}
+
+.badge-priority.critica {
+  background: #9f1010;
+  color: var(--white);
+}
+
+.badge-priority.alta {
+  background: #ef5b1a;
+  color: var(--black);
+}
+
+.badge-priority.media {
+  background: var(--gold);
+  color: var(--black);
+}
+
+.badge-priority.baja {
+  background: #d8d0c7;
+  color: var(--black);
+}
+
+.badge-priority.neutra {
+  background: var(--paper);
+  color: var(--black);
 }
 
 /* Footer */

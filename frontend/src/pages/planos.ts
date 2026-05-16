@@ -363,11 +363,19 @@ function renderListaEstanterias(plano: PlanoOperativoResponse): void {
 
     const title = document.createElement("span");
     title.className = "plan-title";
-    title.textContent = `${zona.seccion.nombre} · ${zona.seccion.codigo}`;
+    const zoneName = document.createElement("strong");
+    zoneName.textContent = zona.seccion.nombre;
+    const zoneCode = document.createElement("span");
+    zoneCode.textContent = zona.seccion.codigo;
+    title.append(zoneName, zoneCode);
 
     const meta = document.createElement("span");
     meta.className = "plan-meta";
-    meta.textContent = `Responsable: ${textoResponsables(zona.responsables)} · ${estanterias.length} estanterías · ${totalAlertas(estanterias)} alertas`;
+    const responsible = document.createElement("span");
+    responsible.textContent = `Responsable: ${textoResponsables(zona.responsables)}`;
+    const summary = document.createElement("span");
+    summary.textContent = `${estanterias.length} estanterías · ${totalAlertas(estanterias)} alertas`;
+    meta.append(responsible, summary);
 
     button.append(title, meta);
     item.appendChild(button);
@@ -393,11 +401,21 @@ function renderListaEstanterias(plano: PlanoOperativoResponse): void {
 
         const rackTitle = document.createElement("span");
         rackTitle.className = "plan-title";
-        rackTitle.textContent = `${estanteria.estanteria.codigo} · ${estanteria.estanteria.nombre}`;
+        const rackCode = document.createElement("strong");
+        rackCode.textContent = estanteria.estanteria.codigo;
+        const rackName = document.createElement("span");
+        rackName.textContent = estanteria.estanteria.nombre;
+        rackTitle.append(rackCode, rackName);
 
         const rackMeta = document.createElement("span");
         rackMeta.className = "plan-meta";
-        rackMeta.textContent = `${etiquetaEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual)} · ${estanteria.alertasAbiertas.length === 0 ? "Sin alertas abiertas" : `${estanteria.alertasAbiertas.length} alertas`}`;
+        const visualState = document.createElement("span");
+        visualState.textContent = etiquetaEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual);
+        const alertsState = document.createElement("span");
+        alertsState.textContent = estanteria.alertasAbiertas.length === 0
+          ? "Sin alertas abiertas"
+          : `${estanteria.alertasAbiertas.length} alertas`;
+        rackMeta.append(visualState, alertsState);
 
         rackButton.append(rackTitle, rackMeta);
         rackItem.appendChild(rackButton);

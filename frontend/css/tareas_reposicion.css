@@ -212,6 +212,53 @@ button, input, select {
   min-width: 200px;
 }
 
+.priority-legend {
+  display: grid;
+  gap: 12px;
+  margin: -18px 0 32px;
+  padding: 16px 18px;
+  border: var(--border-heavy);
+  background: var(--paper);
+  box-shadow: var(--shadow-solid);
+}
+
+.priority-legend h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.priority-legend ul {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.priority-legend li {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 10px;
+  border: var(--border-main);
+  background: var(--surface);
+}
+
+.priority-legend .priority-chip {
+  justify-self: start;
+}
+
+.priority-legend strong {
+  font-size: 0.78rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
 /* ==========================================================================
    GRID Y TARJETAS DE TAREA
    ========================================================================== */
@@ -334,6 +381,18 @@ button, input, select {
   color: var(--ink);
   border-width: 2px;
   box-shadow: 2px 2px 0 var(--muted);
+}
+
+@media (max-width: 900px) {
+  .priority-legend ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .priority-legend ul {
+    grid-template-columns: 1fr;
+  }
 }
 
 .task-body {

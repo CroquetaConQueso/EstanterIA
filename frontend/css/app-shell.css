@@ -46,9 +46,13 @@
   flex: 0 0 auto;
   min-height: 64px;
   color: var(--shell-white) !important;
+  font-family: 'Arial Black', Impact, 'Franklin Gothic Heavy', sans-serif !important;
+  font-weight: 900 !important;
   font-size: 1.15rem !important;
   line-height: 1 !important;
   letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
   text-shadow: 2px 2px 0 var(--shell-black) !important;
 }
 
@@ -82,9 +86,13 @@
   min-height: 64px !important;
   padding: 0 12px !important;
   color: var(--shell-white) !important;
+  font-family: 'Arial Black', Impact, 'Franklin Gothic Heavy', sans-serif !important;
+  font-weight: 900 !important;
   font-size: 0.72rem !important;
   line-height: 1 !important;
   letter-spacing: 1.4px !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
   border-right: var(--shell-border-light) !important;
   border-bottom: 0 !important;
   white-space: nowrap !important;
@@ -114,8 +122,12 @@
   color: var(--shell-black) !important;
   border: var(--shell-border-light) !important;
   box-shadow: 3px 3px 0 var(--shell-black) !important;
+  font-family: 'Arial Black', Impact, 'Franklin Gothic Heavy', sans-serif !important;
+  font-weight: 900 !important;
   font-size: 0.82rem !important;
   letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
   white-space: nowrap !important;
 }
 

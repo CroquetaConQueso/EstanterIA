@@ -5,10 +5,15 @@ type ImportMetaWithEnv = ImportMeta & {
 };
 
 const DEFAULT_API_BASE_URL = "http://localhost:8080";
+const CAPTURES_PREFIX = "/captures/";
 
 export function getApiBaseUrl(): string {
   const configured = (import.meta as ImportMetaWithEnv).env?.VITE_API_BASE_URL?.trim();
   return (configured || DEFAULT_API_BASE_URL).replace(/\/+$/, "");
+}
+
+function buildBackendUrl(path: string): string {
+  return `${getApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export function normalizeImageUrl(path: string | null | undefined): string | null {
@@ -23,7 +28,7 @@ export function normalizeImageUrl(path: string | null | undefined): string | nul
 
   normalized = normalized.replace(/\\/g, "/");
 
-  if (normalized.startsWith("./")) {
+  while (normalized.startsWith("./")) {
     normalized = normalized.slice(2);
   }
 
@@ -32,8 +37,13 @@ export function normalizeImageUrl(path: string | null | undefined): string | nul
   }
 
   if (!normalized.startsWith("/")) {
-    normalized = `/captures/${normalized.replace(/^\/+/, "")}`;
+    normalized = `${CAPTURES_PREFIX}${normalized.replace(/^\/+/, "")}`;
   }
 
-  return `${getApiBaseUrl()}${normalized}`;
+  return buildBackendUrl(normalized);
+}
+
+export function imageFallbackText(path: string | null | undefined): string {
+  const trimmed = path?.trim();
+  return trimmed ? `Ruta: ${trimmed}` : "Sin imagen asociada";
 }

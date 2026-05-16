@@ -506,6 +506,8 @@ public class AlertaOperativaService {
                 alerta.getMensaje(),
                 alerta.getCreatedAt(),
                 alerta.getResueltaAt(),
+                alerta.getInspeccion() == null ? null : alerta.getInspeccion().getId(),
+                alerta.getInspeccion() == null ? null : alerta.getInspeccion().getImagenPath(),
                 toSeccionResponse(alerta.getSeccion()),
                 toEstanteriaResumenResponse(alerta.getEstanteria()),
                 toAlertaSlotResponse(alerta.getSlotConfiguracion()),

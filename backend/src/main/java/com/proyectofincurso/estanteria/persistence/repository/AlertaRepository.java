@@ -15,6 +15,7 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
     @Query("""
             select distinct alerta
             from Alerta alerta
+            left join fetch alerta.inspeccion
             left join fetch alerta.seccion
             left join fetch alerta.estanteria
             left join fetch alerta.slotConfiguracion slot
@@ -31,6 +32,7 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
     @Query("""
             select distinct alerta
             from Alerta alerta
+            left join fetch alerta.inspeccion
             left join fetch alerta.seccion
             left join fetch alerta.estanteria
             left join fetch alerta.slotConfiguracion slot
@@ -49,6 +51,7 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
     @Query("""
             select distinct alerta
             from Alerta alerta
+            left join fetch alerta.inspeccion
             left join fetch alerta.estanteria
             left join fetch alerta.slotConfiguracion slot
             left join fetch slot.producto

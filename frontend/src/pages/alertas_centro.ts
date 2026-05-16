@@ -1,5 +1,6 @@
 import { authFetch, isStructuralAdmin } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
+import { imageFallbackText, normalizeImageUrl } from "../lib/image-paths";
 
 requireAuth();
 
@@ -72,6 +73,10 @@ type AlertaResponse = {
   mensaje: string;
   createdAt: string;
   resueltaAt?: string | null;
+  inspeccionId?: number | null;
+  imagenPath?: string | null;
+  imagePath?: string | null;
+  imageUrl?: string | null;
   seccion?: SeccionResponse | null;
   estanteria?: EstanteriaResumenResponse | null;
   slot?: AlertaSlotResponse | null;
@@ -211,6 +216,10 @@ function getDetectadoEsperado(alerta: AlertaResponse): string {
   return `${etiquetaTipo(alerta.tipo)} · ${slot}`;
 }
 
+function getAlertaImagePath(alerta: AlertaResponse): string | null {
+  return alerta.imageUrl ?? alerta.imagenPath ?? alerta.imagePath ?? null;
+}
+
 function getBlobBusqueda(alerta: AlertaResponse): string {
   return [
     alerta.id,
@@ -296,22 +305,58 @@ function addDetailItem(label: string, value: string): void {
   detalle.appendChild(li);
 }
 
+function renderAlertPreview(alerta: AlertaResponse): void {
+  if (!preview) return;
+
+  const imagePath = getAlertaImagePath(alerta);
+  const imageUrl = normalizeImageUrl(imagePath);
+  preview.innerHTML = "";
+  preview.classList.toggle("has-image", Boolean(imageUrl));
+
+  if (!imageUrl) {
+    const placeholder = document.createElement("div");
+    placeholder.className = "image-placeholder";
+    const title = document.createElement("strong");
+    title.textContent = etiquetaTipo(alerta.tipo);
+    const context = document.createElement("span");
+    context.textContent = `${getEstanteria(alerta)} · ${getSlot(alerta)}`;
+    const path = document.createElement("small");
+    path.textContent = imageFallbackText(imagePath);
+    placeholder.append(title, context, path);
+    preview.appendChild(placeholder);
+    return;
+  }
+
+  const img = document.createElement("img");
+  img.className = "alert-image";
+  img.src = imageUrl;
+  img.alt = `Imagen asociada a alerta ${alerta.id}`;
+  img.addEventListener("error", () => {
+    preview.classList.remove("has-image");
+    preview.innerHTML = "";
+    const wrapper = document.createElement("div");
+    wrapper.className = "image-error";
+    const title = document.createElement("strong");
+    title.textContent = "Imagen no disponible";
+    const path = document.createElement("small");
+    path.textContent = imageFallbackText(imagePath);
+    wrapper.append(title, path);
+    preview.appendChild(wrapper);
+  });
+  preview.appendChild(img);
+}
+
 function renderDetail(alerta: AlertaResponse): void {
   if (!detalle) return;
 
   detalle.innerHTML = "";
   setActionStatus();
 
-  if (preview) {
-    preview.innerHTML = `
-      <span>
-        ${etiquetaTipo(alerta.tipo)}<br>
-        ${getEstanteria(alerta)} · ${getSlot(alerta)}
-      </span>
-    `;
-  }
+  renderAlertPreview(alerta);
 
   addDetailItem("ID", String(alerta.id));
+  addDetailItem("Inspeccion", textoSeguro(alerta.inspeccionId, "Sin inspeccion asociada"));
+  addDetailItem("Imagen", getAlertaImagePath(alerta) ?? "Sin imagen asociada");
   addDetailItem("Tipo", etiquetaTipo(alerta.tipo));
   addDetailItem("Prioridad", alerta.prioridad);
   addDetailItem("Estado", etiquetaEstado(alerta.estado));

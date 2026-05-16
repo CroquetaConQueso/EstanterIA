@@ -1,6 +1,6 @@
 import { authFetch } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
-import { normalizeImageUrl } from "../lib/image-paths";
+import { imageFallbackText, normalizeImageUrl } from "../lib/image-paths";
 
 requireAuth();
 
@@ -335,9 +335,14 @@ function renderPhoto(ins: InspeccionResponse) {
     const imageUrl = normalizeImageUrl(imagen);
 
     if (!imageUrl) {
-        const texto = document.createElement("span");
+        const wrapper = document.createElement("div");
+        wrapper.className = "image-error";
+        const texto = document.createElement("strong");
         texto.textContent = "Esta inspección no tiene imagen asociada";
-        photoPlaceholder.appendChild(texto);
+        const path = document.createElement("small");
+        path.textContent = imageFallbackText(imagen);
+        wrapper.append(texto, path);
+        photoPlaceholder.appendChild(wrapper);
         return;
     }
 
@@ -352,7 +357,7 @@ function renderPhoto(ins: InspeccionResponse) {
         const text = document.createElement("strong");
         text.textContent = "Imagen no disponible";
         const path = document.createElement("small");
-        path.textContent = imagen ?? "";
+        path.textContent = imageFallbackText(imagen);
         wrapper.append(text, path);
         photoPlaceholder.appendChild(wrapper);
     });

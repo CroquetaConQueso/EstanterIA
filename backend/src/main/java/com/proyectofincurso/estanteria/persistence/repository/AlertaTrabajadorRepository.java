@@ -16,6 +16,7 @@ public interface AlertaTrabajadorRepository extends JpaRepository<AlertaTrabajad
             select distinct notificacion
             from AlertaTrabajador notificacion
             join fetch notificacion.alerta alerta
+            left join fetch alerta.inspeccion
             left join fetch alerta.seccion
             left join fetch alerta.estanteria
             left join fetch alerta.slotConfiguracion slot
@@ -33,6 +34,7 @@ public interface AlertaTrabajadorRepository extends JpaRepository<AlertaTrabajad
             select notificacion
             from AlertaTrabajador notificacion
             join fetch notificacion.alerta alerta
+            left join fetch alerta.inspeccion
             left join fetch alerta.seccion
             left join fetch alerta.estanteria
             left join fetch alerta.slotConfiguracion slot

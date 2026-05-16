@@ -1,6 +1,6 @@
 import { authFetch } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
-import { normalizeImageUrl } from "../lib/image-paths";
+import { imageFallbackText, normalizeImageUrl } from "../lib/image-paths";
 
 requireAuth();
 
@@ -280,7 +280,7 @@ function setPreview(result: Partial<VisionResponse>): void {
     const text = document.createElement("p");
     text.textContent = "Sin captura reciente";
     const small = document.createElement("small");
-    small.textContent = "No se ha asociado una imagen al resultado actual.";
+    small.textContent = imageFallbackText(imagePath);
     placeholder.append(text, small);
     previewBox.appendChild(placeholder);
     return;
@@ -298,7 +298,7 @@ function setPreview(result: Partial<VisionResponse>): void {
     const text = document.createElement("p");
     text.textContent = "Imagen no disponible";
     const small = document.createElement("small");
-    small.textContent = imagePath;
+    small.textContent = imageFallbackText(imagePath);
     placeholder.append(text, small);
     previewBox.appendChild(placeholder);
   });

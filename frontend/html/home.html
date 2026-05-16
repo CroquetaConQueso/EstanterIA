@@ -18,160 +18,135 @@
               Suite<span class="brand-accent">Tienda</span>
             </span>
           </a>
-                <nav class="nav" aria-label="Principal">
-        <a class="nav-link is-active" aria-current="page" href="home.html">Inicio</a>
-        <a class="nav-link" href="planos.html">Planos</a>
-        <a class="nav-link" href="inspecciones.html">Inspecciones</a>
-        <a class="nav-link" href="inventario.html">Inventario</a>
-        <a class="nav-link" href="alertas_centro.html">Alertas</a>
-        <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
-        <a class="nav-link" href="vision.html">Visión</a>
-      </nav>
+          <nav class="nav" aria-label="Principal">
+            <a class="nav-link is-active" aria-current="page" href="home.html">Inicio</a>
+            <a class="nav-link" href="planos.html">Planos</a>
+            <a class="nav-link" href="inspecciones.html">Inspecciones</a>
+            <a class="nav-link" href="inventario.html">Inventario</a>
+            <a class="nav-link" href="alertas_centro.html">Alertas</a>
+            <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
+            <a class="nav-link" href="vision.html">Vision</a>
+          </nav>
         </div>
         <div class="right">
           <a class="user" href="perfil.html">Mi perfil</a>
         </div>
       </div>
     </header>
+
     <main class="page">
       <header class="page-head">
         <h1>Dashboard operativo</h1>
         <p>
           Lectura ejecutiva del estado actual de EstanterIA: alertas, tareas,
-          estanterías operativas e inspecciones recientes.
+          estanterias operativas e inspecciones recientes.
         </p>
       </header>
 
-      <!-- Resumen operativo -->
-      <section class="slider-section">
-        <div class="slider-head">
+      <section class="dashboard-hero">
+        <article class="alert-banner">
           <div>
-            <h2>Estado operativo actual</h2>
-            <p>
-              Métricas calculadas desde alertas, tareas, inspecciones y modelo operativo real.
-            </p>
+            <span class="banner-kicker">Alertas abiertas</span>
+            <strong id="metric-alertas-abiertas">Cargando...</strong>
           </div>
-          <div class="slider-legend">
-            <span class="legend-dot ok"></span> Sin bloqueo
-            <span class="legend-dot gap"></span> Requiere atenci&oacute;n
-          </div>
-        </div>
+          <dl class="metric-strip">
+            <div>
+              <dt>Tareas pendientes</dt>
+              <dd id="metric-tareas-pendientes">Cargando...</dd>
+            </div>
+            <div>
+              <dt>Tareas en progreso</dt>
+              <dd id="metric-tareas-progreso">Cargando...</dd>
+            </div>
+            <div>
+              <dt>Proximos a caducar</dt>
+              <dd id="metric-caducidades">Cargando...</dd>
+            </div>
+            <div>
+              <dt>Estanterias con accion</dt>
+              <dd id="metric-estanterias-accion">Cargando...</dd>
+            </div>
+          </dl>
+        </article>
 
-        <div class="slider-shell">
-          <button
-            class="slider-btn prev"
-            id="slider-prev"
-            type="button"
-            aria-label="Anterior"
-          >
-            ‹
-          </button>
-
-          <div class="slider-frame">
-            <div class="slider-track" id="slider-track">
-              <article class="slide is-active">
-                <img
-                  src="../img/almacenCentral.jpg"
-                  alt="Resumen de alertas abiertas"
-                />
-                <div class="slide-caption">
-                  <div class="caption-title">Alertas abiertas</div>
-                  <div class="caption-meta" id="metric-alertas-abiertas">Cargando...</div>
-                </div>
-              </article>
-
-              <article class="slide">
-                <img
-                  src="../img/planoTiendaBarrio.jpg"
-                  alt="Resumen de alertas criticas"
-                />
-                <div class="slide-caption">
-                  <div class="caption-title">Tareas pendientes</div>
-                  <div class="caption-meta" id="metric-tareas-pendientes">Cargando...</div>
-                </div>
-              </article>
-
-              <article class="slide">
-                <img
-                  src="../img/planosSupermercado.png"
-                  alt="Resumen de revisiones manuales"
-                />
-                <div class="slide-caption">
-                  <div class="caption-title">Tareas en progreso</div>
-                  <div class="caption-meta" id="metric-tareas-progreso">Cargando...</div>
-                </div>
-              </article>
-
-              <article class="slide">
-                <img
-                  src="../img/planosFerreteria.jpg"
-                  alt="Resumen de caducidades"
-                />
-                <div class="slide-caption">
-                  <div class="caption-title">Próximos a caducar</div>
-                  <div class="caption-meta" id="metric-caducidades">Cargando...</div>
-                </div>
-              </article>
-
-              <article class="slide">
-                <img
-                  src="../img/almacenCentral.jpg"
-                  alt="Resumen de estanterías con acción necesaria"
-                />
-                <div class="slide-caption">
-                  <div class="caption-title">Estanterías con acción necesaria</div>
-                  <div class="caption-meta" id="metric-estanterias-accion">Cargando...</div>
-                </div>
-              </article>
+        <article class="plan-preview-card">
+          <div class="plan-preview-head">
+            <div>
+              <p class="section-kicker">Plano operativo</p>
+              <h2 id="home-plano-nombre">Cargando plano...</h2>
+              <p id="home-plano-codigo">Consultando planos de EMP-DEMO</p>
+            </div>
+            <div class="plan-preview-actions" id="home-plano-nav" aria-label="Navegacion de planos">
+              <button class="icon-btn" id="home-plano-prev" type="button" aria-label="Plano anterior">Anterior</button>
+              <button class="icon-btn" id="home-plano-next" type="button" aria-label="Plano siguiente">Siguiente</button>
             </div>
           </div>
 
-          <button
-            class="slider-btn next"
-            id="slider-next"
-            type="button"
-            aria-label="Siguiente"
-          >
-            ›
-          </button>
-          <div class="slider-dots" id="slider-dots" aria-hidden="true"></div>
-        </div>
+          <div class="plan-preview-shell" id="home-plano-preview" aria-label="Miniatura de plano operativo">
+            <div class="plan-preview-stage" id="home-plano-stage">
+              <span>Cargando plano operativo...</span>
+            </div>
+          </div>
+
+          <div class="plan-preview-footer">
+            <dl class="plan-summary">
+              <div>
+                <dt>Zonas</dt>
+                <dd id="home-plano-zonas">-</dd>
+              </div>
+              <div>
+                <dt>Estanterias</dt>
+                <dd id="home-plano-estanterias">-</dd>
+              </div>
+              <div>
+                <dt>Alertas abiertas</dt>
+                <dd id="home-plano-alertas">-</dd>
+              </div>
+              <div>
+                <dt>Tareas activas</dt>
+                <dd id="home-plano-tareas">-</dd>
+              </div>
+            </dl>
+            <a class="btn primary" id="home-plano-link" href="/html/planos.html">Ir a Planos</a>
+          </div>
+          <p class="plan-preview-status" id="home-plano-status" aria-live="polite"></p>
+        </article>
       </section>
 
-      <!-- Tarjetas principales -->
       <section class="cards">
         <article class="card">
           <h2>Planos y estado visual</h2>
           <p>
-            Consulta la representación operativa de la estantería demo con
-            su último estado visual, slots y alertas asociadas.
+            Consulta el plano operativo seleccionado con su ultimo estado visual,
+            slots y alertas asociadas.
           </p>
           <ul>
-            <li>Lectura espacial de EST-001.</li>
-            <li>Resumen de ocupados, vacíos y anomalías.</li>
-            <li>Acceso directo al plano operativo.</li>
+            <li>Lectura espacial por zonas.</li>
+            <li>Resumen de ocupados, vacios y anomalias.</li>
+            <li>Acceso directo al plano activo.</li>
           </ul>
           <button
             class="btn primary"
-            onclick="window.location.href='planos.html'"
+            id="quick-planos-link"
+            onclick="window.location.href='/html/planos.html'"
           >
             Ir a Planos
           </button>
         </article>
 
         <article class="card">
-          <h2>Últimas inspecciones</h2>
+          <h2>Ultimas inspecciones</h2>
           <p>
-            Revisa el histórico de inspecciones visuales por slots y sus
+            Revisa el historico de inspecciones visuales por slots y sus
             resultados persistidos en backend.
           </p>
           <ul>
             <li>Listado ordenado por fecha.</li>
-            <li>Estado general visual por estantería.</li>
-            <li>Acceso directo al detalle de cada inspección.</li>
+            <li>Estado general visual por estanteria.</li>
+            <li>Acceso directo al detalle de cada inspeccion.</li>
           </ul>
           <button
-            class="btn ghost"
+            class="btn primary"
             onclick="window.location.href='inspecciones.html'"
           >
             Ir a Inspecciones
@@ -181,16 +156,16 @@
         <article class="card">
           <h2>Inventario operativo</h2>
           <p>
-            Consulta la configuración real de slots, productos esperados,
+            Consulta la configuracion real de slots, productos esperados,
             proveedores y asignaciones activas.
           </p>
           <ul>
-            <li>Slots configurados por estantería.</li>
+            <li>Slots configurados por estanteria.</li>
             <li>Producto esperado y proveedor asociado.</li>
             <li>Fechas de caducidad y retirada.</li>
           </ul>
           <button
-            class="btn ghost"
+            class="btn primary"
             onclick="window.location.href='inventario.html'"
           >
             Ir a Inventario
@@ -200,27 +175,26 @@
 
       <section class="shelf-status">
         <div class="summary-head">
-          <h2>Estado de estanterías</h2>
+          <h2>Estado de estanterias</h2>
           <p>
-            Semáforo operativo construido desde alertas abiertas, tareas activas,
-            inspecciones recientes y estanterías configuradas en EMP-DEMO.
+            Semaforo operativo construido desde alertas abiertas, tareas activas,
+            inspecciones recientes y estanterias configuradas en EMP-DEMO.
           </p>
         </div>
         <div class="shelf-grid" id="estado-estanterias">
           <article class="shelf-card neutral">
-            <h3>Cargando estanterías...</h3>
+            <h3>Cargando estanterias...</h3>
             <p>Consultando modelo operativo y actividad reciente.</p>
           </article>
         </div>
       </section>
 
-      <!-- Resumen de estado -->
       <section class="summary">
         <div class="summary-head">
           <h2>Actividad reciente</h2>
           <p>
             Alertas, inspecciones y tareas ordenadas por fecha para orientar
-            la siguiente acción operativa.
+            la siguiente accion operativa.
           </p>
         </div>
 
@@ -230,15 +204,13 @@
               <tr>
                 <th>Tipo</th>
                 <th>Fecha</th>
-                <th>Estantería</th>
+                <th>Estanteria</th>
                 <th>Resumen</th>
                 <th>Contexto</th>
                 <th>Estado</th>
               </tr>
             </thead>
-            <tbody id="tbody-resumen">
-              <!-- Rellenado por JS -->
-            </tbody>
+            <tbody id="tbody-resumen"></tbody>
           </table>
         </div>
       </section>
@@ -251,4 +223,3 @@
     <script type="module" src="/src/pages/home.ts"></script>
   </body>
 </html>
-

@@ -2,11 +2,13 @@
    VARIABLES Y RESET (Brutalismo Corporativo)
    ========================================================================== */
 :root {
-  --paper: #f4f4f0;
+  --paper: #e6dfd7;
   --ink: #111111;
-  --surface: #ffffff;
-  --muted: #666666;
-  --highlight: #e8e8e8;
+  --surface: #f4f0ec;
+  --muted: #555555;
+  --highlight: #fff7e7;
+  --gold: #f9a01b;
+  --white: #f4f0ec;
   
   /* Colores funcionales */
   --alert: #d32f2f;
@@ -36,8 +38,13 @@ body {
   font-family: 'Helvetica Neue', Arial, sans-serif;
   color: var(--ink);
   background-color: var(--paper);
-  background-image: radial-gradient(var(--muted) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(17, 17, 17, 0.025) 0,
+    rgba(17, 17, 17, 0.025) 2px,
+    transparent 2px,
+    transparent 12px
+  );
 }
 
 a {
@@ -218,7 +225,7 @@ button, input, select {
 }
 
 .metric {
-  background: var(--paper);
+  background: var(--white);
   border: var(--border-main);
   padding: 16px 24px;
   display: flex;
@@ -260,7 +267,7 @@ button, input, select {
   gap: 20px;
   padding: 24px;
   background: var(--surface);
-  border: var(--border-main);
+  border: var(--border-heavy);
   box-shadow: var(--shadow-solid);
   margin-bottom: 40px;
   flex-wrap: wrap;
@@ -296,11 +303,11 @@ button, input, select {
   margin: 0 0 20px;
   padding: 16px;
   border: var(--border-heavy);
-  background: var(--danger);
+  background: var(--alert);
   color: var(--surface);
   font-weight: 900;
   text-transform: uppercase;
-  box-shadow: var(--shadow-block);
+  box-shadow: var(--shadow-solid);
 }
 
 .grow {
@@ -327,7 +334,7 @@ button, input, select {
 }
 
 .task-card:hover {
-  transform: translate(-2px, -2px);
+  transform: none;
   box-shadow: var(--shadow-hover);
 }
 
@@ -469,7 +476,7 @@ button, input, select {
   box-shadow: 2px 2px 0 var(--ink);
   flex: 1;
   text-align: center;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: background 0.12s, color 0.12s, transform 0.1s, box-shadow 0.1s;
 }
 
 .btn:active {
@@ -478,12 +485,13 @@ button, input, select {
 }
 
 .btn.primary {
-  background: var(--ink);
-  color: var(--surface);
+  background: var(--alert);
+  color: var(--white);
 }
 
 .btn.primary:hover {
-  background: var(--muted);
+  background: var(--ink);
+  color: var(--gold);
 }
 
 .btn.ghost {
@@ -493,9 +501,9 @@ button, input, select {
 }
 
 .btn.ghost:hover {
-  background: var(--highlight);
+  background: var(--ink);
   border-color: var(--ink);
-  color: var(--ink);
+  color: var(--gold);
 }
 
 .btn.warn {
@@ -504,15 +512,16 @@ button, input, select {
 }
 
 .btn.warn:hover {
-  background: var(--warn);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--gold);
 }
 
 .foot {
   text-align: center;
   padding: 32px;
   border-top: var(--border-heavy);
-  background: var(--surface);
+  background: var(--ink);
+  color: var(--gold);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 2px;

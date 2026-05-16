@@ -25,6 +25,11 @@ public interface InspeccionRepository extends JpaRepository<Inspeccion,Long>{
             select inspeccion
             from Inspeccion inspeccion
             where inspeccion.estanteria.id = :estanteriaId
+              and exists (
+                  select 1
+                  from InspeccionSlotResultado slot
+                  where slot.inspeccion = inspeccion
+              )
             order by coalesce(inspeccion.capturadaEn, inspeccion.createdAt) desc
             """)
     List<Inspeccion> findUltimasConSlotsByEstanteriaId(@Param("estanteriaId") Long estanteriaId,

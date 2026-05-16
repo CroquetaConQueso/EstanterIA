@@ -242,7 +242,6 @@ const homePlanoEstanterias = document.querySelector<HTMLElement>("#home-plano-es
 const homePlanoAlertas = document.querySelector<HTMLElement>("#home-plano-alertas");
 const homePlanoTareas = document.querySelector<HTMLElement>("#home-plano-tareas");
 const homePlanoStatus = document.querySelector<HTMLElement>("#home-plano-status");
-const homePlanoLink = document.querySelector<HTMLAnchorElement>("#home-plano-link");
 const quickPlanosLink = document.querySelector<HTMLButtonElement>("#quick-planos-link");
 
 let planosDisponibles: PlanoResumenResponse[] = [];
@@ -346,7 +345,6 @@ function crearPlanoUrl(codigo: string): string {
 
 function actualizarEnlacesPlano(codigo: string): void {
   const url = crearPlanoUrl(codigo);
-  if (homePlanoLink) homePlanoLink.href = url;
   if (quickPlanosLink) {
     quickPlanosLink.onclick = () => {
       window.location.href = url;
@@ -382,10 +380,6 @@ function renderSinPlanos(): void {
   setTexto(homePlanoTareas, "-");
   setPlanPreviewMessage("No hay planos configurados.");
 
-  if (homePlanoLink) {
-    homePlanoLink.href = "/html/editor.html";
-    homePlanoLink.textContent = "Crear plano";
-  }
   if (quickPlanosLink) {
     quickPlanosLink.onclick = () => {
       window.location.href = "/html/editor.html";
@@ -505,7 +499,6 @@ function renderPlanoOperativo(plano: PlanoOperativoResponse): void {
   setTexto(homePlanoAlertas, String(totalAlertasPlano(plano)));
   setTexto(homePlanoTareas, String(totalTareasPlano(plano)));
   setTexto(homePlanoStatus, "Miniatura operativa solo lectura. Usa los controles para cambiar de plano.");
-  if (homePlanoLink) homePlanoLink.textContent = "Ir a Planos";
   actualizarEnlacesPlano(plano.codigo);
   renderPlanoPreview(plano);
 }

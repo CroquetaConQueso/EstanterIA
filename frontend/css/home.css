@@ -154,6 +154,7 @@ a {
 
 .page {
   max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
   padding: 40px 24px 80px;
   flex: 1;
@@ -196,13 +197,15 @@ a {
 
 .dashboard-hero {
   display: grid;
-  grid-template-columns: minmax(300px, 0.36fr) minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 32px;
+  align-items: stretch;
   margin-bottom: 32px;
 }
 
 .alert-banner,
 .plan-preview-card {
+  min-width: 0;
   border: var(--border-heavy);
   background: var(--white);
   box-shadow: var(--shadow-block);
@@ -211,9 +214,12 @@ a {
 .alert-banner {
   display: grid;
   align-content: start;
-  gap: 18px;
-  min-height: 100%;
-  padding: 22px;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  padding: 18px;
+  overflow: hidden;
   background: var(--red);
   color: var(--white);
   box-shadow: var(--shadow-red);
@@ -227,13 +233,15 @@ a {
   background: var(--black);
   color: var(--gold);
   padding: 7px 10px;
-  font-size: 0.84rem;
+  font-size: clamp(0.72rem, 0.85vw, 0.84rem);
   letter-spacing: 1px;
   margin-bottom: 10px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .banner-kicker {
-  font-size: 0.95rem;
+  font-size: clamp(0.78rem, 1vw, 0.9rem);
   color: var(--white);
   border-color: var(--gold);
 }
@@ -246,32 +254,40 @@ a {
 
 .alert-banner strong {
   display: block;
+  max-width: 100%;
   color: var(--gold);
-  font-size: clamp(2.4rem, 4vw, 4.6rem);
-  line-height: 1;
-  text-shadow: 4px 4px 0 var(--black);
+  font-size: clamp(1.55rem, 2.45vw, 2.5rem);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+  text-shadow: 3px 3px 0 var(--black);
 }
 
 .metric-strip,
 .plan-summary {
   display: grid;
+  width: 100%;
+  min-width: 0;
   gap: 10px;
 }
 
 .metric-strip div,
 .plan-summary div {
+  width: 100%;
+  min-width: 0;
   border: var(--border-light);
   background: var(--white);
   color: var(--black);
-  padding: 10px 12px;
-  box-shadow: 3px 3px 0 var(--black);
+  padding: 9px 10px;
+  overflow-wrap: anywhere;
+  box-shadow: 2px 2px 0 var(--black);
 }
 
 .metric-strip dt,
 .plan-summary dt {
   color: var(--black);
-  font-size: 0.78rem;
+  font-size: clamp(0.68rem, 0.78vw, 0.78rem);
   letter-spacing: 1px;
+  line-height: 1.25;
 }
 
 .metric-strip dd,
@@ -279,7 +295,8 @@ a {
   margin-top: 6px;
   color: var(--black);
   font-family: 'Courier New', Courier, monospace;
-  font-size: 1.12rem;
+  font-size: clamp(0.92rem, 1vw, 1.05rem);
+  line-height: 1.25;
   font-weight: 900;
   text-transform: none;
 }
@@ -301,10 +318,7 @@ a {
 }
 
 .plan-preview-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  align-items: stretch;
+  display: block;
   padding: 0 22px 22px;
 }
 
@@ -496,11 +510,6 @@ a {
 .plan-summary {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   flex: 1;
-}
-
-.plan-preview-footer .btn {
-  flex-shrink: 0;
-  align-self: stretch;
 }
 
 .plan-preview-status {
@@ -890,7 +899,4 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .plan-preview-footer .btn {
-    width: 100%;
-  }
 }

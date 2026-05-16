@@ -1,9 +1,11 @@
 package com.proyectofincurso.estanteria.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Datos editables del perfil del usuario autenticado")
 public record ActualizarPerfilRequest(
         @NotBlank(message = "El nombre de usuario es obligatorio")
         @Size(min = 3, max = 80, message = "El nombre de usuario debe tener entre 3 y 80 caracteres")

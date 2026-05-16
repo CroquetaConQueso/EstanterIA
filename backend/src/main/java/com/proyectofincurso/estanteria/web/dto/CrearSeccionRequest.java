@@ -1,8 +1,10 @@
 package com.proyectofincurso.estanteria.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Payload para crear una seccion operativa")
 public record CrearSeccionRequest(
         @NotBlank(message = "El codigo de empresa es obligatorio")
         @Size(max = 50, message = "El codigo de empresa no puede superar 50 caracteres")

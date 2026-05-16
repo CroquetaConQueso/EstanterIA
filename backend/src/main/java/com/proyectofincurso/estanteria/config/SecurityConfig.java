@@ -52,6 +52,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/login", "/api/registro").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/forgot-password", "/api/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reset-password/validate").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/logout").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/alertas/evaluar-caducidad")
                         .hasAnyRole("ADMIN", "SUPERADMIN")

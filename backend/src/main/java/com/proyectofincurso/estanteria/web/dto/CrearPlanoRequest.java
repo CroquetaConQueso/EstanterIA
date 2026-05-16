@@ -1,5 +1,6 @@
 package com.proyectofincurso.estanteria.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,6 +9,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
+@Schema(description = "Payload para crear un plano 2D persistente")
 public record CrearPlanoRequest(
         @NotBlank(message = "El codigo de empresa es obligatorio")
         @Size(max = 50, message = "El codigo de empresa no puede superar 50 caracteres")

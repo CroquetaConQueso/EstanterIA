@@ -1,10 +1,12 @@
 package com.proyectofincurso.estanteria.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
+@Schema(description = "Solicitud para registrar una inspeccion manual")
 public class InspeccionarRequest {
 
     @NotBlank(message = "El código de estantería es obligatorio")

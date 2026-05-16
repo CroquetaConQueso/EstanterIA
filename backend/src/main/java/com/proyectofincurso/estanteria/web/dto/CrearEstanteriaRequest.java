@@ -1,5 +1,6 @@
 package com.proyectofincurso.estanteria.web.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
+@Schema(description = "Payload para crear una estanteria con slots configurados")
 public record CrearEstanteriaRequest(
         @NotNull(message = "La seccion es obligatoria")
         @Positive(message = "La seccion debe ser valida")

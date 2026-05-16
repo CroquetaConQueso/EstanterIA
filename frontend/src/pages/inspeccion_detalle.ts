@@ -1,5 +1,6 @@
 import { authFetch } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
+import { normalizeImageUrl } from "../lib/image-paths";
 
 requireAuth();
 
@@ -48,6 +49,22 @@ type InspeccionDetalleResponse = {
     resultadoVisual: ResultadoVisualResponse | null;
 };
 
+type SeccionResponse = {
+    id: number;
+    codigo: string;
+    nombre: string;
+};
+
+type EstanteriaResumenResponse = {
+    id: number;
+    codigo: string;
+    nombre: string;
+};
+
+type EstanteriaConSeccion = EstanteriaResumenResponse & {
+    seccion: SeccionResponse;
+};
+
 type ApiErrorResponse = {
     message?: string;
 };
@@ -58,6 +75,10 @@ const imagenEl = document.querySelector<HTMLElement>("#detalle-imagen");
 const resumenEl = document.querySelector<HTMLUListElement>("#detalle-resumen");
 const visualEl = document.querySelector<HTMLUListElement>("#detalle-visual");
 const slotsEl = document.querySelector<HTMLUListElement>("#detalle-slots");
+
+const EMPRESA_CODIGO = "EMP-DEMO";
+
+let estanteriasPorCodigo = new Map<string, EstanteriaConSeccion>();
 
 function setError(msg: string | null) {
     if (!errorEl) return;
@@ -112,6 +133,10 @@ function getImagenPath(inspeccion: InspeccionDetalleResponse): string | null {
     return inspeccion.resultadoVisual?.imagen?.ruta || inspeccion.imagenPath || null;
 }
 
+function getEstanteriaInfo(codigo: string): EstanteriaConSeccion | null {
+    return estanteriasPorCodigo.get(codigo) ?? null;
+}
+
 async function parseErrorResponse(res: Response): Promise<ApiErrorResponse | null> {
     try {
         const text = await res.text();
@@ -128,8 +153,8 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
     return `Error HTTP ${status}`;
 }
 
-async function fetchDetalle(id: string): Promise<InspeccionDetalleResponse> {
-    const res = await authFetch(`/api/inspecciones/${encodeURIComponent(id)}`, {
+async function fetchJson<T>(url: string): Promise<T> {
+    const res = await authFetch(url, {
         method: "GET",
         headers: {
             "Accept": "application/json"
@@ -141,21 +166,57 @@ async function fetchDetalle(id: string): Promise<InspeccionDetalleResponse> {
         throw new Error(getBackendErrorMessage(errorData, res.status));
     }
 
-    return res.json() as Promise<InspeccionDetalleResponse>;
+    return res.json() as Promise<T>;
+}
+
+async function fetchDetalle(id: string): Promise<InspeccionDetalleResponse> {
+    return fetchJson<InspeccionDetalleResponse>(`/api/inspecciones/${encodeURIComponent(id)}`);
+}
+
+async function cargarMapaSeccionesEstanterias(): Promise<void> {
+    const secciones = await fetchJson<SeccionResponse[]>(`/api/empresas/${encodeURIComponent(EMPRESA_CODIGO)}/secciones`);
+    const entries = await Promise.all(
+        secciones.map(async (seccion) => {
+            const estanterias = await fetchJson<EstanteriaResumenResponse[]>(`/api/secciones/${encodeURIComponent(String(seccion.id))}/estanterias`);
+            return estanterias.map((estanteria) => ({ ...estanteria, seccion }));
+        })
+    );
+
+    estanteriasPorCodigo = new Map(
+        entries.flat().map((estanteria) => [estanteria.codigo, estanteria])
+    );
 }
 
 function renderImagen(inspeccion: InspeccionDetalleResponse) {
     if (!imagenEl) return;
 
     const imagen = getImagenPath(inspeccion);
+    const imageUrl = normalizeImageUrl(imagen);
     imagenEl.innerHTML = "";
 
-    const texto = document.createElement("span");
-    texto.textContent = imagen
-        ? `Imagen asociada: ${imagen}`
-        : "Esta inspección no tiene imagen asociada";
+    if (!imageUrl) {
+        const texto = document.createElement("span");
+        texto.textContent = "Esta inspección no tiene imagen asociada";
+        imagenEl.appendChild(texto);
+        return;
+    }
 
-    imagenEl.appendChild(texto);
+    const img = document.createElement("img");
+    img.className = "inspection-image";
+    img.src = imageUrl;
+    img.alt = `Imagen de inspección ${inspeccion.estanteriaCodigo}`;
+    img.addEventListener("error", () => {
+        imagenEl.innerHTML = "";
+        const wrapper = document.createElement("div");
+        wrapper.className = "image-error";
+        const text = document.createElement("strong");
+        text.textContent = "Imagen no disponible";
+        const path = document.createElement("small");
+        path.textContent = imagen ?? "";
+        wrapper.append(text, path);
+        imagenEl.appendChild(wrapper);
+    });
+    imagenEl.appendChild(img);
 }
 
 function renderDetalle(inspeccion: InspeccionDetalleResponse) {
@@ -166,9 +227,11 @@ function renderDetalle(inspeccion: InspeccionDetalleResponse) {
     const resultadoVisual = inspeccion.resultadoVisual;
     const resumen = resultadoVisual?.resumen ?? null;
     const slots = resultadoVisual?.slots ?? [];
+    const info = getEstanteriaInfo(inspeccion.estanteriaCodigo);
 
     addListItem(resumenEl, "ID", String(inspeccion.id));
-    addListItem(resumenEl, "Código de estantería", inspeccion.estanteriaCodigo);
+    addListItem(resumenEl, "Sección", info ? `${info.seccion.codigo} · ${info.seccion.nombre}` : "Sin sección");
+    addListItem(resumenEl, "Estantería", info ? `${info.codigo} · ${info.nombre}` : inspeccion.estanteriaCodigo);
     addListItem(resumenEl, "Estado backend", inspeccion.estado);
     addListItem(resumenEl, "Fecha de creación", formatFecha(inspeccion.createdAt));
     addListItem(resumenEl, "Notas", inspeccion.notas?.trim() ? inspeccion.notas : "Sin notas");
@@ -220,6 +283,7 @@ async function init() {
     try {
         setError(null);
         setEstadoCarga("Cargando detalle de inspección...");
+        await cargarMapaSeccionesEstanterias();
         const detalle = await fetchDetalle(id);
         renderDetalle(detalle);
     } catch (err) {

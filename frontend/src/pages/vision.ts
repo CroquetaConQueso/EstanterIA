@@ -1,5 +1,6 @@
 import { authFetch } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
+import { normalizeImageUrl } from "../lib/image-paths";
 
 requireAuth();
 
@@ -10,6 +11,18 @@ type VisionRequest = {
   modo: VisionModo;
   imagePath: string | null;
   notas: string | null;
+};
+
+type SeccionResponse = {
+  id: number;
+  codigo: string;
+  nombre: string;
+};
+
+type EstanteriaResumenResponse = {
+  id: number;
+  codigo: string;
+  nombre: string;
 };
 
 type ResultadoVisualResponse = {
@@ -52,6 +65,7 @@ type ApiErrorResponse = {
 };
 
 const form = document.querySelector<HTMLFormElement>("#vision-form");
+const seccionSelect = document.querySelector<HTMLSelectElement>("#vision-seccion");
 const estanteriaSelect = document.querySelector<HTMLSelectElement>("#vision-estanteria");
 const modoSelect = document.querySelector<HTMLSelectElement>("#vision-modo");
 const imagePathInput = document.querySelector<HTMLInputElement>("#vision-image-path");
@@ -62,7 +76,9 @@ const errorEl = document.querySelector<HTMLElement>("#vision-error");
 const successEl = document.querySelector<HTMLElement>("#vision-success");
 
 const previewBox = document.querySelector<HTMLElement>("#preview-box");
+const previewSection = document.querySelector<HTMLElement>("#preview-section");
 const previewShelf = document.querySelector<HTMLElement>("#preview-shelf");
+const previewShelfCode = document.querySelector<HTMLElement>("#preview-shelf-code");
 const previewImage = document.querySelector<HTMLElement>("#preview-image");
 
 const resultChip = document.querySelector<HTMLElement>("#result-chip");
@@ -84,6 +100,11 @@ const btnReset = document.querySelector<HTMLButtonElement>("#btn-reset");
 
 const visionStatusText = document.querySelector<HTMLElement>("#vision-status-text");
 const visionStatusChip = document.querySelector<HTMLElement>("#vision-status-chip");
+
+const EMPRESA_CODIGO = "EMP-DEMO";
+
+let secciones: SeccionResponse[] = [];
+let estanteriasActuales: EstanteriaResumenResponse[] = [];
 
 function setError(msg: string | null): void {
   if (!errorEl) return;
@@ -139,6 +160,27 @@ function setOperationalStatus(type: "idle" | "running" | "success" | "critical" 
   }
 }
 
+function setSelectOptions(
+  select: HTMLSelectElement | null,
+  placeholder: string,
+  options: Array<{ value: string; label: string }>
+): void {
+  if (!select) return;
+  select.innerHTML = "";
+
+  const empty = document.createElement("option");
+  empty.value = "";
+  empty.textContent = placeholder;
+  select.appendChild(empty);
+
+  options.forEach((option) => {
+    const el = document.createElement("option");
+    el.value = option.value;
+    el.textContent = option.label;
+    select.appendChild(el);
+  });
+}
+
 function getResumen(resultadoVisual: ResultadoVisualResponse | null | undefined): ResultadoVisualResponse["resumen"] {
   return resultadoVisual?.resumen ?? null;
 }
@@ -149,6 +191,16 @@ function getImagePath(result: Partial<VisionResponse>): string {
 
 function getEstadoGeneral(result: Partial<VisionResponse>): string {
   return getResumen(result.resultadoVisual)?.estadoGeneralVisual || "Sin análisis";
+}
+
+function getSeccionSeleccionada(): SeccionResponse | null {
+  const id = Number(seccionSelect?.value ?? "");
+  return secciones.find((seccion) => seccion.id === id) ?? null;
+}
+
+function getEstanteriaSeleccionada(): EstanteriaResumenResponse | null {
+  const codigo = estanteriaSelect?.value ?? "";
+  return estanteriasActuales.find((estanteria) => estanteria.codigo === codigo) ?? null;
 }
 
 function isResultadoRevisable(result: VisionResponse): boolean {
@@ -188,17 +240,41 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
   return `Error HTTP ${status}`;
 }
 
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await authFetch(url, {
+    method: "GET",
+    headers: { "Accept": "application/json" }
+  });
+
+  if (!res.ok) {
+    const errorData = await parseErrorResponse(res);
+    throw new Error(getBackendErrorMessage(errorData, res.status));
+  }
+
+  return res.json() as Promise<T>;
+}
+
+function updateCurrentSelectionMeta(): void {
+  const seccion = getSeccionSeleccionada();
+  const estanteria = getEstanteriaSeleccionada();
+
+  if (previewSection) previewSection.textContent = seccion ? `${seccion.codigo} · ${seccion.nombre}` : "—";
+  if (previewShelf) previewShelf.textContent = estanteria ? estanteria.nombre : "—";
+  if (previewShelfCode) previewShelfCode.textContent = estanteria?.codigo ?? "—";
+}
+
 function setPreview(result: Partial<VisionResponse>): void {
   const imagePath = getImagePath(result);
+  const imageUrl = normalizeImageUrl(imagePath);
 
-  if (previewShelf) previewShelf.textContent = result.estanteriaCodigo || "—";
+  updateCurrentSelectionMeta();
   if (previewImage) previewImage.textContent = imagePath || "—";
   if (!previewBox) return;
 
   previewBox.innerHTML = "";
-  previewBox.classList.toggle("has-image", Boolean(imagePath));
+  previewBox.classList.toggle("has-image", Boolean(imageUrl));
 
-  if (!imagePath) {
+  if (!imageUrl) {
     const placeholder = document.createElement("div");
     placeholder.className = "preview-placeholder";
     const text = document.createElement("p");
@@ -212,8 +288,20 @@ function setPreview(result: Partial<VisionResponse>): void {
 
   const img = document.createElement("img");
   img.className = "preview-image";
-  img.src = imagePath;
+  img.src = imageUrl;
   img.alt = `Imagen de inspección ${result.estanteriaCodigo ?? ""}`.trim();
+  img.addEventListener("error", () => {
+    previewBox.classList.remove("has-image");
+    previewBox.innerHTML = "";
+    const placeholder = document.createElement("div");
+    placeholder.className = "preview-placeholder";
+    const text = document.createElement("p");
+    text.textContent = "Imagen no disponible";
+    const small = document.createElement("small");
+    small.textContent = imagePath;
+    placeholder.append(text, small);
+    previewBox.appendChild(placeholder);
+  });
   previewBox.appendChild(img);
 }
 
@@ -278,6 +366,7 @@ function updateImagePathState(): void {
 function validateClient(estanteriaCodigo: string, modo: string, imagePath: string, notas: string): Record<string, string> {
   const errors: Record<string, string> = {};
 
+  if (!seccionSelect?.value) errors.seccion = "Debes seleccionar una sección";
   if (!estanteriaCodigo.trim()) errors.estanteriaCodigo = "Debes seleccionar una estantería";
   if (!modo) errors.modo = "Debes seleccionar un modo de ejecución";
   if (modo === "predict-existing" && !imagePath.trim()) errors.imagePath = "Debes indicar la ruta de la imagen";
@@ -318,6 +407,75 @@ async function runVision(payload: VisionRequest): Promise<VisionResponse> {
   return res.json() as Promise<VisionResponse>;
 }
 
+async function cargarSecciones(): Promise<void> {
+  if (!seccionSelect) return;
+
+  try {
+    secciones = await fetchJson<SeccionResponse[]>(`/api/empresas/${encodeURIComponent(EMPRESA_CODIGO)}/secciones`);
+
+    if (secciones.length === 0) {
+      setSelectOptions(seccionSelect, "No hay secciones disponibles", []);
+      seccionSelect.disabled = true;
+      setError("No hay secciones disponibles para ejecutar Vision.");
+      return;
+    }
+
+    setSelectOptions(
+      seccionSelect,
+      "Selecciona una sección",
+      secciones.map((seccion) => ({
+        value: String(seccion.id),
+        label: `${seccion.codigo} · ${seccion.nombre}`
+      }))
+    );
+    seccionSelect.disabled = false;
+  } catch (err) {
+    setSelectOptions(seccionSelect, "No se pudieron cargar secciones", []);
+    seccionSelect.disabled = true;
+    setError(err instanceof Error ? err.message : "No se pudieron cargar las secciones.");
+  }
+}
+
+async function cargarEstanteriasDeSeccion(seccionId: string): Promise<void> {
+  if (!estanteriaSelect) return;
+
+  estanteriasActuales = [];
+  setSelectOptions(estanteriaSelect, "Cargando estanterías...", []);
+  estanteriaSelect.disabled = true;
+  updateCurrentSelectionMeta();
+
+  if (!seccionId) {
+    setSelectOptions(estanteriaSelect, "Selecciona primero una sección", []);
+    return;
+  }
+
+  try {
+    estanteriasActuales = await fetchJson<EstanteriaResumenResponse[]>(`/api/secciones/${encodeURIComponent(seccionId)}/estanterias`);
+
+    if (estanteriasActuales.length === 0) {
+      setSelectOptions(estanteriaSelect, "Esta sección no tiene estanterías", []);
+      setError("La sección seleccionada no tiene estanterías configuradas.");
+      updateCurrentSelectionMeta();
+      return;
+    }
+
+    setSelectOptions(
+      estanteriaSelect,
+      "Selecciona una estantería",
+      estanteriasActuales.map((estanteria) => ({
+        value: estanteria.codigo,
+        label: `${estanteria.codigo} · ${estanteria.nombre}`
+      }))
+    );
+    estanteriaSelect.disabled = false;
+  } catch (err) {
+    setSelectOptions(estanteriaSelect, "No se pudieron cargar estanterías", []);
+    setError(err instanceof Error ? err.message : "No se pudieron cargar las estanterías.");
+  } finally {
+    updateCurrentSelectionMeta();
+  }
+}
+
 function resetView(): void {
   setError(null);
   setSuccess(null);
@@ -329,10 +487,25 @@ function resetView(): void {
   updateImagePathState();
 }
 
+seccionSelect?.addEventListener("change", () => {
+  setError(null);
+  setSuccess(null);
+  void cargarEstanteriasDeSeccion(seccionSelect.value);
+});
+
+estanteriaSelect?.addEventListener("change", () => {
+  setError(null);
+  setSuccess(null);
+  updateCurrentSelectionMeta();
+});
+
 modoSelect?.addEventListener("change", updateImagePathState);
 
 btnReset?.addEventListener("click", () => {
   form?.reset();
+  estanteriasActuales = [];
+  setSelectOptions(estanteriaSelect, "Selecciona primero una sección", []);
+  if (estanteriaSelect) estanteriaSelect.disabled = true;
   resetView();
 });
 
@@ -391,4 +564,7 @@ form?.addEventListener("submit", async (e: SubmitEvent) => {
   }
 });
 
-resetView();
+document.addEventListener("DOMContentLoaded", () => {
+  resetView();
+  void cargarSecciones();
+});

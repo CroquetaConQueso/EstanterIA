@@ -496,3 +496,18 @@ textarea::placeholder {
   background: var(--black);
   border-style: solid;
 }
+
+.preview-box.has-image .preview-image {
+  object-fit: contain;
+}
+
+.image-error,
+.preview-placeholder {
+  display: grid;
+  gap: 10px;
+}
+
+.image-error small,
+.preview-placeholder small {
+  overflow-wrap: anywhere;
+}

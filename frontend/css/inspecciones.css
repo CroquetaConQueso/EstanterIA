@@ -198,7 +198,7 @@ select {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) 460px;
+  grid-template-columns: minmax(0, 1.7fr) 430px;
   gap: 28px;
 }
 
@@ -218,7 +218,7 @@ select {
 
 .table {
   width: 100%;
-  min-width: 980px;
+  min-width: 820px;
   border-collapse: collapse;
 }
 
@@ -243,23 +243,44 @@ select {
 
 .table th,
 .table td {
+  white-space: normal;
+}
+
+.table th:nth-child(1),
+.table td:nth-child(1),
+.table th:nth-child(5),
+.table td:nth-child(5),
+.table th:nth-child(6),
+.table td:nth-child(6) {
   white-space: nowrap;
 }
 
-.table th:nth-child(3),
-.table td:nth-child(3),
-.table th:nth-child(7),
-.table td:nth-child(7) {
-  white-space: normal;
-  min-width: 150px;
-}
-
 .table td:last-child {
-  min-width: 280px;
+  width: 170px;
+  min-width: 170px;
 }
 
 .table tbody tr:hover td {
   background: var(--gold);
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.table tbody tr:focus-visible td {
+  outline: 3px solid var(--red);
+  outline-offset: -3px;
+}
+
+.table tbody tr.is-selected td {
+  background: var(--black);
+  color: var(--gold);
+}
+
+.table tbody tr.is-selected .btn {
+  background: var(--gold);
+  color: var(--black);
 }
 
 .photo-placeholder {
@@ -272,6 +293,27 @@ select {
   padding: 20px;
   margin: 18px 0;
   text-align: center;
+  overflow: hidden;
+}
+
+.inspection-image {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  background: var(--black);
+}
+
+.image-error {
+  display: grid;
+  gap: 10px;
+  text-transform: none;
+}
+
+.image-error small {
+  font-family: 'Courier New', Courier, monospace;
+  color: var(--white);
+  overflow-wrap: anywhere;
 }
 
 .detail-shell {

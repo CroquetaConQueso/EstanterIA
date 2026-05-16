@@ -38,6 +38,7 @@ a {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -161,6 +162,7 @@ textarea {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   border: var(--border-light);
@@ -172,6 +174,7 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
   background: var(--black);
   color: var(--gold);

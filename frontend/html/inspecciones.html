@@ -19,7 +19,7 @@
         </span>
       </a>
 
-            <nav class="nav" aria-label="Principal">
+      <nav class="nav" aria-label="Principal">
         <a class="nav-link" href="home.html">Inicio</a>
         <a class="nav-link" href="planos.html">Planos</a>
         <a class="nav-link is-active" aria-current="page" href="inspecciones.html">Inspecciones</a>
@@ -42,14 +42,21 @@
       <p class="eyebrow">Histórico visual</p>
       <h1>Inspecciones por slots</h1>
       <p>
-        Histórico técnico-operativo de inspecciones visuales, con estado general,
-        vacíos, anomalías, modelo utilizado y acceso al detalle persistido.
+        Histórico técnico-operativo de inspecciones visuales, con filtro por sección,
+        estado general, modelo utilizado y acceso al detalle persistido.
       </p>
     </div>
 
     <div class="filters-inline">
       <label>
-        Buscar por estantería o notas
+        Sección
+        <select id="filtro-seccion">
+          <option value="">Todas</option>
+        </select>
+      </label>
+
+      <label>
+        Buscar
         <input type="text" id="filtro-plano" placeholder="EST-001, notas, estado visual..." />
       </label>
 
@@ -83,7 +90,6 @@
     </div>
   </header>
 
-  <!-- Feedback (lo pinta TS/JS) -->
   <p class="form-error" id="inspecciones-error" role="alert" aria-live="polite" hidden></p>
   <p class="help" id="inspecciones-success" hidden></p>
 
@@ -91,27 +97,24 @@
     <section class="list-shell">
       <h2>Listado de inspecciones</h2>
       <p class="help">
-        Selecciona una inspección para ver el detalle real persistido en backend.
+        Haz click en una fila para actualizar el detalle. Usa “Abrir completo” para la pantalla dedicada.
       </p>
 
       <div class="table-shell">
         <table class="table">
           <thead>
             <tr>
-              <th>Fecha · hora</th>
+              <th>Fecha</th>
+              <th>Sección</th>
               <th>Estantería</th>
               <th>Estado visual</th>
-              <th>Ocupados</th>
-              <th>Vacíos</th>
-              <th>Anomalías</th>
+              <th>Resumen</th>
               <th>Modelo</th>
-              <th>Acciones</th>
+              <th>Acción</th>
             </tr>
           </thead>
 
-          <tbody id="tbody-inspecciones">
-            <!-- Rellenado por /src/pages/inspecciones.ts -->
-          </tbody>
+          <tbody id="tbody-inspecciones"></tbody>
         </table>
       </div>
     </section>
@@ -119,7 +122,7 @@
     <aside class="detail-shell">
       <h2>Detalle de la inspección</h2>
       <p class="help">
-        Al seleccionar una inspección se consultará su detalle real, con resumen visual y slots.
+        El panel se actualiza al seleccionar una fila y consulta el detalle real del backend.
       </p>
 
       <div class="photo-placeholder" id="photo-placeholder">
@@ -143,7 +146,7 @@
 
       <p>
         <a class="btn ghost" id="detalle-completo-link" href="inspeccion_detalle.html" hidden>
-          Abrir detalle completo
+          Abrir completo
         </a>
       </p>
 
@@ -156,7 +159,6 @@
   <small>Suite Tienda · Inspecciones IA · Histórico visual</small>
 </footer>
 
-<!-- Vite + TS -->
 <script type="module" src="/src/pages/inspecciones.ts"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 import { authFetch } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
+import { normalizeImageUrl } from "../lib/image-paths";
 
 requireAuth();
 
@@ -54,6 +55,22 @@ type InspeccionResponse = {
     resultadoVisual?: ResultadoVisualResponse | null;
 };
 
+type SeccionResponse = {
+    id: number;
+    codigo: string;
+    nombre: string;
+};
+
+type EstanteriaResumenResponse = {
+    id: number;
+    codigo: string;
+    nombre: string;
+};
+
+type EstanteriaConSeccion = EstanteriaResumenResponse & {
+    seccion: SeccionResponse;
+};
+
 type ApiErrorResponse = {
     timestamp?: string;
     status?: number;
@@ -64,6 +81,7 @@ type ApiErrorResponse = {
 };
 
 const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-inspecciones");
+const filtroSeccion = document.querySelector<HTMLSelectElement>("#filtro-seccion");
 const filtroPlano = document.querySelector<HTMLInputElement>("#filtro-plano");
 const filtroEstado = document.querySelector<HTMLSelectElement>("#filtro-estado");
 const filtroFechaDesde = document.querySelector<HTMLInputElement>("#filtro-fecha-desde");
@@ -72,7 +90,6 @@ const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar-filtr
 
 const errorEl = document.querySelector<HTMLElement>("#inspecciones-error");
 const successEl = document.querySelector<HTMLElement>("#inspecciones-success");
-const out = document.querySelector<HTMLPreElement>("#out");
 
 const photoPlaceholder = document.querySelector<HTMLElement>("#photo-placeholder");
 const detalleResumen = document.querySelector<HTMLUListElement>("#detalle-resumen");
@@ -82,13 +99,11 @@ const detalleError = document.querySelector<HTMLElement>("#detalle-error");
 const detalleCompletoLink = document.querySelector<HTMLAnchorElement>("#detalle-completo-link");
 
 let inspecciones: InspeccionResponse[] = [];
+let estanteriasPorCodigo = new Map<string, EstanteriaConSeccion>();
+let selectedInspeccionId: number | null = null;
 
 const API_URL = "/api/inspecciones";
-
-function show(obj: unknown) {
-    if (!out) return;
-    out.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
-}
+const EMPRESA_CODIGO = "EMP-DEMO";
 
 function setError(msg: string | null) {
     if (!errorEl) return;
@@ -144,6 +159,27 @@ function addListItem(list: HTMLUListElement | null, label: string, value: string
     list.appendChild(li);
 }
 
+function setSelectOptions(
+    select: HTMLSelectElement | null,
+    placeholder: string,
+    options: Array<{ value: string; label: string }>
+): void {
+    if (!select) return;
+    select.innerHTML = "";
+
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = placeholder;
+    select.appendChild(empty);
+
+    options.forEach((option) => {
+        const el = document.createElement("option");
+        el.value = option.value;
+        el.textContent = option.label;
+        select.appendChild(el);
+    });
+}
+
 function formatFecha(value: string | null | undefined): string {
     if (!value) return "Sin fecha";
 
@@ -189,11 +225,6 @@ function getErrorRangoFechas(): string | null {
     return null;
 }
 
-function formatNullable(value: string | number | null | undefined): string {
-    if (value === null || value === undefined || value === "") return "Sin análisis visual";
-    return String(value);
-}
-
 function formatConfianza(value: number | null | undefined): string {
     if (value === null || value === undefined) return "Sin confianza";
     return `${Math.round(value * 100)}%`;
@@ -223,6 +254,15 @@ function getImagenPath(ins: InspeccionResponse): string | null {
     return ins.resultadoVisual?.imagen?.ruta || ins.imagenPath || null;
 }
 
+function getEstanteriaInfo(codigo: string): EstanteriaConSeccion | null {
+    return estanteriasPorCodigo.get(codigo) ?? null;
+}
+
+function getSeccionLabel(ins: InspeccionResponse): string {
+    const info = getEstanteriaInfo(ins.estanteriaCodigo);
+    return info ? `${info.seccion.codigo} · ${info.seccion.nombre}` : "Sin sección";
+}
+
 async function parseErrorResponse(res: Response): Promise<ApiErrorResponse | null> {
     try {
         const text = await res.text();
@@ -245,12 +285,10 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
     return `Error HTTP ${status}`;
 }
 
-async function fetchInspeccionDetalle(id: number): Promise<InspeccionResponse> {
-    const res = await authFetch(`${API_URL}/${encodeURIComponent(String(id))}`, {
+async function fetchJson<T>(url: string): Promise<T> {
+    const res = await authFetch(url, {
         method: "GET",
-        headers: {
-            "Accept": "application/json"
-        }
+        headers: { "Accept": "application/json" }
     });
 
     if (!res.ok) {
@@ -258,7 +296,34 @@ async function fetchInspeccionDetalle(id: number): Promise<InspeccionResponse> {
         throw new Error(getBackendErrorMessage(errorData, res.status));
     }
 
-    return res.json() as Promise<InspeccionResponse>;
+    return res.json() as Promise<T>;
+}
+
+async function fetchInspeccionDetalle(id: number): Promise<InspeccionResponse> {
+    return fetchJson<InspeccionResponse>(`${API_URL}/${encodeURIComponent(String(id))}`);
+}
+
+async function cargarMapaSeccionesEstanterias(): Promise<void> {
+    const secciones = await fetchJson<SeccionResponse[]>(`/api/empresas/${encodeURIComponent(EMPRESA_CODIGO)}/secciones`);
+    const entries = await Promise.all(
+        secciones.map(async (seccion) => {
+            const estanterias = await fetchJson<EstanteriaResumenResponse[]>(`/api/secciones/${encodeURIComponent(String(seccion.id))}/estanterias`);
+            return estanterias.map((estanteria) => ({ ...estanteria, seccion }));
+        })
+    );
+
+    estanteriasPorCodigo = new Map(
+        entries.flat().map((estanteria) => [estanteria.codigo, estanteria])
+    );
+
+    setSelectOptions(
+        filtroSeccion,
+        "Todas",
+        secciones.map((seccion) => ({
+            value: String(seccion.id),
+            label: `${seccion.codigo} · ${seccion.nombre}`
+        }))
+    );
 }
 
 function renderPhoto(ins: InspeccionResponse) {
@@ -266,13 +331,32 @@ function renderPhoto(ins: InspeccionResponse) {
 
     photoPlaceholder.innerHTML = "";
 
-    const texto = document.createElement("span");
     const imagen = getImagenPath(ins);
-    texto.textContent = imagen
-        ? `Imagen asociada: ${imagen}`
-        : "Esta inspección no tiene imagen asociada";
+    const imageUrl = normalizeImageUrl(imagen);
 
-    photoPlaceholder.appendChild(texto);
+    if (!imageUrl) {
+        const texto = document.createElement("span");
+        texto.textContent = "Esta inspección no tiene imagen asociada";
+        photoPlaceholder.appendChild(texto);
+        return;
+    }
+
+    const img = document.createElement("img");
+    img.className = "inspection-image";
+    img.src = imageUrl;
+    img.alt = `Imagen de inspección ${ins.estanteriaCodigo}`;
+    img.addEventListener("error", () => {
+        photoPlaceholder.innerHTML = "";
+        const wrapper = document.createElement("div");
+        wrapper.className = "image-error";
+        const text = document.createElement("strong");
+        text.textContent = "Imagen no disponible";
+        const path = document.createElement("small");
+        path.textContent = imagen ?? "";
+        wrapper.append(text, path);
+        photoPlaceholder.appendChild(wrapper);
+    });
+    photoPlaceholder.appendChild(img);
 }
 
 function renderDetalle(ins: InspeccionResponse) {
@@ -285,9 +369,11 @@ function renderDetalle(ins: InspeccionResponse) {
     const resumen = getResumenPersistido(ins);
     const resultadoVisual = ins.resultadoVisual ?? null;
     const slots = resultadoVisual?.slots ?? [];
+    const info = getEstanteriaInfo(ins.estanteriaCodigo);
 
     addListItem(detalleResumen, "ID", String(ins.id));
-    addListItem(detalleResumen, "Código de estantería", ins.estanteriaCodigo);
+    addListItem(detalleResumen, "Sección", info ? `${info.seccion.codigo} · ${info.seccion.nombre}` : "Sin sección");
+    addListItem(detalleResumen, "Estantería", info ? `${info.codigo} · ${info.nombre}` : ins.estanteriaCodigo);
     addListItem(detalleResumen, "Estado backend", ins.estado);
     addListItem(detalleResumen, "Fecha de creación", formatFecha(ins.createdAt));
     addListItem(detalleResumen, "Notas", ins.notas?.trim() ? ins.notas : "Sin notas");
@@ -329,11 +415,12 @@ function renderDetalle(ins: InspeccionResponse) {
 
 async function renderDetalleDesdeBackend(id: number) {
     setDetalleError(null);
+    selectedInspeccionId = id;
+    renderTabla();
 
     try {
         const detalle = await fetchInspeccionDetalle(id);
         renderDetalle(detalle);
-        show(detalle);
     } catch (err) {
         setDetalleError(err instanceof Error ? err.message : "No se pudo cargar el detalle");
     }
@@ -342,15 +429,21 @@ async function renderDetalleDesdeBackend(id: number) {
 function getInspeccionesFiltradas(): InspeccionResponse[] {
     const texto = filtroPlano?.value.trim().toLowerCase() ?? "";
     const estado = filtroEstado?.value ?? "";
+    const seccionId = filtroSeccion?.value ?? "";
     const desde = getInicioDia(filtroFechaDesde?.value ?? "");
     const hasta = getFinDia(filtroFechaHasta?.value ?? "");
 
     return inspecciones.filter((ins) => {
         const resumen = getResumenPersistido(ins);
         const fecha = getFechaFiltro(ins);
+        const info = getEstanteriaInfo(ins.estanteriaCodigo);
+        const coincideSeccion = !seccionId || String(info?.seccion.id ?? "") === seccionId;
         const coincideTexto =
             !texto ||
             ins.estanteriaCodigo.toLowerCase().includes(texto) ||
+            (info?.nombre.toLowerCase().includes(texto) ?? false) ||
+            (info?.seccion.nombre.toLowerCase().includes(texto) ?? false) ||
+            (info?.seccion.codigo.toLowerCase().includes(texto) ?? false) ||
             (ins.notas?.toLowerCase().includes(texto) ?? false) ||
             (resumen?.estadoGeneralVisual.toLowerCase().includes(texto) ?? false);
 
@@ -361,7 +454,7 @@ function getInspeccionesFiltradas(): InspeccionResponse[] {
         const coincideDesde = !desde || (fecha !== null && fecha.getTime() >= desde.getTime());
         const coincideHasta = !hasta || (fecha !== null && fecha.getTime() <= hasta.getTime());
 
-        return coincideTexto && coincideEstado && coincideDesde && coincideHasta;
+        return coincideSeccion && coincideTexto && coincideEstado && coincideDesde && coincideHasta;
     });
 }
 
@@ -375,7 +468,7 @@ function renderTabla() {
         setError(errorRango);
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan = 8;
+        td.colSpan = 7;
         td.textContent = "Corrige el rango de fechas para aplicar el filtro";
         tr.appendChild(td);
         tbody.appendChild(tr);
@@ -390,7 +483,7 @@ function renderTabla() {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
 
-        td.colSpan = 8;
+        td.colSpan = 7;
         td.textContent = "No hay inspecciones para mostrar";
         tr.appendChild(td);
         tbody.appendChild(tr);
@@ -399,53 +492,56 @@ function renderTabla() {
 
     lista.forEach((ins) => {
         const resumen = getResumenPersistido(ins);
+        const info = getEstanteriaInfo(ins.estanteriaCodigo);
         const tr = document.createElement("tr");
+        tr.tabIndex = 0;
+        tr.classList.toggle("is-selected", selectedInspeccionId === ins.id);
+        tr.addEventListener("click", () => {
+            void renderDetalleDesdeBackend(ins.id);
+        });
+        tr.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                void renderDetalleDesdeBackend(ins.id);
+            }
+        });
 
         const tdFecha = document.createElement("td");
         tdFecha.textContent = formatFecha(ins.capturadaEn ?? ins.createdAt);
 
+        const tdSeccion = document.createElement("td");
+        tdSeccion.textContent = getSeccionLabel(ins);
+
         const tdEstanteria = document.createElement("td");
-        tdEstanteria.textContent = ins.estanteriaCodigo;
+        tdEstanteria.textContent = info ? `${info.codigo} · ${info.nombre}` : ins.estanteriaCodigo;
 
         const tdEstadoVisual = document.createElement("td");
         tdEstadoVisual.textContent = resumen?.estadoGeneralVisual ?? "Sin análisis visual";
 
-        const tdOcupados = document.createElement("td");
-        tdOcupados.textContent = formatNullable(resumen?.ocupados);
-
-        const tdVacios = document.createElement("td");
-        tdVacios.textContent = formatNullable(resumen?.vacios);
-
-        const tdAnomalias = document.createElement("td");
-        tdAnomalias.textContent = formatNullable(resumen?.anomalias);
+        const tdResumen = document.createElement("td");
+        tdResumen.textContent = resumen
+            ? `O:${resumen.ocupados} · V:${resumen.vacios} · A:${resumen.anomalias}`
+            : "Sin datos";
 
         const tdModelo = document.createElement("td");
         tdModelo.textContent = ins.modeloVersion ?? ins.resultadoVisual?.modeloVersion ?? "Sin modelo";
 
         const tdAcciones = document.createElement("td");
-        const btnDetalle = document.createElement("button");
         const enlaceDetalle = document.createElement("a");
-
-        btnDetalle.type = "button";
-        btnDetalle.className = "btn ghost";
-        btnDetalle.textContent = "Ver detalle";
-        btnDetalle.addEventListener("click", () => {
-            void renderDetalleDesdeBackend(ins.id);
-        });
 
         enlaceDetalle.className = "btn ghost";
         enlaceDetalle.href = `inspeccion_detalle.html?id=${encodeURIComponent(String(ins.id))}`;
         enlaceDetalle.textContent = "Abrir completo";
+        enlaceDetalle.addEventListener("click", (event) => event.stopPropagation());
 
-        tdAcciones.append(btnDetalle, enlaceDetalle);
+        tdAcciones.append(enlaceDetalle);
 
         tr.append(
             tdFecha,
+            tdSeccion,
             tdEstanteria,
             tdEstadoVisual,
-            tdOcupados,
-            tdVacios,
-            tdAnomalias,
+            tdResumen,
             tdModelo,
             tdAcciones
         );
@@ -458,30 +554,14 @@ async function cargarInspecciones() {
     setError(null);
 
     try {
-        const res = await authFetch(API_URL, {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        });
-
-        if (!res.ok) {
-            const errorData = await parseErrorResponse(res);
-            show(errorData ?? { error: "HTTP_ERROR", status: res.status });
-
-            const msg = getBackendErrorMessage(errorData, res.status);
-            setError(msg);
-            return;
-        }
-
-        const data = await res.json() as InspeccionResponse[];
+        await cargarMapaSeccionesEstanterias();
+        const data = await fetchJson<InspeccionResponse[]>(API_URL);
         inspecciones = data;
 
         inspecciones.sort((a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
-        show(inspecciones);
         renderTabla();
 
         const nuevaInspeccionId = sessionStorage.getItem("nuevaInspeccionId");
@@ -502,52 +582,35 @@ async function cargarInspecciones() {
             setDetalleError("No hay detalle disponible porque no existen inspecciones");
         }
 
-    } catch {
-        setError("No se pudo conectar con el servidor.");
-        show({ error: "NETWORK_ERROR" });
+    } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudo conectar con el servidor.");
     }
 }
 
-if (filtroPlano) {
-    filtroPlano.addEventListener("input", () => {
-        setSuccess(null);
-        renderTabla();
-    });
+function onFilterChange() {
+    setSuccess(null);
+    selectedInspeccionId = null;
+    renderTabla();
 }
 
-if (filtroEstado) {
-    filtroEstado.addEventListener("change", () => {
-        setSuccess(null);
-        renderTabla();
-    });
-}
+filtroSeccion?.addEventListener("change", onFilterChange);
+filtroPlano?.addEventListener("input", onFilterChange);
+filtroEstado?.addEventListener("change", onFilterChange);
+filtroFechaDesde?.addEventListener("change", onFilterChange);
+filtroFechaHasta?.addEventListener("change", onFilterChange);
 
-if (filtroFechaDesde) {
-    filtroFechaDesde.addEventListener("change", () => {
-        setSuccess(null);
-        renderTabla();
-    });
-}
+btnLimpiar?.addEventListener("click", () => {
+    if (filtroSeccion) filtroSeccion.value = "";
+    if (filtroPlano) filtroPlano.value = "";
+    if (filtroEstado) filtroEstado.value = "";
+    if (filtroFechaDesde) filtroFechaDesde.value = "";
+    if (filtroFechaHasta) filtroFechaHasta.value = "";
 
-if (filtroFechaHasta) {
-    filtroFechaHasta.addEventListener("change", () => {
-        setSuccess(null);
-        renderTabla();
-    });
-}
-
-if (btnLimpiar) {
-    btnLimpiar.addEventListener("click", () => {
-        if (filtroPlano) filtroPlano.value = "";
-        if (filtroEstado) filtroEstado.value = "";
-        if (filtroFechaDesde) filtroFechaDesde.value = "";
-        if (filtroFechaHasta) filtroFechaHasta.value = "";
-
-        setError(null);
-        setSuccess(null);
-        renderTabla();
-    });
-}
+    setError(null);
+    setSuccess(null);
+    selectedInspeccionId = null;
+    renderTabla();
+});
 
 document.addEventListener("DOMContentLoaded", () => {
     void cargarInspecciones();

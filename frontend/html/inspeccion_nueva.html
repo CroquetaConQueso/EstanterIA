@@ -43,7 +43,7 @@
       <p class="eyebrow">Alta operativa</p>
       <h1>Nueva inspección</h1>
       <p class="page-desc">
-        Crea una inspección manual básica con los campos que persiste el backend.
+        Crea una inspección manual básica seleccionando primero la sección y después la estantería.
         Para captura y clasificación visual por slots, usa el módulo de Visión.
       </p>
     </div>
@@ -62,8 +62,18 @@
       <form id="form-inspeccion-nueva" class="form">
         <div class="fields">
           <div class="field">
-            <label for="insp-estanteria">Código de estantería</label>
-            <input type="text" id="insp-estanteria" name="estanteriaCodigo" placeholder="Ej: EST-001" minlength="5" maxlength="50" required />
+            <label for="insp-seccion">Sección</label>
+            <select id="insp-seccion" name="seccionId" required>
+              <option value="">Cargando secciones...</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="insp-estanteria">Estantería</label>
+            <select id="insp-estanteria" name="estanteriaCodigo" required disabled>
+              <option value="">Selecciona primero una sección</option>
+            </select>
+            <p class="micro" id="insp-estanteria-help">No necesitas escribir códigos manualmente.</p>
           </div>
 
           <div class="field">

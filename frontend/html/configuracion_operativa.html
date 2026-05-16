@@ -74,7 +74,13 @@
       <div class="status" id="seccion-status" role="status">Carga las secciones existentes para evitar duplicados.</div>
 
       <div class="summary-block">
-        <h3>Secciones disponibles</h3>
+        <div class="summary-head">
+          <h3>Secciones disponibles</h3>
+          <label class="toggle-row">
+            <input id="mostrar-secciones-inactivas" type="checkbox" />
+            Mostrar inactivas
+          </label>
+        </div>
         <ul class="entity-list" id="lista-secciones">
           <li>Cargando secciones...</li>
         </ul>
@@ -130,7 +136,16 @@
       <div class="status" id="estanteria-status" role="status">Selecciona una seccion y configura sus huecos.</div>
 
       <div class="summary-block">
-        <h3>Estanterias de la seccion</h3>
+        <div class="summary-head">
+          <div>
+            <h3>Estanterias de la seccion</h3>
+            <p class="micro" id="seccion-gestion-label">Selecciona una seccion.</p>
+          </div>
+          <label class="toggle-row">
+            <input id="mostrar-estanterias-inactivas" type="checkbox" />
+            Mostrar inactivas
+          </label>
+        </div>
         <ul class="entity-list" id="lista-estanterias">
           <li>Selecciona una seccion.</li>
         </ul>

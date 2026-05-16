@@ -57,6 +57,20 @@ public class SeccionController {
         return modeloOperativoService.actualizarSeccion(seccionId, request);
     }
 
+    @PatchMapping(value = "/{seccionId}/desactivar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Desactivar seccion", description = "Requiere ADMIN/SUPERADMIN. Desactiva la seccion sin borrar historico operativo.")
+    public SeccionResponse desactivarSeccion(@PathVariable Long seccionId) {
+        return modeloOperativoService.desactivarSeccion(seccionId);
+    }
+
+    @PatchMapping(value = "/{seccionId}/reactivar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Reactivar seccion", description = "Requiere ADMIN/SUPERADMIN. Reactiva la seccion para nuevas configuraciones.")
+    public SeccionResponse reactivarSeccion(@PathVariable Long seccionId) {
+        return modeloOperativoService.reactivarSeccion(seccionId);
+    }
+
     @PatchMapping(value = "/{seccionId}/responsable-principal", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")

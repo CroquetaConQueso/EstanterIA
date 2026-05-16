@@ -62,6 +62,7 @@ const seccionNombreInput = document.querySelector<HTMLInputElement>("#seccion-no
 const seccionDescripcionInput = document.querySelector<HTMLTextAreaElement>("#seccion-descripcion");
 const seccionStatus = document.querySelector<HTMLElement>("#seccion-status");
 const listaSecciones = document.querySelector<HTMLUListElement>("#lista-secciones");
+const mostrarSeccionesInactivasInput = document.querySelector<HTMLInputElement>("#mostrar-secciones-inactivas");
 
 const formEstanteria = document.querySelector<HTMLFormElement>("#form-estanteria");
 const estanteriaSeccionSelect = document.querySelector<HTMLSelectElement>("#estanteria-seccion");
@@ -74,12 +75,15 @@ const productosStatus = document.querySelector<HTMLElement>("#productos-status")
 const estanteriaStatus = document.querySelector<HTMLElement>("#estanteria-status");
 const listaEstanterias = document.querySelector<HTMLUListElement>("#lista-estanterias");
 const btnCrearEstanteria = document.querySelector<HTMLButtonElement>("#btn-crear-estanteria");
+const mostrarEstanteriasInactivasInput = document.querySelector<HTMLInputElement>("#mostrar-estanterias-inactivas");
+const seccionGestionLabel = document.querySelector<HTMLElement>("#seccion-gestion-label");
 
 let secciones: SeccionResponse[] = [];
 let productos: ProductoResumenResponse[] = [];
 let estanteriasSeccion: EstanteriaResumenResponse[] = [];
 let savingSeccion = false;
 let savingEstanteria = false;
+let seccionGestionId: number | null = null;
 
 function setStatus(element: HTMLElement | null, text: string, kind: "info" | "ok" | "error" = "info"): void {
   if (!element) return;
@@ -113,6 +117,21 @@ function option(value: string, text: string): HTMLOptionElement {
   node.value = value;
   node.textContent = text;
   return node;
+}
+
+function entidadActiva(entidad: { activa: boolean | null }): boolean {
+  return entidad.activa !== false;
+}
+
+function estadoTexto(entidad: { activa: boolean | null }): string {
+  return entidadActiva(entidad) ? "Activa" : "Inactiva";
+}
+
+function badgeEstado(entidad: { activa: boolean | null }): HTMLSpanElement {
+  const badge = document.createElement("span");
+  badge.className = entidadActiva(entidad) ? "state-badge active" : "state-badge inactive";
+  badge.textContent = estadoTexto(entidad);
+  return badge;
 }
 
 function textValue(input: HTMLInputElement | HTMLTextAreaElement | null): string {
@@ -164,31 +183,52 @@ async function fetchJson<T>(url: string, init: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+function selectedManagementSection(): SeccionResponse | null {
+  return secciones.find((seccion) => seccion.id === seccionGestionId) ?? null;
+}
+
+function syncManagementSection(): void {
+  if (seccionGestionId && secciones.some((seccion) => seccion.id === seccionGestionId)) {
+    return;
+  }
+
+  const selectedCreateId = Number(estanteriaSeccionSelect?.value);
+  const selectedCreateSection = Number.isFinite(selectedCreateId)
+    ? secciones.find((seccion) => seccion.id === selectedCreateId)
+    : null;
+  seccionGestionId = selectedCreateSection?.id ?? secciones[0]?.id ?? null;
+}
+
 function renderSecciones(): void {
+  syncManagementSection();
+
   if (listaSecciones) {
     listaSecciones.innerHTML = "";
     if (secciones.length === 0) {
-      listaSecciones.appendChild(li("No hay secciones activas."));
+      listaSecciones.appendChild(li(mostrarSeccionesInactivasInput?.checked
+        ? "No hay secciones registradas."
+        : "No hay secciones activas."));
     } else {
       secciones.forEach((seccion) => {
-        listaSecciones.appendChild(li(`${seccion.codigo} - ${seccion.nombre}`));
+        listaSecciones.appendChild(renderSeccionItem(seccion));
       });
     }
   }
 
   if (!estanteriaSeccionSelect) return;
   const previous = estanteriaSeccionSelect.value;
+  const seccionesActivas = secciones.filter(entidadActiva);
   estanteriaSeccionSelect.innerHTML = "";
 
-  if (secciones.length === 0) {
+  if (seccionesActivas.length === 0) {
     estanteriaSeccionSelect.appendChild(option("", "Crea una seccion primero"));
     return;
   }
 
-  secciones.forEach((seccion) => {
+  seccionesActivas.forEach((seccion) => {
     estanteriaSeccionSelect.appendChild(option(String(seccion.id), `${seccion.nombre} - ${seccion.codigo}`));
   });
-  if (previous && secciones.some((seccion) => String(seccion.id) === previous)) {
+  if (previous && seccionesActivas.some((seccion) => String(seccion.id) === previous)) {
     estanteriaSeccionSelect.value = previous;
   }
 }
@@ -197,24 +237,105 @@ function renderEstanterias(): void {
   if (!listaEstanterias) return;
   listaEstanterias.innerHTML = "";
 
-  if (!estanteriaSeccionSelect?.value) {
+  const seccion = selectedManagementSection();
+  if (seccionGestionLabel) {
+    seccionGestionLabel.textContent = seccion
+      ? `${seccion.codigo} - ${seccion.nombre} (${estadoTexto(seccion)})`
+      : "Selecciona una seccion.";
+  }
+
+  if (!seccion) {
     listaEstanterias.appendChild(li("Selecciona una seccion."));
     return;
   }
 
   if (estanteriasSeccion.length === 0) {
-    listaEstanterias.appendChild(li("La seccion no tiene estanterias activas."));
+    listaEstanterias.appendChild(li(mostrarEstanteriasInactivasInput?.checked
+      ? "La seccion no tiene estanterias registradas."
+      : "La seccion no tiene estanterias activas."));
     return;
   }
 
   estanteriasSeccion.forEach((estanteria) => {
-    listaEstanterias.appendChild(li(`${estanteria.codigo} - ${estanteria.nombre}`));
+    listaEstanterias.appendChild(renderEstanteriaItem(estanteria));
   });
 }
 
 function li(text: string): HTMLLIElement {
   const item = document.createElement("li");
   item.textContent = text;
+  return item;
+}
+
+function renderSeccionItem(seccion: SeccionResponse): HTMLLIElement {
+  const item = document.createElement("li");
+  if (seccion.id === seccionGestionId) item.classList.add("is-selected");
+
+  const main = document.createElement("div");
+  main.className = "entity-main";
+  const title = document.createElement("strong");
+  title.textContent = `${seccion.codigo} - ${seccion.nombre}`;
+  const description = document.createElement("span");
+  description.textContent = seccion.descripcion ?? "Sin descripcion";
+  main.append(title, description);
+
+  const actions = document.createElement("div");
+  actions.className = "entity-actions";
+  actions.appendChild(badgeEstado(seccion));
+
+  const viewButton = document.createElement("button");
+  viewButton.className = "btn compact";
+  viewButton.type = "button";
+  viewButton.textContent = "Ver estanterias";
+  viewButton.addEventListener("click", () => {
+    seccionGestionId = seccion.id;
+    renderSecciones();
+    void cargarEstanteriasDeSeccion();
+  });
+  actions.appendChild(viewButton);
+
+  if (puedeConfigurarEstructura) {
+    const stateButton = document.createElement("button");
+    stateButton.className = entidadActiva(seccion) ? "btn compact danger" : "btn compact";
+    stateButton.type = "button";
+    stateButton.textContent = entidadActiva(seccion) ? "Desactivar seccion" : "Reactivar seccion";
+    stateButton.addEventListener("click", () => {
+      void cambiarEstadoSeccion(seccion, !entidadActiva(seccion));
+    });
+    actions.appendChild(stateButton);
+  }
+
+  item.append(main, actions);
+  return item;
+}
+
+function renderEstanteriaItem(estanteria: EstanteriaResumenResponse): HTMLLIElement {
+  const item = document.createElement("li");
+
+  const main = document.createElement("div");
+  main.className = "entity-main";
+  const title = document.createElement("strong");
+  title.textContent = `${estanteria.codigo} - ${estanteria.nombre}`;
+  const description = document.createElement("span");
+  description.textContent = estanteria.descripcion ?? "Sin descripcion";
+  main.append(title, description);
+
+  const actions = document.createElement("div");
+  actions.className = "entity-actions";
+  actions.appendChild(badgeEstado(estanteria));
+
+  if (puedeConfigurarEstructura) {
+    const stateButton = document.createElement("button");
+    stateButton.className = entidadActiva(estanteria) ? "btn compact danger" : "btn compact";
+    stateButton.type = "button";
+    stateButton.textContent = entidadActiva(estanteria) ? "Desactivar estanteria" : "Reactivar estanteria";
+    stateButton.addEventListener("click", () => {
+      void cambiarEstadoEstanteria(estanteria, !entidadActiva(estanteria));
+    });
+    actions.appendChild(stateButton);
+  }
+
+  item.append(main, actions);
   return item;
 }
 
@@ -287,7 +408,8 @@ function labeled(labelText: string, control: HTMLElement): HTMLElement {
 }
 
 async function cargarSecciones(): Promise<void> {
-  secciones = await fetchJson<SeccionResponse[]>(`/api/empresas/${EMPRESA_CODIGO}/secciones`);
+  const query = mostrarSeccionesInactivasInput?.checked ? "?incluirInactivas=true" : "";
+  secciones = await fetchJson<SeccionResponse[]>(`/api/empresas/${EMPRESA_CODIGO}/secciones${query}`);
   renderSecciones();
   await cargarEstanteriasDeSeccion();
 }
@@ -303,9 +425,10 @@ async function cargarProductos(): Promise<void> {
 }
 
 async function cargarEstanteriasDeSeccion(): Promise<void> {
-  const seccionId = Number(estanteriaSeccionSelect?.value);
-  estanteriasSeccion = Number.isFinite(seccionId) && seccionId > 0
-    ? await fetchJson<EstanteriaResumenResponse[]>(`/api/secciones/${seccionId}/estanterias`)
+  const seccionId = seccionGestionId;
+  const query = mostrarEstanteriasInactivasInput?.checked ? "?incluirInactivas=true" : "";
+  estanteriasSeccion = seccionId && seccionId > 0
+    ? await fetchJson<EstanteriaResumenResponse[]>(`/api/secciones/${seccionId}/estanterias${query}`)
     : [];
   renderEstanterias();
 }
@@ -427,6 +550,82 @@ async function crearEstanteria(event: SubmitEvent): Promise<void> {
   }
 }
 
+async function cambiarEstadoSeccion(seccion: SeccionResponse, activar: boolean): Promise<void> {
+  if (!puedeConfigurarEstructura) {
+    setStatus(seccionStatus, structuralPermissionMessage(), "error");
+    return;
+  }
+
+  if (!activar) {
+    const confirmed = window.confirm(
+      "La seccion dejara de estar disponible para nuevas configuraciones. Se conservara el historico operativo."
+    );
+    if (!confirmed) return;
+  }
+
+  const endpoint = activar ? "reactivar" : "desactivar";
+  setStatus(seccionStatus, activar ? "Reactivando seccion..." : "Desactivando seccion...", "info");
+
+  try {
+    const updated = await fetchJson<SeccionResponse>(`/api/secciones/${encodeURIComponent(String(seccion.id))}/${endpoint}`, {
+      method: "PATCH"
+    });
+    seccionGestionId = updated.id;
+    if (!activar && mostrarSeccionesInactivasInput) {
+      mostrarSeccionesInactivasInput.checked = true;
+    }
+    if (!activar && mostrarEstanteriasInactivasInput) {
+      mostrarEstanteriasInactivasInput.checked = true;
+    }
+    setStatus(
+      seccionStatus,
+      activar
+        ? "Seccion reactivada. Ya esta disponible para nuevas configuraciones."
+        : "Seccion desactivada. Se conserva el historico operativo.",
+      "ok"
+    );
+    await cargarSecciones();
+  } catch (err) {
+    setStatus(seccionStatus, err instanceof Error ? err.message : "No se pudo cambiar el estado de la seccion.", "error");
+  }
+}
+
+async function cambiarEstadoEstanteria(estanteria: EstanteriaResumenResponse, activar: boolean): Promise<void> {
+  if (!puedeConfigurarEstructura) {
+    setStatus(estanteriaStatus, structuralPermissionMessage(), "error");
+    return;
+  }
+
+  if (!activar) {
+    const confirmed = window.confirm(
+      "La estanteria dejara de estar disponible para nuevas inspecciones y configuraciones. Se conservara el historico operativo."
+    );
+    if (!confirmed) return;
+  }
+
+  const endpoint = activar ? "reactivar" : "desactivar";
+  setStatus(estanteriaStatus, activar ? "Reactivando estanteria..." : "Desactivando estanteria...", "info");
+
+  try {
+    await fetchJson(`/api/estanterias/${encodeURIComponent(estanteria.codigo)}/${endpoint}`, {
+      method: "PATCH"
+    });
+    if (!activar && mostrarEstanteriasInactivasInput) {
+      mostrarEstanteriasInactivasInput.checked = true;
+    }
+    setStatus(
+      estanteriaStatus,
+      activar
+        ? "Estanteria reactivada. Ya esta disponible para nuevas operaciones."
+        : "Estanteria desactivada. Se conserva el historico operativo.",
+      "ok"
+    );
+    await cargarEstanteriasDeSeccion();
+  } catch (err) {
+    setStatus(estanteriaStatus, err instanceof Error ? err.message : "No se pudo cambiar el estado de la estanteria.", "error");
+  }
+}
+
 function bindEvents(): void {
   formSeccion?.addEventListener("submit", (event) => {
     void crearSeccion(event);
@@ -435,6 +634,17 @@ function bindEvents(): void {
     void crearEstanteria(event);
   });
   estanteriaSeccionSelect?.addEventListener("change", () => {
+    const selected = Number(estanteriaSeccionSelect.value);
+    if (Number.isFinite(selected) && selected > 0) {
+      seccionGestionId = selected;
+      renderSecciones();
+    }
+    void cargarEstanteriasDeSeccion();
+  });
+  mostrarSeccionesInactivasInput?.addEventListener("change", () => {
+    void cargarSecciones();
+  });
+  mostrarEstanteriasInactivasInput?.addEventListener("change", () => {
     void cargarEstanteriasDeSeccion();
   });
   slotCountInput?.addEventListener("change", renderSlots);

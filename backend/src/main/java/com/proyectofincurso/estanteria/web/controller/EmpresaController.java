@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -32,8 +33,10 @@ public class EmpresaController {
     }
 
     @GetMapping(value = "/{codigoEmpresa}/secciones", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar secciones de empresa", description = "Requiere autenticacion. Devuelve secciones activas de una empresa.")
-    public List<SeccionResponse> obtenerSecciones(@PathVariable String codigoEmpresa) {
-        return modeloOperativoService.obtenerSeccionesDeEmpresa(codigoEmpresa);
+    @Operation(summary = "Listar secciones de empresa", description = "Requiere autenticacion. Por defecto devuelve secciones activas de una empresa.")
+    public List<SeccionResponse> obtenerSecciones(
+            @PathVariable String codigoEmpresa,
+            @RequestParam(name = "incluirInactivas", defaultValue = "false") boolean incluirInactivas) {
+        return modeloOperativoService.obtenerSeccionesDeEmpresa(codigoEmpresa, incluirInactivas);
     }
 }

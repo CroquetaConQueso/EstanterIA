@@ -48,6 +48,20 @@ public class EstanteriaController {
         return modeloOperativoService.actualizarEstanteria(codigo, request);
     }
 
+    @PatchMapping(value = "/{codigo}/desactivar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Desactivar estanteria", description = "Requiere ADMIN/SUPERADMIN. Desactiva la estanteria sin borrar historico operativo.")
+    public EstanteriaConfiguracionResponse desactivarEstanteria(@PathVariable String codigo) {
+        return modeloOperativoService.desactivarEstanteria(codigo);
+    }
+
+    @PatchMapping(value = "/{codigo}/reactivar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Reactivar estanteria", description = "Requiere ADMIN/SUPERADMIN. Vuelve a marcar la estanteria como activa.")
+    public EstanteriaConfiguracionResponse reactivarEstanteria(@PathVariable String codigo) {
+        return modeloOperativoService.reactivarEstanteria(codigo);
+    }
+
     @GetMapping(value = "/{codigo}/configuracion", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Obtener configuracion de estanteria", description = "Requiere autenticacion. Devuelve datos, seccion y slots de una estanteria.")
     public EstanteriaConfiguracionResponse obtenerConfiguracion(@PathVariable String codigo) {

@@ -91,7 +91,7 @@ public class PlanoService {
         plano.setUpdatedAt(ahora);
 
         Plano planoGuardado = planoRepository.save(plano);
-        recrearContenido(planoGuardado, zonas(request.zonas()), estanterias(request.estanterias()), ahora);
+        recrearContenido(planoGuardado, zonas(request.zonas()), estanterias(request.estanterias()), ahora, Set.of());
 
         return toPlanoResponse(planoGuardado);
     }
@@ -108,11 +108,14 @@ public class PlanoService {
         plano.setAlto(request.alto());
         plano.setUpdatedAt(ahora);
 
+        Set<Long> estanteriasYaColocadas = planoEstanteriaLayoutRepository.findByPlanoIdOrderByIdAsc(plano.getId()).stream()
+                .map(layout -> layout.getEstanteria().getId())
+                .collect(Collectors.toSet());
         planoEstanteriaLayoutRepository.deleteByPlanoId(plano.getId());
         planoEstanteriaLayoutRepository.flush();
         planoZonaRepository.deleteByPlanoId(plano.getId());
         planoZonaRepository.flush();
-        recrearContenido(plano, zonas(request.zonas()), estanterias(request.estanterias()), ahora);
+        recrearContenido(plano, zonas(request.zonas()), estanterias(request.estanterias()), ahora, estanteriasYaColocadas);
 
         return toPlanoResponse(plano);
     }
@@ -120,10 +123,11 @@ public class PlanoService {
     private void recrearContenido(Plano plano,
                                   List<PlanoZonaRequest> zonasRequest,
                                   List<PlanoEstanteriaLayoutRequest> estanteriasRequest,
-                                  Instant ahora) {
+                                  Instant ahora,
+                                  Set<Long> estanteriasInactivasPermitidas) {
         Map<Long, Seccion> secciones = cargarYValidarSecciones(plano.getEmpresa(), zonasRequest);
         Map<Long, PlanoZona> zonasPorSeccion = crearZonas(plano, zonasRequest, secciones, ahora);
-        crearLayouts(plano, estanteriasRequest, zonasPorSeccion, ahora);
+        crearLayouts(plano, estanteriasRequest, zonasPorSeccion, ahora, estanteriasInactivasPermitidas);
     }
 
     private Map<Long, Seccion> cargarYValidarSecciones(Empresa empresa, List<PlanoZonaRequest> zonasRequest) {
@@ -196,7 +200,8 @@ public class PlanoService {
     private void crearLayouts(Plano plano,
                               List<PlanoEstanteriaLayoutRequest> estanteriasRequest,
                               Map<Long, PlanoZona> zonasPorSeccion,
-                              Instant ahora) {
+                              Instant ahora,
+                              Set<Long> estanteriasInactivasPermitidas) {
         Set<Long> estanteriasUsadas = new HashSet<>();
         List<PlanoEstanteriaLayout> layouts = new ArrayList<>();
 
@@ -210,11 +215,18 @@ public class PlanoService {
             }
 
             Estanteria estanteria = estanteriaRepository
-                    .findWithSeccionByCodigoAndActivaTrue(normalizar(request.estanteriaCodigo()))
+                    .findWithSeccionByCodigoIgnoreCase(normalizar(request.estanteriaCodigo()))
                     .orElseThrow(() -> ApiException.notFound(
                             "ESTANTERIA_NOT_FOUND",
-                            "No existe una estanteria activa con el codigo indicado"
+                            "No existe una estanteria con el codigo indicado"
                     ));
+
+            if (Boolean.FALSE.equals(estanteria.getActiva()) && !estanteriasInactivasPermitidas.contains(estanteria.getId())) {
+                throw ApiException.notFound(
+                        "ESTANTERIA_NOT_FOUND",
+                        "No existe una estanteria activa con el codigo indicado"
+                );
+            }
 
             if (!estanteriasUsadas.add(estanteria.getId())) {
                 throw ApiException.badRequest(

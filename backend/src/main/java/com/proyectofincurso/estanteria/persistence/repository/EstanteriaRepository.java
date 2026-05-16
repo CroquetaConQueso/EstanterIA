@@ -10,6 +10,8 @@ import java.util.Optional;
 public interface EstanteriaRepository extends JpaRepository<Estanteria, Long> {
     List<Estanteria> findBySeccionIdAndActivaTrueOrderByCodigoAsc(Long seccionId);
 
+    List<Estanteria> findBySeccionIdOrderByCodigoAsc(Long seccionId);
+
     Optional<Estanteria> findByCodigoAndActivaTrue(String codigo);
 
     Optional<Estanteria> findByCodigoIgnoreCase(String codigo);
@@ -20,4 +22,7 @@ public interface EstanteriaRepository extends JpaRepository<Estanteria, Long> {
 
     @EntityGraph(attributePaths = {"seccion", "seccion.empresa"})
     Optional<Estanteria> findWithSeccionByCodigoAndActivaTrue(String codigo);
+
+    @EntityGraph(attributePaths = {"seccion", "seccion.empresa"})
+    Optional<Estanteria> findWithSeccionByCodigoIgnoreCase(String codigo);
 }

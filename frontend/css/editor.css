@@ -503,6 +503,11 @@ textarea {
   outline-offset: 2px;
 }
 
+.rack-node.is-inactive {
+  background: repeating-linear-gradient(135deg, rgba(17, 17, 17, 0.2) 0 8px, rgba(244, 240, 236, 0.35) 8px 16px), var(--muted);
+  color: var(--white);
+}
+
 .zone-node.is-dragging,
 .rack-node.is-dragging {
   cursor: grabbing;
@@ -542,6 +547,18 @@ textarea {
   background: var(--paper);
   color: var(--black);
   box-shadow: 3px 3px 0 var(--black);
+}
+
+.rack-status-actions {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: var(--border-light);
+  background: var(--paper);
+}
+
+.rack-status-actions[hidden] {
+  display: none;
 }
 
 .lists-panel {

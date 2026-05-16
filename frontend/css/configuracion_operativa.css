@@ -166,6 +166,19 @@ textarea {
   color: var(--gold);
 }
 
+.btn.compact {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-width: 2px;
+  box-shadow: 3px 3px 0 var(--black);
+  font-size: 0.72rem;
+}
+
+.btn.danger {
+  background: var(--danger);
+  color: var(--white);
+}
+
 .btn:disabled {
   opacity: 0.65;
   cursor: wait;
@@ -199,6 +212,41 @@ textarea {
   padding-top: 18px;
 }
 
+.summary-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summary-head h3,
+.summary-head p {
+  margin: 0;
+}
+
+.micro {
+  margin-top: 6px;
+  color: var(--muted);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.toggle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  font-family: 'Courier New', Courier, monospace;
+  color: var(--muted);
+  text-transform: none;
+}
+
+.toggle-row input {
+  width: auto;
+}
+
 .entity-list {
   list-style: none;
   display: grid;
@@ -215,6 +263,54 @@ textarea {
   font-family: 'Courier New', Courier, monospace;
   font-weight: 800;
   text-transform: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.entity-list li.is-selected {
+  outline: 3px solid var(--gold);
+}
+
+.entity-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.entity-main span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.entity-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 9px;
+  border: var(--border-light);
+  background: var(--white);
+  color: var(--black);
+  font-size: 0.72rem;
+}
+
+.state-badge.active {
+  background: var(--ok);
+  color: var(--white);
+}
+
+.state-badge.inactive {
+  background: var(--black);
+  color: var(--gold);
 }
 
 .slots-head {
@@ -290,5 +386,15 @@ textarea {
   .field-grid,
   .slot-row {
     grid-template-columns: 1fr;
+  }
+
+  .summary-head,
+  .entity-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .entity-actions {
+    justify-content: flex-start;
   }
 }

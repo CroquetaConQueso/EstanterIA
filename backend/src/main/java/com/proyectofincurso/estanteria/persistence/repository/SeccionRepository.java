@@ -9,6 +9,8 @@ import java.util.Optional;
 public interface SeccionRepository extends JpaRepository<Seccion, Long> {
     List<Seccion> findByEmpresaCodigoAndActivaTrueOrderByNombreAsc(String codigoEmpresa);
 
+    List<Seccion> findByEmpresaCodigoOrderByNombreAsc(String codigoEmpresa);
+
     Optional<Seccion> findByIdAndActivaTrue(Long id);
 
     Optional<Seccion> findByEmpresaIdAndCodigoIgnoreCase(Long empresaId, String codigo);

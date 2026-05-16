@@ -84,6 +84,11 @@ public class ModeloOperativoService {
 
     @Transactional(readOnly = true)
     public List<SeccionResponse> obtenerSeccionesDeEmpresa(String codigoEmpresa) {
+        return obtenerSeccionesDeEmpresa(codigoEmpresa, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SeccionResponse> obtenerSeccionesDeEmpresa(String codigoEmpresa, boolean incluirInactivas) {
         if (empresaRepository.findByCodigoAndActivaTrue(codigoEmpresa).isEmpty()) {
             throw ApiException.notFound(
                     "EMPRESA_NOT_FOUND",
@@ -91,7 +96,11 @@ public class ModeloOperativoService {
             );
         }
 
-        return seccionRepository.findByEmpresaCodigoAndActivaTrueOrderByNombreAsc(codigoEmpresa).stream()
+        List<Seccion> secciones = incluirInactivas
+                ? seccionRepository.findByEmpresaCodigoOrderByNombreAsc(codigoEmpresa)
+                : seccionRepository.findByEmpresaCodigoAndActivaTrueOrderByNombreAsc(codigoEmpresa);
+
+        return secciones.stream()
                 .map(this::toSeccionResponse)
                 .toList();
     }
@@ -151,6 +160,40 @@ public class ModeloOperativoService {
     }
 
     @Transactional
+    public SeccionResponse desactivarSeccion(Long seccionId) {
+        Seccion seccion = seccionRepository.findById(seccionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SECCION_NOT_FOUND",
+                        "No existe una seccion con el identificador indicado"
+                ));
+
+        if (!Boolean.FALSE.equals(seccion.getActiva())) {
+            seccion.setActiva(false);
+            seccion.setUpdatedAt(Instant.now());
+            seccion = seccionRepository.save(seccion);
+        }
+
+        return toSeccionResponse(seccion);
+    }
+
+    @Transactional
+    public SeccionResponse reactivarSeccion(Long seccionId) {
+        Seccion seccion = seccionRepository.findById(seccionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SECCION_NOT_FOUND",
+                        "No existe una seccion con el identificador indicado"
+                ));
+
+        if (!Boolean.TRUE.equals(seccion.getActiva())) {
+            seccion.setActiva(true);
+            seccion.setUpdatedAt(Instant.now());
+            seccion = seccionRepository.save(seccion);
+        }
+
+        return toSeccionResponse(seccion);
+    }
+
+    @Transactional
     public PlanoResponsableResponse asignarResponsablePrincipal(Long seccionId, Long trabajadorId) {
         Seccion seccion = seccionRepository.findByIdAndActivaTrue(seccionId)
                 .orElseThrow(() -> ApiException.notFound(
@@ -201,11 +244,14 @@ public class ModeloOperativoService {
 
     @Transactional(readOnly = true)
     public List<EstanteriaResumenResponse> obtenerEstanteriasDeSeccion(Long seccionId, boolean incluirInactivas) {
-        if (!seccionRepository.existsById(seccionId)) {
-            throw ApiException.notFound(
-                    "SECCION_NOT_FOUND",
-                    "No existe la seccion solicitada"
-            );
+        Seccion seccion = seccionRepository.findById(seccionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SECCION_NOT_FOUND",
+                        "No existe la seccion solicitada"
+                ));
+
+        if (!incluirInactivas && Boolean.FALSE.equals(seccion.getActiva())) {
+            return List.of();
         }
 
         List<Estanteria> estanterias = incluirInactivas

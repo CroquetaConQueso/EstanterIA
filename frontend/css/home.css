@@ -603,6 +603,15 @@ a {
   color: var(--red);
 }
 
+.cards .btn.primary {
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .btn:focus-visible {
   outline: 4px solid var(--black);
   outline-offset: 3px;

@@ -51,11 +51,36 @@ export function buildAuthHeaders(headers: HeadersInit = {}): Headers {
   return result;
 }
 
-export function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
-  return fetch(input, {
+export class AuthSessionExpiredError extends Error {
+  constructor() {
+    super("Sesion caducada o invalida. Redirigiendo a login.");
+    this.name = "AuthSessionExpiredError";
+  }
+}
+
+function redirectToLogin(): never {
+  clearAuthSession();
+  window.location.replace("/html/login.html");
+  throw new AuthSessionExpiredError();
+}
+
+export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const token = getAuthToken();
+
+  if (!token || isTokenExpired(token)) {
+    redirectToLogin();
+  }
+
+  const response = await fetch(input, {
     ...init,
     headers: buildAuthHeaders(init.headers)
   });
+
+  if (response.status === 401) {
+    redirectToLogin();
+  }
+
+  return response;
 }
 
 export function clearAuthSession(): void {

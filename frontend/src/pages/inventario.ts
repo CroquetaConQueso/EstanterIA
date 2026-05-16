@@ -54,6 +54,8 @@ type TrabajadorResumenResponse = {
 
 type AsignacionActivaSlotResponse = {
   id: number;
+  productoProveedorId: number | null;
+  productoAsignado: ProductoResumenResponse | null;
   proveedor: ProveedorResumenResponse | null;
   claveProductoProveedor: string | null;
   stockDisponible: boolean | null;
@@ -105,6 +107,15 @@ type ProductoCreadoResponse = {
   stockMensaje?: string | null;
 };
 
+type ProductoProveedorResumenResponse = {
+  id: number;
+  producto: ProductoResumenResponse | null;
+  proveedor: ProveedorResumenResponse | null;
+  claveProductoProveedor: string | null;
+  stockDisponible: boolean | null;
+  stockMensaje: string | null;
+};
+
 const CODIGO_EMPRESA_DEMO = "EMP-DEMO";
 
 const seccionSelect = document.querySelector<HTMLSelectElement>("#f-seccion");
@@ -131,6 +142,20 @@ const deactivateProductDialog = document.querySelector<HTMLDialogElement>("#deac
 const btnCancelDeactivateProduct = document.querySelector<HTMLButtonElement>("#btn-cancel-deactivate-product");
 const btnConfirmDeactivateProduct = document.querySelector<HTMLButtonElement>("#btn-confirm-deactivate-product");
 const inventoryActionStatus = document.querySelector<HTMLElement>("#inventory-action-status");
+const assignmentActions = document.querySelector<HTMLElement>("#assignment-actions");
+const btnEditAssignment = document.querySelector<HTMLButtonElement>("#btn-edit-assignment");
+const btnRetireAssignment = document.querySelector<HTMLButtonElement>("#btn-retire-assignment");
+const assignmentDialog = document.querySelector<HTMLDialogElement>("#assignment-dialog");
+const assignmentForm = document.querySelector<HTMLFormElement>("#assignment-form");
+const assignmentDialogTitle = document.querySelector<HTMLElement>("#assignment-dialog-title");
+const assignmentDialogHelp = document.querySelector<HTMLElement>("#assignment-dialog-help");
+const btnCloseAssignmentDialog = document.querySelector<HTMLButtonElement>("#btn-close-assignment-dialog");
+const assignmentProductProviderSelect = document.querySelector<HTMLSelectElement>("#assignment-product-provider");
+const assignmentPlacementDateInput = document.querySelector<HTMLInputElement>("#assignment-placement-date");
+const assignmentExpiryDateInput = document.querySelector<HTMLInputElement>("#assignment-expiry-date");
+const assignmentPlannedRemovalDateInput = document.querySelector<HTMLInputElement>("#assignment-planned-removal-date");
+const assignmentFormStatus = document.querySelector<HTMLElement>("#assignment-form-status");
+const btnSaveAssignment = document.querySelector<HTMLButtonElement>("#btn-save-assignment");
 
 const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-inventario");
 const detalleResumen = document.querySelector<HTMLUListElement>("#detalle-inv-resumen");
@@ -140,6 +165,7 @@ const detalleAsignacion = document.querySelector<HTMLUListElement>("#detalle-inv
 let empresa: EmpresaResponse | null = null;
 let secciones: SeccionResponse[] = [];
 let estanterias: EstanteriaResumenResponse[] = [];
+let productoProveedorOpciones: ProductoProveedorResumenResponse[] = [];
 let configuracionActual: EstanteriaConfiguracionResponse | null = null;
 let selectedSlotId: number | null = null;
 let productDialogMode: "create" | "edit" = "create";
@@ -199,6 +225,10 @@ function productoNombre(slot: SlotConfiguradoResponse): string {
   return textoSeguro(slot.productoEsperado?.nombre, "Sin producto esperado");
 }
 
+function productoAsignadoNombre(slot: SlotConfiguradoResponse): string {
+  return textoSeguro(slot.asignacionActiva?.productoAsignado?.nombre, "Sin asignación activa");
+}
+
 function getSelectedSlot(): SlotConfiguradoResponse | null {
   const slots = configuracionActual?.slots ?? [];
   return slots.find((slot) => slot.id === selectedSlotId) ?? slots[0] ?? null;
@@ -216,6 +246,14 @@ function estadoAsignacion(slot: SlotConfiguradoResponse): string {
   return textoSeguro(slot.asignacionActiva?.estadoAsignacion, "Sin asignaci\u00f3n activa");
 }
 
+function productoProveedorLabel(opcion: ProductoProveedorResumenResponse): string {
+  const producto = opcion.producto;
+  const proveedor = opcion.proveedor;
+  const productoCodigo = producto?.codigoInterno ? `${producto.codigoInterno} - ` : "";
+  const proveedorTexto = proveedor?.nombre ?? proveedor?.codigo ?? "Proveedor sin nombre";
+  return `${productoCodigo}${producto?.nombre ?? "Producto sin nombre"} / ${proveedorTexto}`;
+}
+
 function fechasSlot(slot: SlotConfiguradoResponse): string {
   const asignacion = slot.asignacionActiva;
   if (!asignacion) return "Sin fechas de asignaci\u00f3n";
@@ -229,6 +267,8 @@ function blobBusqueda(slot: SlotConfiguradoResponse): string {
     slot.orden,
     slot.productoEsperado?.codigoInterno,
     slot.productoEsperado?.nombre,
+    slot.asignacionActiva?.productoAsignado?.codigoInterno,
+    slot.asignacionActiva?.productoAsignado?.nombre,
     slot.asignacionActiva?.proveedor?.codigo,
     slot.asignacionActiva?.proveedor?.nombre,
     slot.asignacionActiva?.claveProductoProveedor,
@@ -278,6 +318,24 @@ async function fetchJson<T>(url: string): Promise<T> {
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const response = await authFetch(url, {
     method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    const errorData = await parseErrorResponse(response);
+    throw new Error(getBackendErrorMessage(errorData, response.status));
+  }
+
+  return response.json() as Promise<T>;
+}
+
+async function putJson<T>(url: string, body: unknown): Promise<T> {
+  const response = await authFetch(url, {
+    method: "PUT",
     headers: {
       "Accept": "application/json",
       "Content-Type": "application/json"
@@ -347,6 +405,7 @@ function setDetalleMessage(message: string): void {
   clearList(detalleSlots);
   clearList(detalleAsignacion);
   if (productActions) productActions.hidden = true;
+  if (assignmentActions) assignmentActions.hidden = true;
   addListItem(detalleResumen, "Estado", message);
 }
 
@@ -468,7 +527,9 @@ function renderTabla(): void {
     tdProducto.appendChild(productoWrap);
 
     const tdProveedor = document.createElement("td");
-    tdProveedor.textContent = proveedorNombre(slot);
+    tdProveedor.textContent = slot.asignacionActiva
+      ? `${productoAsignadoNombre(slot)} / ${proveedorNombre(slot)}`
+      : "Sin asignación activa";
 
     const tdStock = document.createElement("td");
     const stockChip = document.createElement("span");
@@ -505,6 +566,19 @@ function renderProductActions(slot: SlotConfiguradoResponse | null): void {
   btnReactivateProduct.hidden = productoActivo(producto);
 }
 
+function renderAssignmentActions(slot: SlotConfiguradoResponse | null): void {
+  if (!assignmentActions || !btnEditAssignment || !btnRetireAssignment) return;
+
+  if (!puedeGestionarProductos || !slot?.id) {
+    assignmentActions.hidden = true;
+    return;
+  }
+
+  assignmentActions.hidden = false;
+  btnEditAssignment.textContent = slot.asignacionActiva ? "Editar asignación activa" : "Crear asignación activa";
+  btnRetireAssignment.hidden = !slot.asignacionActiva;
+}
+
 function renderDetalle(slotSeleccionado?: SlotConfiguradoResponse): void {
   const configuracion = configuracionActual;
   if (!configuracion) {
@@ -531,40 +605,38 @@ function renderDetalle(slotSeleccionado?: SlotConfiguradoResponse): void {
 
   if (slots.length === 0) {
     addListItem(detalleSlots, "Slots", "Sin slots configurados");
-  } else {
-    slots.forEach((slot) => {
-      addListItem(
-        detalleSlots,
-        textoSeguro(slot.slotId, "Sin slot"),
-        `${productoNombre(slot)} / objetivo ${textoSeguro(slot.cantidadObjetivo, "no indicado")}`
-      );
-    });
   }
 
   const slot = slotSeleccionado ?? slots[0] ?? null;
   selectedSlotId = slot?.id ?? null;
 
   if (!slot) {
-    addListItem(detalleAsignacion, "Asignaci\u00f3n", "Sin slot seleccionado");
+    addListItem(detalleSlots, "Producto esperado", "Sin slot seleccionado");
+    addListItem(detalleAsignacion, "Asignación activa", "Sin slot seleccionado");
     renderProductActions(null);
+    renderAssignmentActions(null);
     return;
   }
 
-  addListItem(detalleAsignacion, "Slot", `${textoSeguro(slot.slotId, "Sin slot")} / orden ${textoSeguro(slot.orden, "sin orden")}`);
-  addListItem(detalleAsignacion, "Producto esperado", productoNombre(slot));
-  addListItem(detalleAsignacion, "C\u00f3digo interno", textoSeguro(slot.productoEsperado?.codigoInterno));
-  addListItem(detalleAsignacion, "Estado producto", badgeProductoActivo(slot.productoEsperado));
-  addListItem(detalleAsignacion, "Descripci\u00f3n producto", textoSeguro(slot.productoEsperado?.descripcion, "Sin descripci\u00f3n"));
-  addListItem(detalleAsignacion, "Cantidad objetivo", textoSeguro(slot.cantidadObjetivo, "No indicada"));
+  addListItem(detalleSlots, "Slot", `${textoSeguro(slot.slotId, "Sin slot")} / orden ${textoSeguro(slot.orden, "sin orden")}`);
+  addListItem(detalleSlots, "Producto esperado", productoNombre(slot));
+  addListItem(detalleSlots, "Código interno", textoSeguro(slot.productoEsperado?.codigoInterno));
+  addListItem(detalleSlots, "Estado producto", badgeProductoActivo(slot.productoEsperado));
+  addListItem(detalleSlots, "Descripción producto", textoSeguro(slot.productoEsperado?.descripcion, "Sin descripción"));
+  addListItem(detalleSlots, "Cantidad objetivo", textoSeguro(slot.cantidadObjetivo, "No indicada"));
   renderProductActions(slot);
+  renderAssignmentActions(slot);
 
   const asignacion = slot.asignacionActiva;
   if (!asignacion) {
     addListItem(detalleAsignacion, "Asignaci\u00f3n activa", "Sin asignaci\u00f3n activa");
+    addListItem(detalleAsignacion, "Lectura visual", "Las inspecciones visuales no crean asignaciones automáticamente");
     return;
   }
 
   addListItem(detalleAsignacion, "Estado", textoSeguro(asignacion.estadoAsignacion));
+  addListItem(detalleAsignacion, "Producto asignado", productoAsignadoNombre(slot));
+  addListItem(detalleAsignacion, "Código asignado", textoSeguro(asignacion.productoAsignado?.codigoInterno));
   addListItem(detalleAsignacion, "Proveedor", proveedorNombre(slot));
   addListItem(detalleAsignacion, "Clave proveedor", claveProveedor(slot));
   addListItem(detalleAsignacion, "Stock disponible", asignacion.stockMensaje ?? formatStock(asignacion.stockDisponible));
@@ -573,6 +645,139 @@ function renderDetalle(slotSeleccionado?: SlotConfiguradoResponse): void {
   addListItem(detalleAsignacion, "Retirada programada", formatFecha(asignacion.fechaRetiradaProgramada));
   addListItem(detalleAsignacion, "Retirada confirmada", formatFecha(asignacion.fechaRetiradaConfirmada));
   addListItem(detalleAsignacion, "Observaciones", textoSeguro(asignacion.observaciones, "Sin observaciones"));
+}
+
+function setAssignmentFormStatus(message = "", type: "info" | "success" | "error" = "info"): void {
+  if (!assignmentFormStatus) return;
+  assignmentFormStatus.textContent = message;
+  assignmentFormStatus.dataset.type = type;
+}
+
+function renderProductoProveedorOptions(slot: SlotConfiguradoResponse): void {
+  if (!assignmentProductProviderSelect) return;
+
+  assignmentProductProviderSelect.innerHTML = "";
+  const opciones = productoProveedorOpciones;
+
+  if (opciones.length === 0) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No hay proveedor/stock disponible para productos";
+    assignmentProductProviderSelect.appendChild(option);
+    return;
+  }
+
+  opciones.forEach((opcion) => {
+    const option = document.createElement("option");
+    option.value = String(opcion.id);
+    option.textContent = productoProveedorLabel(opcion);
+    assignmentProductProviderSelect.appendChild(option);
+  });
+
+  const actual = slot.asignacionActiva?.productoProveedorId;
+  const esperado = slot.productoEsperado?.id;
+  const defecto = actual
+    ?? opciones.find((opcion) => opcion.producto?.id === esperado)?.id
+    ?? opciones[0]?.id;
+
+  if (defecto) assignmentProductProviderSelect.value = String(defecto);
+}
+
+function abrirDialogoAsignacion(): void {
+  if (!puedeGestionarProductos) {
+    setInventoryActionStatus("Solo un administrador puede gestionar asignaciones.", "error");
+    return;
+  }
+
+  const slot = getSelectedSlot();
+  if (!slot?.id) {
+    setInventoryActionStatus("Selecciona un slot antes de gestionar la asignación.", "error");
+    return;
+  }
+
+  const asignacion = slot.asignacionActiva;
+  if (assignmentDialogTitle) {
+    assignmentDialogTitle.textContent = asignacion ? "Editar asignación activa" : "Crear asignación activa";
+  }
+  if (assignmentDialogHelp) {
+    const hayProveedorEsperado = productoProveedorOpciones.some((opcion) => opcion.producto?.id === slot.productoEsperado?.id);
+    assignmentDialogHelp.textContent = hayProveedorEsperado
+      ? `Producto esperado: ${productoNombre(slot)}. La asignación activa indica qué producto/proveedor está colocado ahora.`
+      : `Producto esperado: ${productoNombre(slot)}. No hay proveedor/stock disponible para este producto; puedes seleccionar otra opción activa si corresponde.`;
+  }
+
+  renderProductoProveedorOptions(slot);
+  if (assignmentPlacementDateInput) assignmentPlacementDateInput.value = asignacion?.fechaColocacion ?? "";
+  if (assignmentExpiryDateInput) assignmentExpiryDateInput.value = asignacion?.fechaCaducidad ?? "";
+  if (assignmentPlannedRemovalDateInput) {
+    assignmentPlannedRemovalDateInput.value = asignacion?.fechaRetiradaProgramada ?? "";
+  }
+  setAssignmentFormStatus();
+  assignmentDialog?.showModal();
+}
+
+function cerrarDialogoAsignacion(): void {
+  assignmentDialog?.close();
+}
+
+async function guardarAsignacionDesdeFormulario(): Promise<void> {
+  if (!puedeGestionarProductos) {
+    setAssignmentFormStatus("Solo un administrador puede gestionar asignaciones.", "error");
+    return;
+  }
+
+  const slot = getSelectedSlot();
+  if (!slot?.id) {
+    setAssignmentFormStatus("Selecciona un slot antes de guardar.", "error");
+    return;
+  }
+
+  const productoProveedorId = Number(assignmentProductProviderSelect?.value);
+  if (!Number.isFinite(productoProveedorId) || productoProveedorId <= 0) {
+    setAssignmentFormStatus("Selecciona un producto/proveedor disponible.", "error");
+    return;
+  }
+
+  const fechaColocacion = assignmentPlacementDateInput?.value || null;
+  const fechaCaducidad = assignmentExpiryDateInput?.value || null;
+  const fechaRetiradaProgramada = assignmentPlannedRemovalDateInput?.value || null;
+
+  setAssignmentFormStatus("Guardando asignación activa...", "info");
+  if (btnSaveAssignment) btnSaveAssignment.disabled = true;
+
+  try {
+    await putJson<SlotConfiguradoResponse>(`/api/slots/${encodeURIComponent(String(slot.id))}/asignacion-activa`, {
+      productoProveedorId,
+      fechaColocacion,
+      fechaCaducidad,
+      fechaRetiradaProgramada
+    });
+    await refrescarConfiguracionManteniendoSlot(slot.id);
+    setInventoryActionStatus("Asignación activa guardada correctamente.", "success");
+    cerrarDialogoAsignacion();
+  } finally {
+    if (btnSaveAssignment) btnSaveAssignment.disabled = false;
+  }
+}
+
+async function retirarAsignacionSeleccionada(): Promise<void> {
+  if (!puedeGestionarProductos) {
+    setInventoryActionStatus("Solo un administrador puede retirar asignaciones.", "error");
+    return;
+  }
+
+  const slot = getSelectedSlot();
+  if (!slot?.id || !slot.asignacionActiva) {
+    setInventoryActionStatus("El slot seleccionado no tiene asignación activa.", "error");
+    return;
+  }
+
+  const confirmed = window.confirm("La asignación activa se marcará como retirada y se conservará el histórico.");
+  if (!confirmed) return;
+
+  await patchJson<SlotConfiguradoResponse>(`/api/slots/${encodeURIComponent(String(slot.id))}/asignacion-activa/retirar`);
+  await refrescarConfiguracionManteniendoSlot(slot.id);
+  setInventoryActionStatus("Asignación retirada. Se conserva el histórico operativo.", "success");
 }
 
 async function cargarConfiguracion(codigoEstanteria: string): Promise<void> {
@@ -596,6 +801,10 @@ async function cargarConfiguracion(codigoEstanteria: string): Promise<void> {
   renderDetalle(configuracionActual.slots[0]);
 }
 
+async function cargarOpcionesProductoProveedor(): Promise<void> {
+  productoProveedorOpciones = await fetchJson<ProductoProveedorResumenResponse[]>("/api/productos-proveedor/activos");
+}
+
 async function refrescarConfiguracionManteniendoSeleccion(productoId?: number): Promise<void> {
   const codigoEstanteria = estanteriaSelect?.value ?? "";
   if (!codigoEstanteria) return;
@@ -607,6 +816,22 @@ async function refrescarConfiguracionManteniendoSeleccion(productoId?: number): 
 
   const slotSeleccionado = configuracionActual.slots.find((slot) => productoId && slot.productoEsperado?.id === productoId)
     ?? configuracionActual.slots.find((slot) => slot.id === slotIdAnterior)
+    ?? configuracionActual.slots[0]
+    ?? null;
+  selectedSlotId = slotSeleccionado?.id ?? null;
+  renderTabla();
+  renderDetalle(slotSeleccionado ?? undefined);
+}
+
+async function refrescarConfiguracionManteniendoSlot(slotId: number): Promise<void> {
+  const codigoEstanteria = estanteriaSelect?.value ?? "";
+  if (!codigoEstanteria) return;
+
+  configuracionActual = await fetchJson<EstanteriaConfiguracionResponse>(
+    `/api/estanterias/${encodeURIComponent(codigoEstanteria)}/configuracion`
+  );
+
+  const slotSeleccionado = configuracionActual.slots.find((slot) => slot.id === slotId)
     ?? configuracionActual.slots[0]
     ?? null;
   selectedSlotId = slotSeleccionado?.id ?? null;
@@ -699,6 +924,7 @@ async function crearProductoDesdeFormulario(): Promise<void> {
 
   const codigoEstanteria = estanteriaSelect?.value ?? "";
   if (codigoEstanteria) {
+    await cargarOpcionesProductoProveedor();
     await cargarConfiguracion(codigoEstanteria);
   }
 
@@ -736,6 +962,7 @@ async function editarProductoDesdeFormulario(): Promise<void> {
   });
 
   setProductFormStatus(`${producto.codigoInterno} actualizado correctamente.`, "success");
+  await cargarOpcionesProductoProveedor();
   await refrescarConfiguracionManteniendoSeleccion(productoActual.id);
 
   window.setTimeout(() => {
@@ -826,6 +1053,7 @@ async function cargarInicial(): Promise<void> {
   try {
     empresa = await fetchJson<EmpresaResponse>(`/api/empresas/${encodeURIComponent(CODIGO_EMPRESA_DEMO)}`);
     secciones = await fetchJson<SeccionResponse[]>(`/api/empresas/${encodeURIComponent(CODIGO_EMPRESA_DEMO)}/secciones`);
+    await cargarOpcionesProductoProveedor();
     renderSecciones();
 
     if (secciones.length === 0) {
@@ -897,6 +1125,20 @@ btnConfirmDeactivateProduct?.addEventListener("click", () => {
     deactivateProductDialog?.close();
     setInventoryActionStatus(err instanceof Error ? err.message : "No se pudo desactivar el producto", "error");
     btnConfirmDeactivateProduct?.removeAttribute("disabled");
+  });
+});
+btnEditAssignment?.addEventListener("click", abrirDialogoAsignacion);
+btnRetireAssignment?.addEventListener("click", () => {
+  void retirarAsignacionSeleccionada().catch((err: unknown) => {
+    setInventoryActionStatus(err instanceof Error ? err.message : "No se pudo retirar la asignación.", "error");
+  });
+});
+btnCloseAssignmentDialog?.addEventListener("click", cerrarDialogoAsignacion);
+assignmentForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  void guardarAsignacionDesdeFormulario().catch((err: unknown) => {
+    setAssignmentFormStatus(err instanceof Error ? err.message : "No se pudo guardar la asignación.", "error");
+    if (btnSaveAssignment) btnSaveAssignment.disabled = false;
   });
 });
 

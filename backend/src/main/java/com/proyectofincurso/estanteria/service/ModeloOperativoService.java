@@ -33,8 +33,10 @@ import com.proyectofincurso.estanteria.web.dto.CrearSeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.EmpresaResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaConfiguracionResponse;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
+import com.proyectofincurso.estanteria.web.dto.GuardarAsignacionActivaSlotRequest;
 import com.proyectofincurso.estanteria.web.dto.PlanoResponsableResponse;
 import com.proyectofincurso.estanteria.web.dto.ProductoCreadoResponse;
+import com.proyectofincurso.estanteria.web.dto.ProductoProveedorResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.ProductoResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.ProveedorResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.SeccionResponse;
@@ -46,6 +48,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.HashSet;
 import java.util.List;
@@ -555,6 +558,128 @@ public class ModeloOperativoService {
     }
 
     @Transactional(readOnly = true)
+    public List<ProductoProveedorResumenResponse> obtenerProductosProveedorActivos() {
+        return productoProveedorRepository.findByActivoTrueOrderByProductoNombreAscProveedorNombreAsc().stream()
+                .filter(productoProveedor -> Boolean.TRUE.equals(productoProveedor.getProducto().getActivo()))
+                .filter(productoProveedor -> Boolean.TRUE.equals(productoProveedor.getProveedor().getActivo()))
+                .map(this::toProductoProveedorResumenResponse)
+                .toList();
+    }
+
+    @Transactional
+    public SlotConfiguradoResponse guardarAsignacionActivaSlot(Long slotConfiguracionId,
+                                                               GuardarAsignacionActivaSlotRequest request) {
+        EstanteriaSlotConfiguracion slot = slotConfiguracionRepository.findById(slotConfiguracionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SLOT_NOT_FOUND",
+                        "No existe el slot indicado"
+                ));
+
+        if (!Boolean.TRUE.equals(slot.getActivo())) {
+            throw ApiException.badRequest(
+                    "SLOT_INACTIVO",
+                    "No se puede asignar producto a un slot inactivo"
+            );
+        }
+
+        ProductoProveedor productoProveedor = productoProveedorRepository.findById(request.productoProveedorId())
+                .orElseThrow(() -> ApiException.notFound(
+                        "PRODUCTO_PROVEEDOR_NOT_FOUND",
+                        "No existe la relacion producto/proveedor indicada"
+                ));
+
+        if (!Boolean.TRUE.equals(productoProveedor.getActivo())
+                || !Boolean.TRUE.equals(productoProveedor.getProducto().getActivo())
+                || !Boolean.TRUE.equals(productoProveedor.getProveedor().getActivo())) {
+            throw ApiException.badRequest(
+                    "PRODUCTO_PROVEEDOR_INACTIVO",
+                    "La relacion producto/proveedor no esta activa"
+            );
+        }
+
+        validarFechasAsignacion(request);
+
+        Instant ahora = Instant.now();
+        AsignacionProductoSlot asignacion = asignacionProductoSlotRepository
+                .findAsignacionActivaDeSlot(slot.getId(), EstadoAsignacionProductoSlot.ACTIVA)
+                .orElseGet(() -> {
+                    AsignacionProductoSlot nueva = new AsignacionProductoSlot();
+                    nueva.setSlotConfiguracion(slot);
+                    nueva.setEstadoAsignacion(EstadoAsignacionProductoSlot.ACTIVA);
+                    nueva.setCreatedAt(ahora);
+                    return nueva;
+                });
+
+        asignacion.setProductoProveedor(productoProveedor);
+        asignacion.setFechaColocacion(request.fechaColocacion());
+        asignacion.setFechaCaducidad(request.fechaCaducidad());
+        asignacion.setFechaRetiradaProgramada(request.fechaRetiradaProgramada());
+        asignacion.setFechaRetiradaConfirmada(null);
+        asignacion.setEstadoAsignacion(EstadoAsignacionProductoSlot.ACTIVA);
+        asignacion.setUpdatedAt(ahora);
+        asignacionProductoSlotRepository.save(asignacion);
+
+        return obtenerSlotConfigurado(slot.getId());
+    }
+
+    @Transactional
+    public SlotConfiguradoResponse retirarAsignacionActivaSlot(Long slotConfiguracionId) {
+        EstanteriaSlotConfiguracion slot = slotConfiguracionRepository.findById(slotConfiguracionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SLOT_NOT_FOUND",
+                        "No existe el slot indicado"
+                ));
+
+        Optional<AsignacionProductoSlot> asignacionActiva = asignacionProductoSlotRepository
+                .findAsignacionActivaDeSlot(slot.getId(), EstadoAsignacionProductoSlot.ACTIVA);
+
+        if (asignacionActiva.isPresent()) {
+            AsignacionProductoSlot asignacion = asignacionActiva.get();
+            asignacion.setEstadoAsignacion(EstadoAsignacionProductoSlot.RETIRADA);
+            asignacion.setFechaRetiradaConfirmada(LocalDate.now());
+            asignacion.setUpdatedAt(Instant.now());
+            asignacionProductoSlotRepository.save(asignacion);
+        }
+
+        return obtenerSlotConfigurado(slot.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public SlotConfiguradoResponse obtenerSlotConfigurado(Long slotConfiguracionId) {
+        EstanteriaSlotConfiguracion slot = slotConfiguracionRepository.findById(slotConfiguracionId)
+                .orElseThrow(() -> ApiException.notFound(
+                        "SLOT_NOT_FOUND",
+                        "No existe el slot indicado"
+                ));
+        AsignacionProductoSlot asignacionActiva = asignacionProductoSlotRepository
+                .findAsignacionActivaDeSlot(slot.getId(), EstadoAsignacionProductoSlot.ACTIVA)
+                .orElse(null);
+        return toSlotConfiguradoResponse(slot, asignacionActiva);
+    }
+
+    private void validarFechasAsignacion(GuardarAsignacionActivaSlotRequest request) {
+        LocalDate fechaColocacion = request.fechaColocacion();
+        LocalDate fechaCaducidad = request.fechaCaducidad();
+        LocalDate fechaRetiradaProgramada = request.fechaRetiradaProgramada();
+
+        if (fechaColocacion != null && fechaCaducidad != null && fechaCaducidad.isBefore(fechaColocacion)) {
+            throw ApiException.badRequest(
+                    "ASIGNACION_FECHAS_INVALIDAS",
+                    "La fecha de caducidad no puede ser anterior a la fecha de colocacion"
+            );
+        }
+
+        if (fechaCaducidad != null
+                && fechaRetiradaProgramada != null
+                && fechaRetiradaProgramada.isAfter(fechaCaducidad)) {
+            throw ApiException.badRequest(
+                    "ASIGNACION_FECHAS_INVALIDAS",
+                    "La fecha de retirada programada no puede ser posterior a la fecha de caducidad"
+            );
+        }
+    }
+
+    @Transactional(readOnly = true)
     public EstanteriaConfiguracionResponse obtenerConfiguracionDeEstanteria(String codigo) {
         Estanteria estanteria = estanteriaRepository.findWithSeccionByCodigoIgnoreCase(normalizar(codigo))
                 .orElseThrow(() -> ApiException.notFound(
@@ -739,6 +864,8 @@ public class ModeloOperativoService {
 
         return new AsignacionActivaSlotResponse(
                 asignacion.getId(),
+                productoProveedor.getId(),
+                toProductoResumenResponse(productoProveedor.getProducto()),
                 toProveedorResumenResponse(productoProveedor.getProveedor()),
                 productoProveedor.getClaveProductoProveedor(),
                 productoProveedor.getStockDisponible(),
@@ -749,6 +876,17 @@ public class ModeloOperativoService {
                 asignacion.getFechaRetiradaConfirmada(),
                 asignacion.getEstadoAsignacion(),
                 asignacion.getObservaciones()
+        );
+    }
+
+    private ProductoProveedorResumenResponse toProductoProveedorResumenResponse(ProductoProveedor productoProveedor) {
+        return new ProductoProveedorResumenResponse(
+                productoProveedor.getId(),
+                toProductoResumenResponse(productoProveedor.getProducto()),
+                toProveedorResumenResponse(productoProveedor.getProveedor()),
+                productoProveedor.getClaveProductoProveedor(),
+                productoProveedor.getStockDisponible(),
+                stockMensaje(productoProveedor.getStockDisponible())
         );
     }
 

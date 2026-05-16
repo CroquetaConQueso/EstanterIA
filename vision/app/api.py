@@ -29,10 +29,11 @@ def predict(payload: PredictionRequest):
 @app.post("/capture-and-predict", response_model=PredictionResponse)
 def capture_and_predict(payload: CapturePredictRequest):
     try:
-        capture_path = capture_image_from_camera()
+        estanteria_codigo = payload.estanteriaCodigo or "EST-001"
+        capture_path = capture_image_from_camera(estanteria_codigo)
         return predict_image(
             str(capture_path),
-            payload.estanteriaCodigo or "EST-001",
+            estanteria_codigo,
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc

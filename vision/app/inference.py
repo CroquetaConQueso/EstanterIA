@@ -9,6 +9,7 @@ from app.config import (
     CONFIDENCE_THRESHOLD,
     MODEL_PATH,
     MODEL_VERSION,
+    RAW_DIR,
     ROI_HEIGHT,
     ROI_WIDTH,
     ROI_X,
@@ -153,7 +154,8 @@ def predict_image(
     resumen = build_resumen(slots)
 
     image_name = Path(image_path).name
-    public_path = f"{CAPTURES_PUBLIC_PATH.rstrip('/')}/{image_name}"
+    capture_relative_path = get_capture_relative_path(image_path)
+    public_path = f"{CAPTURES_PUBLIC_PATH.rstrip('/')}/{capture_relative_path}"
     captured_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
     return PredictionResponse(
@@ -167,3 +169,12 @@ def predict_image(
         resumen=resumen,
         slots=slots,
     )
+
+
+def get_capture_relative_path(image_path: str) -> str:
+    try:
+        raw_dir = RAW_DIR.resolve()
+        image_resolved = Path(image_path).resolve()
+        return image_resolved.relative_to(raw_dir).as_posix()
+    except ValueError:
+        return Path(image_path).name

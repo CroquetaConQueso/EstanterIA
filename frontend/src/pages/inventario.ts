@@ -33,6 +33,7 @@ type ProductoResumenResponse = {
   codigoInterno: string | null;
   nombre: string | null;
   descripcion: string | null;
+  activo: boolean | null;
 };
 
 type ProveedorResumenResponse = {
@@ -94,8 +95,11 @@ type ApiErrorResponse = {
 
 type ProductoCreadoResponse = {
   id: number;
+  productoUuid?: string | null;
   codigoInterno: string;
   nombre: string;
+  descripcion?: string | null;
+  activo?: boolean | null;
   proveedor?: ProveedorResumenResponse | null;
   stockDisponible?: boolean | null;
   stockMensaje?: string | null;
@@ -117,6 +121,16 @@ const productDescriptionInput = document.querySelector<HTMLTextAreaElement>("#pr
 const productLinkDemoProviderInput = document.querySelector<HTMLInputElement>("#product-link-demo-provider");
 const productStockSelect = document.querySelector<HTMLSelectElement>("#product-stock");
 const productFormStatus = document.querySelector<HTMLElement>("#product-form-status");
+const productDialogTitle = document.querySelector<HTMLElement>("#product-dialog-title");
+const productSaveButton = document.querySelector<HTMLButtonElement>("#btn-save-product");
+const productActions = document.querySelector<HTMLElement>("#product-actions");
+const btnEditProduct = document.querySelector<HTMLButtonElement>("#btn-edit-product");
+const btnDeactivateProduct = document.querySelector<HTMLButtonElement>("#btn-deactivate-product");
+const btnReactivateProduct = document.querySelector<HTMLButtonElement>("#btn-reactivate-product");
+const deactivateProductDialog = document.querySelector<HTMLDialogElement>("#deactivate-product-dialog");
+const btnCancelDeactivateProduct = document.querySelector<HTMLButtonElement>("#btn-cancel-deactivate-product");
+const btnConfirmDeactivateProduct = document.querySelector<HTMLButtonElement>("#btn-confirm-deactivate-product");
+const inventoryActionStatus = document.querySelector<HTMLElement>("#inventory-action-status");
 
 const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-inventario");
 const detalleResumen = document.querySelector<HTMLUListElement>("#detalle-inv-resumen");
@@ -128,9 +142,10 @@ let secciones: SeccionResponse[] = [];
 let estanterias: EstanteriaResumenResponse[] = [];
 let configuracionActual: EstanteriaConfiguracionResponse | null = null;
 let selectedSlotId: number | null = null;
-const puedeCrearProductos = isStructuralAdmin();
+let productDialogMode: "create" | "edit" = "create";
+const puedeGestionarProductos = isStructuralAdmin();
 
-if (!puedeCrearProductos && btnOpenProductDialog) {
+if (!puedeGestionarProductos && btnOpenProductDialog) {
   btnOpenProductDialog.hidden = true;
 }
 
@@ -156,6 +171,14 @@ function formatStock(value: boolean | null | undefined): string {
   return "Sin dato de stock";
 }
 
+function productoActivo(producto: ProductoResumenResponse | null | undefined): boolean {
+  return producto?.activo !== false;
+}
+
+function badgeProductoActivo(producto: ProductoResumenResponse | null | undefined): string {
+  return productoActivo(producto) ? "Activo" : "Inactivo";
+}
+
 function stockMensaje(slot: SlotConfiguradoResponse): string {
   return slot.asignacionActiva?.stockMensaje ?? formatStock(slot.asignacionActiva?.stockDisponible);
 }
@@ -174,6 +197,11 @@ function formatEncargado(encargado: TrabajadorResumenResponse): string {
 
 function productoNombre(slot: SlotConfiguradoResponse): string {
   return textoSeguro(slot.productoEsperado?.nombre, "Sin producto esperado");
+}
+
+function getSelectedSlot(): SlotConfiguradoResponse | null {
+  const slots = configuracionActual?.slots ?? [];
+  return slots.find((slot) => slot.id === selectedSlotId) ?? slots[0] ?? null;
 }
 
 function proveedorNombre(slot: SlotConfiguradoResponse): string {
@@ -224,7 +252,7 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
   }
   if (data?.message) return data.message;
   if (status === 400) return "Revisa los datos del producto";
-  if (status === 403) return "Solo un administrador puede crear productos";
+  if (status === 403) return "Solo un administrador puede gestionar productos";
   if (status === 404) return "No se encontraron datos operativos";
   if (status === 409) return "Ya existe un producto con ese codigo interno";
   if (status >= 500) return "Error interno del servidor";
@@ -265,6 +293,29 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function patchJson<T>(url: string, body?: unknown): Promise<T> {
+  const headers = new Headers();
+  headers.set("Accept", "application/json");
+  const init: RequestInit = {
+    method: "PATCH",
+    headers
+  };
+
+  if (body !== undefined) {
+    headers.set("Content-Type", "application/json");
+    init.body = JSON.stringify(body);
+  }
+
+  const response = await authFetch(url, init);
+
+  if (!response.ok) {
+    const errorData = await parseErrorResponse(response);
+    throw new Error(getBackendErrorMessage(errorData, response.status));
+  }
+
+  return response.json() as Promise<T>;
+}
+
 function setRowMessage(message: string): void {
   if (!tbody) return;
 
@@ -295,6 +346,7 @@ function setDetalleMessage(message: string): void {
   clearList(detalleResumen);
   clearList(detalleSlots);
   clearList(detalleAsignacion);
+  if (productActions) productActions.hidden = true;
   addListItem(detalleResumen, "Estado", message);
 }
 
@@ -302,6 +354,19 @@ function setProductFormStatus(message = "", type: "info" | "success" | "error" =
   if (!productFormStatus) return;
   productFormStatus.textContent = message;
   productFormStatus.dataset.type = type;
+}
+
+function setInventoryActionStatus(message = "", type: "info" | "success" | "error" = "info"): void {
+  if (!inventoryActionStatus) return;
+  inventoryActionStatus.textContent = message;
+  inventoryActionStatus.dataset.type = type;
+}
+
+function renderProductBadge(producto: ProductoResumenResponse | null | undefined): HTMLSpanElement {
+  const badge = document.createElement("span");
+  badge.className = productoActivo(producto) ? "badge-ok" : "badge-inactive";
+  badge.textContent = badgeProductoActivo(producto);
+  return badge;
 }
 
 function renderSecciones(): void {
@@ -395,7 +460,12 @@ function renderTabla(): void {
     tdSlot.textContent = `${textoSeguro(slot.slotId, "Sin slot")} / orden ${textoSeguro(slot.orden, "sin orden")}`;
 
     const tdProducto = document.createElement("td");
-    tdProducto.textContent = productoNombre(slot);
+    const productoWrap = document.createElement("div");
+    productoWrap.className = "product-cell";
+    const productoTexto = document.createElement("span");
+    productoTexto.textContent = productoNombre(slot);
+    productoWrap.append(productoTexto, renderProductBadge(slot.productoEsperado));
+    tdProducto.appendChild(productoWrap);
 
     const tdProveedor = document.createElement("td");
     tdProveedor.textContent = proveedorNombre(slot);
@@ -418,6 +488,21 @@ function renderTabla(): void {
     tr.append(tdSeccion, tdEstanteria, tdSlot, tdProducto, tdProveedor, tdStock, tdFechas, tdEstado);
     tbody.appendChild(tr);
   });
+}
+
+function renderProductActions(slot: SlotConfiguradoResponse | null): void {
+  if (!productActions || !btnEditProduct || !btnDeactivateProduct || !btnReactivateProduct) return;
+
+  const producto = slot?.productoEsperado ?? null;
+  if (!puedeGestionarProductos || !producto?.id) {
+    productActions.hidden = true;
+    return;
+  }
+
+  productActions.hidden = false;
+  btnEditProduct.hidden = false;
+  btnDeactivateProduct.hidden = !productoActivo(producto);
+  btnReactivateProduct.hidden = productoActivo(producto);
 }
 
 function renderDetalle(slotSeleccionado?: SlotConfiguradoResponse): void {
@@ -461,13 +546,17 @@ function renderDetalle(slotSeleccionado?: SlotConfiguradoResponse): void {
 
   if (!slot) {
     addListItem(detalleAsignacion, "Asignaci\u00f3n", "Sin slot seleccionado");
+    renderProductActions(null);
     return;
   }
 
   addListItem(detalleAsignacion, "Slot", `${textoSeguro(slot.slotId, "Sin slot")} / orden ${textoSeguro(slot.orden, "sin orden")}`);
   addListItem(detalleAsignacion, "Producto esperado", productoNombre(slot));
   addListItem(detalleAsignacion, "C\u00f3digo interno", textoSeguro(slot.productoEsperado?.codigoInterno));
+  addListItem(detalleAsignacion, "Estado producto", badgeProductoActivo(slot.productoEsperado));
+  addListItem(detalleAsignacion, "Descripci\u00f3n producto", textoSeguro(slot.productoEsperado?.descripcion, "Sin descripci\u00f3n"));
   addListItem(detalleAsignacion, "Cantidad objetivo", textoSeguro(slot.cantidadObjetivo, "No indicada"));
+  renderProductActions(slot);
 
   const asignacion = slot.asignacionActiva;
   if (!asignacion) {
@@ -507,14 +596,71 @@ async function cargarConfiguracion(codigoEstanteria: string): Promise<void> {
   renderDetalle(configuracionActual.slots[0]);
 }
 
+async function refrescarConfiguracionManteniendoSeleccion(productoId?: number): Promise<void> {
+  const codigoEstanteria = estanteriaSelect?.value ?? "";
+  if (!codigoEstanteria) return;
+
+  const slotIdAnterior = selectedSlotId;
+  configuracionActual = await fetchJson<EstanteriaConfiguracionResponse>(
+    `/api/estanterias/${encodeURIComponent(codigoEstanteria)}/configuracion`
+  );
+
+  const slotSeleccionado = configuracionActual.slots.find((slot) => productoId && slot.productoEsperado?.id === productoId)
+    ?? configuracionActual.slots.find((slot) => slot.id === slotIdAnterior)
+    ?? configuracionActual.slots[0]
+    ?? null;
+  selectedSlotId = slotSeleccionado?.id ?? null;
+  renderTabla();
+  renderDetalle(slotSeleccionado ?? undefined);
+}
+
 function abrirDialogoProducto(): void {
-  if (!puedeCrearProductos) {
+  if (!puedeGestionarProductos) {
     setDetalleMessage("Solo un administrador puede crear productos");
     return;
   }
+  productDialogMode = "create";
   productForm?.reset();
+  if (productDialogTitle) productDialogTitle.textContent = "Nuevo producto";
+  if (productSaveButton) productSaveButton.textContent = "Crear producto";
+  if (productCodeInput) productCodeInput.readOnly = false;
+  if (productLinkDemoProviderInput) productLinkDemoProviderInput.disabled = false;
   if (productLinkDemoProviderInput) productLinkDemoProviderInput.checked = true;
   if (productStockSelect) productStockSelect.value = "true";
+  setProductFormStatus();
+  productDialog?.showModal();
+}
+
+function abrirDialogoEditarProducto(): void {
+  if (!puedeGestionarProductos) {
+    setDetalleMessage("Solo un administrador puede editar productos");
+    return;
+  }
+
+  const slot = getSelectedSlot();
+  const producto = slot?.productoEsperado;
+  if (!producto?.id) {
+    setDetalleMessage("Selecciona un slot con producto esperado antes de editar");
+    return;
+  }
+
+  productDialogMode = "edit";
+  if (productDialogTitle) productDialogTitle.textContent = "Editar producto";
+  if (productSaveButton) productSaveButton.textContent = "Guardar cambios";
+  if (productCodeInput) {
+    productCodeInput.value = producto.codigoInterno ?? "";
+    productCodeInput.readOnly = true;
+  }
+  if (productNameInput) productNameInput.value = producto.nombre ?? "";
+  if (productDescriptionInput) productDescriptionInput.value = producto.descripcion ?? "";
+  if (productLinkDemoProviderInput) {
+    productLinkDemoProviderInput.checked = Boolean(slot?.asignacionActiva?.proveedor);
+    productLinkDemoProviderInput.disabled = true;
+  }
+  if (productStockSelect) {
+    const stock = slot?.asignacionActiva?.stockDisponible;
+    productStockSelect.value = stock === false ? "false" : "true";
+  }
   setProductFormStatus();
   productDialog?.showModal();
 }
@@ -524,7 +670,7 @@ function cerrarDialogoProducto(): void {
 }
 
 async function crearProductoDesdeFormulario(): Promise<void> {
-  if (!puedeCrearProductos) {
+  if (!puedeGestionarProductos) {
     setProductFormStatus("Solo un administrador puede crear productos", "error");
     return;
   }
@@ -548,7 +694,7 @@ async function crearProductoDesdeFormulario(): Promise<void> {
     stockDisponible: productStockSelect?.value !== "false"
   });
 
-  const stock = producto.stockMensaje ?? "Producto creado sin proveedor demo vinculado";
+  const stock = producto.stockMensaje ?? "Producto sin proveedor demo vinculado";
   setProductFormStatus(`${producto.codigoInterno} creado. ${stock}. Ya puede usarse en el editor.`, "success");
 
   const codigoEstanteria = estanteriaSelect?.value ?? "";
@@ -559,6 +705,96 @@ async function crearProductoDesdeFormulario(): Promise<void> {
   window.setTimeout(() => {
     cerrarDialogoProducto();
   }, 900);
+}
+
+async function editarProductoDesdeFormulario(): Promise<void> {
+  if (!puedeGestionarProductos) {
+    setProductFormStatus("Solo un administrador puede editar productos", "error");
+    return;
+  }
+
+  const slot = getSelectedSlot();
+  const productoActual = slot?.productoEsperado;
+  if (!productoActual?.id) {
+    setProductFormStatus("Selecciona un producto antes de editar.", "error");
+    return;
+  }
+
+  const nombre = productNameInput?.value.trim() ?? "";
+  const descripcion = productDescriptionInput?.value.trim() ?? "";
+  if (!nombre) {
+    setProductFormStatus("El nombre es obligatorio.", "error");
+    return;
+  }
+
+  setProductFormStatus("Guardando producto...", "info");
+
+  const producto = await patchJson<ProductoCreadoResponse>(`/api/productos/${encodeURIComponent(String(productoActual.id))}`, {
+    nombre,
+    descripcion: descripcion || null,
+    stockDisponible: productStockSelect?.value !== "false"
+  });
+
+  setProductFormStatus(`${producto.codigoInterno} actualizado correctamente.`, "success");
+  await refrescarConfiguracionManteniendoSeleccion(productoActual.id);
+
+  window.setTimeout(() => {
+    cerrarDialogoProducto();
+  }, 700);
+}
+
+async function guardarProductoDesdeFormulario(): Promise<void> {
+  if (productDialogMode === "edit") {
+    await editarProductoDesdeFormulario();
+    return;
+  }
+
+  await crearProductoDesdeFormulario();
+}
+
+function abrirConfirmacionDesactivarProducto(): void {
+  if (!puedeGestionarProductos) {
+    setInventoryActionStatus("Solo un administrador puede desactivar productos.", "error");
+    return;
+  }
+
+  const producto = getSelectedSlot()?.productoEsperado;
+  if (!producto?.id) {
+    setInventoryActionStatus("Selecciona un producto antes de desactivarlo.", "error");
+    return;
+  }
+
+  deactivateProductDialog?.showModal();
+}
+
+async function desactivarProductoSeleccionado(): Promise<void> {
+  const producto = getSelectedSlot()?.productoEsperado;
+  if (!producto?.id) {
+    setInventoryActionStatus("Selecciona un producto antes de desactivarlo.", "error");
+    return;
+  }
+
+  btnConfirmDeactivateProduct?.setAttribute("disabled", "");
+  try {
+    await patchJson<ProductoCreadoResponse>(`/api/productos/${encodeURIComponent(String(producto.id))}/desactivar`);
+    deactivateProductDialog?.close();
+    await refrescarConfiguracionManteniendoSeleccion(producto.id);
+    setInventoryActionStatus("Producto desactivado. Se conserva por trazabilidad.", "success");
+  } finally {
+    btnConfirmDeactivateProduct?.removeAttribute("disabled");
+  }
+}
+
+async function reactivarProductoSeleccionado(): Promise<void> {
+  const producto = getSelectedSlot()?.productoEsperado;
+  if (!producto?.id) {
+    setInventoryActionStatus("Selecciona un producto antes de reactivarlo.", "error");
+    return;
+  }
+
+  await patchJson<ProductoCreadoResponse>(`/api/productos/${encodeURIComponent(String(producto.id))}/reactivar`);
+  await refrescarConfiguracionManteniendoSeleccion(producto.id);
+  setInventoryActionStatus("Producto reactivado. Ya puede usarse en nuevas configuraciones.", "success");
 }
 
 async function cargarEstanteriasDeSeccion(seccionId: number): Promise<void> {
@@ -644,8 +880,23 @@ btnOpenProductDialog?.addEventListener("click", abrirDialogoProducto);
 btnCloseProductDialog?.addEventListener("click", cerrarDialogoProducto);
 productForm?.addEventListener("submit", (event) => {
   event.preventDefault();
-  void crearProductoDesdeFormulario().catch((err: unknown) => {
-    setProductFormStatus(err instanceof Error ? err.message : "No se pudo crear el producto", "error");
+  void guardarProductoDesdeFormulario().catch((err: unknown) => {
+    setProductFormStatus(err instanceof Error ? err.message : "No se pudo guardar el producto", "error");
+  });
+});
+btnEditProduct?.addEventListener("click", abrirDialogoEditarProducto);
+btnDeactivateProduct?.addEventListener("click", abrirConfirmacionDesactivarProducto);
+btnReactivateProduct?.addEventListener("click", () => {
+  void reactivarProductoSeleccionado().catch((err: unknown) => {
+    setInventoryActionStatus(err instanceof Error ? err.message : "No se pudo reactivar el producto", "error");
+  });
+});
+btnCancelDeactivateProduct?.addEventListener("click", () => deactivateProductDialog?.close());
+btnConfirmDeactivateProduct?.addEventListener("click", () => {
+  void desactivarProductoSeleccionado().catch((err: unknown) => {
+    deactivateProductDialog?.close();
+    setInventoryActionStatus(err instanceof Error ? err.message : "No se pudo desactivar el producto", "error");
+    btnConfirmDeactivateProduct?.removeAttribute("disabled");
   });
 });
 
@@ -659,6 +910,7 @@ tbody?.addEventListener("click", (event) => {
   if (!slot) return;
 
   selectedSlotId = slot.id;
+  setInventoryActionStatus();
   renderDetalle(slot);
   renderTabla();
 });
@@ -675,6 +927,7 @@ tbody?.addEventListener("keydown", (event) => {
 
   event.preventDefault();
   selectedSlotId = slot.id;
+  setInventoryActionStatus();
   renderDetalle(slot);
   renderTabla();
 });

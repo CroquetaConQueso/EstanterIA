@@ -24,6 +24,7 @@ import com.proyectofincurso.estanteria.persistence.repository.TrabajadorReposito
 import com.proyectofincurso.estanteria.web.dto.AsignacionActivaSlotResponse;
 import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaSlotRequest;
+import com.proyectofincurso.estanteria.web.dto.ActualizarProductoRequest;
 import com.proyectofincurso.estanteria.web.dto.ActualizarSeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaSlotRequest;
@@ -68,6 +69,7 @@ public class ModeloOperativoService {
     private final ProductoProveedorRepository productoProveedorRepository;
     private final ProveedorRepository proveedorRepository;
     private final TrabajadorRepository trabajadorRepository;
+    private static final String PROVEEDOR_DEMO_CODIGO = "PROV-DEMO";
 
     @Transactional(readOnly = true)
     public EmpresaResponse obtenerEmpresaActivaPorCodigo(String codigo) {
@@ -342,7 +344,16 @@ public class ModeloOperativoService {
 
     @Transactional(readOnly = true)
     public List<ProductoResumenResponse> obtenerProductosActivos() {
-        return productoRepository.findByActivoTrueOrderByNombreAsc().stream()
+        return obtenerProductos(false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductoResumenResponse> obtenerProductos(boolean incluirInactivos) {
+        List<Producto> productos = incluirInactivos
+                ? productoRepository.findAllByOrderByNombreAsc()
+                : productoRepository.findByActivoTrueOrderByNombreAsc();
+
+        return productos.stream()
                 .map(this::toProductoResumenResponse)
                 .toList();
     }
@@ -372,12 +383,12 @@ public class ModeloOperativoService {
 
         boolean vincularProveedorDemo = request.vincularProveedorDemo() == null || request.vincularProveedorDemo();
         if (vincularProveedorDemo) {
-            Optional<Proveedor> proveedorDemo = proveedorRepository.findByCodigoAndActivoTrue("PROV-DEMO");
+            Optional<Proveedor> proveedorDemo = proveedorRepository.findByCodigoAndActivoTrue(PROVEEDOR_DEMO_CODIGO);
             if (proveedorDemo.isPresent()) {
                 productoProveedor = new ProductoProveedor();
                 productoProveedor.setProducto(productoGuardado);
                 productoProveedor.setProveedor(proveedorDemo.get());
-                productoProveedor.setClaveProductoProveedor("PROV-DEMO-" + codigoInterno);
+                productoProveedor.setClaveProductoProveedor(PROVEEDOR_DEMO_CODIGO + "-" + codigoInterno);
                 productoProveedor.setStockDisponible(request.stockDisponible() == null || request.stockDisponible());
                 productoProveedor.setActivo(true);
                 productoProveedor.setCreatedAt(ahora);
@@ -387,6 +398,71 @@ public class ModeloOperativoService {
         }
 
         return toProductoCreadoResponse(productoGuardado, productoProveedor);
+    }
+
+    @Transactional
+    public ProductoCreadoResponse actualizarProducto(Long id, ActualizarProductoRequest request) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound(
+                        "PRODUCTO_NOT_FOUND",
+                        "No existe el producto indicado"
+                ));
+
+        producto.setNombre(normalizar(request.nombre()));
+        producto.setDescripcion(normalizarNullable(request.descripcion()));
+        producto.setUpdatedAt(Instant.now());
+
+        ProductoProveedor productoProveedor = productoProveedorRepository
+                .findByProductoIdAndProveedorCodigoIgnoreCase(producto.getId(), PROVEEDOR_DEMO_CODIGO)
+                .orElse(null);
+
+        if (request.stockDisponible() != null && productoProveedor != null) {
+            productoProveedor.setStockDisponible(request.stockDisponible());
+            productoProveedor.setUpdatedAt(Instant.now());
+            productoProveedorRepository.save(productoProveedor);
+        }
+
+        return toProductoCreadoResponse(productoRepository.save(producto), productoProveedor);
+    }
+
+    @Transactional
+    public ProductoCreadoResponse desactivarProducto(Long id) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound(
+                        "PRODUCTO_NOT_FOUND",
+                        "No existe el producto indicado"
+                ));
+
+        if (!Boolean.FALSE.equals(producto.getActivo())) {
+            producto.setActivo(false);
+            producto.setUpdatedAt(Instant.now());
+            producto = productoRepository.save(producto);
+        }
+
+        return toProductoCreadoResponse(producto, productoProveedorDemo(producto.getId()));
+    }
+
+    @Transactional
+    public ProductoCreadoResponse reactivarProducto(Long id) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound(
+                        "PRODUCTO_NOT_FOUND",
+                        "No existe el producto indicado"
+                ));
+
+        if (!Boolean.TRUE.equals(producto.getActivo())) {
+            producto.setActivo(true);
+            producto.setUpdatedAt(Instant.now());
+            producto = productoRepository.save(producto);
+        }
+
+        return toProductoCreadoResponse(producto, productoProveedorDemo(producto.getId()));
+    }
+
+    private ProductoProveedor productoProveedorDemo(Long productoId) {
+        return productoProveedorRepository
+                .findByProductoIdAndProveedorCodigoIgnoreCase(productoId, PROVEEDOR_DEMO_CODIGO)
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)
@@ -617,7 +693,7 @@ public class ModeloOperativoService {
                 producto.getActivo(),
                 productoProveedor != null ? toProveedorResumenResponse(productoProveedor.getProveedor()) : null,
                 productoProveedor != null ? productoProveedor.getStockDisponible() : null,
-                productoProveedor != null ? stockMensaje(productoProveedor.getStockDisponible()) : "Producto creado sin proveedor demo vinculado"
+                productoProveedor != null ? stockMensaje(productoProveedor.getStockDisponible()) : "Producto sin proveedor demo vinculado"
         );
     }
 

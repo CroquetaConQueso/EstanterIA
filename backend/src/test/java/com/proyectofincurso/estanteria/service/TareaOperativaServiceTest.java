@@ -1,8 +1,11 @@
 package com.proyectofincurso.estanteria.service;
 
+import com.proyectofincurso.estanteria.persistence.entity.Alerta;
+import com.proyectofincurso.estanteria.persistence.entity.EstadoAlerta;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoTareaOperativa;
 import com.proyectofincurso.estanteria.persistence.entity.PrioridadAlerta;
 import com.proyectofincurso.estanteria.persistence.entity.TareaOperativa;
+import com.proyectofincurso.estanteria.persistence.entity.TipoAlerta;
 import com.proyectofincurso.estanteria.persistence.entity.TipoTareaOperativa;
 import com.proyectofincurso.estanteria.persistence.repository.AsignacionProductoSlotRepository;
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaRepository;
@@ -14,6 +17,7 @@ import com.proyectofincurso.estanteria.persistence.repository.UserAccountReposit
 import com.proyectofincurso.estanteria.web.error.ApiException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,6 +28,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -90,6 +95,26 @@ class TareaOperativaServiceTest {
                 .isInstanceOf(ApiException.class)
                 .extracting("status")
                 .isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void alertaRetiradaProgramadaPendienteGeneraTareaAutomaticaDeRetirada() {
+        Alerta alerta = new Alerta();
+        alerta.setId(10L);
+        alerta.setTipoAlerta(TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE);
+        alerta.setPrioridad(PrioridadAlerta.ALTA);
+        alerta.setEstadoAlerta(EstadoAlerta.ABIERTA);
+        when(tareaOperativaRepository.existsByAlertaId(10L)).thenReturn(false);
+
+        service.crearAutomaticaSiNoExiste(alerta);
+
+        ArgumentCaptor<TareaOperativa> captor = ArgumentCaptor.forClass(TareaOperativa.class);
+        verify(tareaOperativaRepository).save(captor.capture());
+        TareaOperativa tarea = captor.getValue();
+        assertThat(tarea.getAlerta()).isEqualTo(alerta);
+        assertThat(tarea.getTipoTarea()).isEqualTo(TipoTareaOperativa.RETIRADA_PRODUCTO);
+        assertThat(tarea.getPrioridad()).isEqualTo(PrioridadAlerta.ALTA);
+        assertThat(tarea.getEstadoTarea()).isEqualTo(EstadoTareaOperativa.PENDIENTE);
     }
 
     private TareaOperativa tarea(EstadoTareaOperativa estado) {

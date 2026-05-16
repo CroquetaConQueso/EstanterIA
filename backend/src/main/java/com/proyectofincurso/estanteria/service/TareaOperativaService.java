@@ -393,7 +393,7 @@ public class TareaOperativaService {
             case REVISION_MANUAL -> TipoTareaOperativa.VERIFICACION_MANUAL;
             case PRODUCTO_PROXIMO_A_CADUCAR -> TipoTareaOperativa.REVISION_CADUCIDAD;
             case PRESENCIA_TRAS_RETIRADA_PROGRAMADA -> TipoTareaOperativa.RETIRADA_PRODUCTO;
-            case RETIRADA_PROGRAMADA_PENDIENTE -> null;
+            case RETIRADA_PROGRAMADA_PENDIENTE -> TipoTareaOperativa.RETIRADA_PRODUCTO;
         };
     }
 

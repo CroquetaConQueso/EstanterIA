@@ -164,6 +164,18 @@ class AlertaOperativaServiceTest {
         assertThat(response.asignacionesEvaluadas()).isZero();
     }
 
+    @Test
+    void asignacionRetiradaNoGeneraAlertasComoActiva() {
+        when(asignacionProductoSlotRepository.findActivaConContextoById(1L, EstadoAsignacionProductoSlot.ACTIVA))
+                .thenReturn(Optional.empty());
+
+        var response = service.evaluarAsignacionActiva(1L);
+
+        verify(alertaRepository, never()).save(any(Alerta.class));
+        assertThat(response.alertasCreadas()).isZero();
+        assertThat(response.asignacionesEvaluadas()).isZero();
+    }
+
     private AsignacionProductoSlot asignacionBase() {
         Seccion seccion = new Seccion();
         seccion.setId(10L);

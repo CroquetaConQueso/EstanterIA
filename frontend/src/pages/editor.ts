@@ -44,7 +44,19 @@ type TrabajadorActivoResponse = {
   id: number;
   nombre: string | null;
   apellidos: string | null;
+  emailContacto?: string | null;
   tipoTrabajador: string | null;
+  estadoDisponibilidad?: string | null;
+  activo: boolean | null;
+};
+
+type TrabajadorAsignadoEstanteriaResponse = {
+  trabajadorId: number;
+  nombre: string | null;
+  apellidos: string | null;
+  emailContacto: string | null;
+  tipoTrabajador: string | null;
+  estadoDisponibilidad: string | null;
   activo: boolean | null;
 };
 
@@ -268,6 +280,12 @@ const rackStatusActions = document.querySelector<HTMLElement>("#rack-status-acti
 const rackStatusText = document.querySelector<HTMLElement>("#rack-status-text");
 const btnDeactivateRack = document.querySelector<HTMLButtonElement>("#btn-deactivate-rack");
 const btnReactivateRack = document.querySelector<HTMLButtonElement>("#btn-reactivate-rack");
+const rackWorkerPanel = document.querySelector<HTMLElement>("#rack-worker-panel");
+const rackWorkersList = document.querySelector<HTMLUListElement>("#rack-workers-list");
+const rackWorkerAssignField = document.querySelector<HTMLElement>("#rack-worker-assign-field");
+const rackWorkerSelect = document.querySelector<HTMLSelectElement>("#rack-worker-select");
+const btnAssignRackWorker = document.querySelector<HTMLButtonElement>("#btn-assign-rack-worker");
+const rackWorkerStatus = document.querySelector<HTMLElement>("#rack-worker-status");
 const btnApplyElement = document.querySelector<HTMLButtonElement>("#btn-apply-element");
 const btnDeleteElement = document.querySelector<HTMLButtonElement>("#btn-delete-element");
 const toolFeedback = document.querySelector<HTMLElement>("#tool-feedback");
@@ -308,6 +326,7 @@ let secciones: SeccionResponse[] = [];
 let estanteriasSeccion: EstanteriaResumenResponse[] = [];
 let productos: ProductoResumenResponse[] = [];
 let trabajadoresActivos: TrabajadorActivoResponse[] = [];
+const trabajadoresPorEstanteria = new Map<string, TrabajadorAsignadoEstanteriaResponse[]>();
 const responsablePrincipalPorSeccionId = new Map<number, number>();
 const rackConfigurations = new Map<string, EstanteriaConfiguracionResponse>();
 let saving = false;
@@ -351,6 +370,7 @@ function applyStructuralPermissions(): void {
   btnDeleteElement?.setAttribute("disabled", "true");
   btnDeactivateRack?.setAttribute("disabled", "true");
   btnReactivateRack?.setAttribute("disabled", "true");
+  btnAssignRackWorker?.setAttribute("disabled", "true");
   document.querySelectorAll<HTMLButtonElement>(".tool").forEach((button) => {
     if (button.dataset.mode !== "select") button.disabled = true;
   });
@@ -643,7 +663,9 @@ function renderSelectionPanel(): void {
     formElemento?.classList.remove("is-visible");
     if (elementResponsibleField) elementResponsibleField.style.display = "none";
     if (rackStatusActions) rackStatusActions.setAttribute("hidden", "");
+    if (rackWorkerPanel) rackWorkerPanel.setAttribute("hidden", "");
     setText(elementResponsibleNote, "");
+    setText(rackWorkerStatus, "");
     if (elementEditStatus) elementEditStatus.textContent = "";
     return;
   }
@@ -666,6 +688,7 @@ function renderSelectionPanel(): void {
       : "El responsable se guarda en la sección/zona, no en las estanterías.");
     if (elementSlotsField) elementSlotsField.style.display = "none";
     if (rackStatusActions) rackStatusActions.setAttribute("hidden", "");
+    if (rackWorkerPanel) rackWorkerPanel.setAttribute("hidden", "");
     if (elementSlotsContainer) elementSlotsContainer.innerHTML = "";
     return;
   }
@@ -693,7 +716,11 @@ function renderSelectionPanel(): void {
       : "Estantería inactiva: se conserva en este plano por histórico, pero no estará disponible para nuevas operaciones.");
     if (btnDeactivateRack) btnDeactivateRack.hidden = !activo || !puedeConfigurarEstructura;
     if (btnReactivateRack) btnReactivateRack.hidden = activo || !puedeConfigurarEstructura;
+    if (rackWorkerPanel) rackWorkerPanel.removeAttribute("hidden");
+    if (rackWorkerStatus && !trabajadoresPorEstanteria.has(rack.estanteriaCodigo)) rackWorkerStatus.textContent = "Cargando trabajadores asignados...";
+    renderTrabajadoresEstanteria(rack);
     if (!config) void cargarConfiguracionRack(rack.estanteriaCodigo);
+    if (!trabajadoresPorEstanteria.has(rack.estanteriaCodigo)) void cargarTrabajadoresEstanteria(rack.estanteriaCodigo);
   }
 }
 
@@ -855,6 +882,103 @@ function trabajadorLabel(trabajador: TrabajadorActivoResponse | PlanoResponsable
   return `${nombre || "Trabajador sin nombre"} · ${trabajador.tipoTrabajador ?? "Sin tipo"}`;
 }
 
+function trabajadorAsignadoLabel(trabajador: TrabajadorAsignadoEstanteriaResponse): string {
+  const nombre = [trabajador.nombre, trabajador.apellidos].filter(Boolean).join(" ").trim();
+  return nombre || "Trabajador sin nombre";
+}
+
+function estadoDisponibilidadLabel(value: string | null | undefined): string {
+  if (!value) return "DISPONIBLE";
+  return value.replaceAll("_", " ");
+}
+
+function renderTrabajadoresEstanteria(rack: LocalRack): void {
+  if (!rackWorkersList) return;
+
+  const asignados = trabajadoresPorEstanteria.get(rack.estanteriaCodigo) ?? [];
+  rackWorkersList.innerHTML = "";
+
+  if (asignados.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "assigned-worker-item";
+    empty.textContent = "No hay trabajadores asignados.";
+    rackWorkersList.appendChild(empty);
+  } else {
+    asignados.forEach((trabajador) => {
+      const item = document.createElement("li");
+      item.className = "assigned-worker-item";
+
+      const main = document.createElement("div");
+      main.className = "assigned-worker-main";
+      const name = document.createElement("strong");
+      name.textContent = trabajadorAsignadoLabel(trabajador);
+      const badge = document.createElement("span");
+      badge.className = `availability-badge${trabajador.estadoDisponibilidad && trabajador.estadoDisponibilidad !== "DISPONIBLE" ? " is-unavailable" : ""}`;
+      badge.textContent = estadoDisponibilidadLabel(trabajador.estadoDisponibilidad);
+      main.append(name, badge);
+
+      const meta = document.createElement("span");
+      meta.className = "assigned-worker-meta";
+      meta.textContent = `${trabajador.tipoTrabajador ?? "Sin tipo"}${trabajador.emailContacto ? ` · ${trabajador.emailContacto}` : ""}`;
+
+      item.append(main, meta);
+
+      if (trabajador.estadoDisponibilidad && trabajador.estadoDisponibilidad !== "DISPONIBLE") {
+        const note = document.createElement("span");
+        note.className = "assigned-worker-meta";
+        note.textContent = "Trabajador no disponible actualmente.";
+        item.appendChild(note);
+      }
+
+      if (puedeConfigurarEstructura) {
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "btn danger";
+        remove.textContent = "Quitar asignación";
+        remove.addEventListener("click", () => {
+          void desasignarTrabajadorEstanteria(rack.estanteriaCodigo, trabajador.trabajadorId);
+        });
+        item.appendChild(remove);
+      }
+
+      rackWorkersList.appendChild(item);
+    });
+  }
+
+  renderTrabajadoresDisponiblesParaRack(rack);
+}
+
+function renderTrabajadoresDisponiblesParaRack(rack: LocalRack): void {
+  if (!rackWorkerSelect || !btnAssignRackWorker || !rackWorkerAssignField) return;
+
+  const asignados = new Set((trabajadoresPorEstanteria.get(rack.estanteriaCodigo) ?? [])
+    .map((trabajador) => trabajador.trabajadorId));
+  const disponibles = trabajadoresActivos.filter((trabajador) => !asignados.has(trabajador.id));
+
+  rackWorkerAssignField.style.display = puedeConfigurarEstructura ? "grid" : "none";
+  rackWorkerSelect.innerHTML = "";
+  if (!rackActivo(rack)) {
+    rackWorkerSelect.appendChild(option("", "No se puede asignar a una estantería inactiva"));
+    rackWorkerSelect.disabled = true;
+    btnAssignRackWorker.disabled = true;
+    return;
+  }
+
+  if (disponibles.length === 0) {
+    rackWorkerSelect.appendChild(option("", "No hay trabajadores disponibles para asignar"));
+    rackWorkerSelect.disabled = true;
+    btnAssignRackWorker.disabled = true;
+    return;
+  }
+
+  rackWorkerSelect.disabled = false;
+  btnAssignRackWorker.disabled = false;
+  rackWorkerSelect.appendChild(option("", "Selecciona trabajador disponible"));
+  disponibles.forEach((trabajador) => {
+    rackWorkerSelect.appendChild(option(String(trabajador.id), trabajadorLabel(trabajador)));
+  });
+}
+
 function renderTrabajadorOptions(select: HTMLSelectElement | null, selectedId?: number | null): void {
   if (!select) return;
   select.innerHTML = "";
@@ -902,6 +1026,61 @@ async function cargarTrabajadoresActivos(): Promise<void> {
   renderTrabajadorOptions(elementResponsible, selectedZone()
     ? responsablePrincipalPorSeccionId.get(selectedZone()!.seccionId)
     : null);
+  const rack = selectedRack();
+  if (rack) renderTrabajadoresDisponiblesParaRack(rack);
+}
+
+async function cargarTrabajadoresEstanteria(codigo: string): Promise<void> {
+  try {
+    const trabajadores = await fetchJson<TrabajadorAsignadoEstanteriaResponse[]>(
+      `/api/estanterias/${encodeURIComponent(codigo)}/trabajadores`
+    );
+    trabajadoresPorEstanteria.set(codigo, trabajadores);
+    const rack = selectedRack();
+    if (rack?.estanteriaCodigo === codigo) {
+      renderTrabajadoresEstanteria(rack);
+    }
+  } catch (error) {
+    setText(rackWorkerStatus, error instanceof Error ? error.message : "No se pudieron cargar trabajadores asignados.");
+  }
+}
+
+async function asignarTrabajadorEstanteria(): Promise<void> {
+  const rack = selectedRack();
+  const trabajadorId = Number(rackWorkerSelect?.value);
+  if (!rack || !Number.isFinite(trabajadorId) || trabajadorId <= 0) {
+    setText(rackWorkerStatus, "Selecciona un trabajador disponible.");
+    return;
+  }
+
+  try {
+    setText(rackWorkerStatus, "Asignando trabajador...");
+    await fetchJson<TrabajadorAsignadoEstanteriaResponse>(
+      `/api/estanterias/${encodeURIComponent(rack.estanteriaCodigo)}/trabajadores/${trabajadorId}`,
+      { method: "POST" }
+    );
+    await cargarTrabajadoresEstanteria(rack.estanteriaCodigo);
+    setText(rackWorkerStatus, "Trabajador asignado a la estantería.");
+  } catch (error) {
+    setText(rackWorkerStatus, error instanceof Error ? error.message : "No se pudo asignar el trabajador.");
+  }
+}
+
+async function desasignarTrabajadorEstanteria(codigo: string, trabajadorId: number): Promise<void> {
+  const confirmed = window.confirm("El trabajador dejará de estar asignado a esta estantería.");
+  if (!confirmed) return;
+
+  try {
+    setText(rackWorkerStatus, "Quitando asignación...");
+    await fetchJson<TrabajadorAsignadoEstanteriaResponse>(
+      `/api/estanterias/${encodeURIComponent(codigo)}/trabajadores/${trabajadorId}/desasignar`,
+      { method: "PATCH" }
+    );
+    await cargarTrabajadoresEstanteria(codigo);
+    setText(rackWorkerStatus, "Asignación retirada.");
+  } catch (error) {
+    setText(rackWorkerStatus, error instanceof Error ? error.message : "No se pudo quitar la asignación.");
+  }
 }
 
 function renderInlineSlots(): void {
@@ -1886,6 +2065,9 @@ function bindEvents(): void {
   btnDeactivateRack?.addEventListener("click", abrirConfirmacionDesactivarEstanteria);
   btnReactivateRack?.addEventListener("click", () => {
     void reactivarEstanteriaSeleccionada();
+  });
+  btnAssignRackWorker?.addEventListener("click", () => {
+    void asignarTrabajadorEstanteria();
   });
   btnCancelRackDeactivate?.addEventListener("click", () => closeDialog(rackDeactivateDialog));
   btnCloseRackDeactivate?.addEventListener("click", () => closeDialog(rackDeactivateDialog));

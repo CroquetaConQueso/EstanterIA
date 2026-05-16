@@ -218,6 +218,20 @@
           <button class="btn danger" id="btn-deactivate-rack" type="button">Desactivar estantería</button>
           <button class="btn primary" id="btn-reactivate-rack" type="button">Reactivar estantería</button>
         </div>
+        <div class="rack-worker-panel" id="rack-worker-panel" hidden>
+          <div>
+            <label>Trabajadores asignados</label>
+            <ul class="assigned-worker-list" id="rack-workers-list">
+              <li>No hay trabajadores asignados.</li>
+            </ul>
+          </div>
+          <div class="field" id="rack-worker-assign-field">
+            <label for="rack-worker-select">Asignar trabajador</label>
+            <select id="rack-worker-select"></select>
+            <button class="btn primary" id="btn-assign-rack-worker" type="button">Asignar trabajador</button>
+          </div>
+          <p class="hint inline-status" id="rack-worker-status"></p>
+        </div>
         <p class="hint inline-status" id="element-edit-status"></p>
         <div class="form-actions">
           <button class="btn primary" id="btn-apply-element" type="button">Aplicar cambios</button>

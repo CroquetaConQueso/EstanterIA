@@ -1,10 +1,10 @@
 package com.proyectofincurso.estanteria.web.dto;
 
-import com.proyectofincurso.estanteria.persistence.entity.TipoTrabajador;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoDisponibilidadTrabajador;
+import com.proyectofincurso.estanteria.persistence.entity.TipoTrabajador;
 
-public record TrabajadorActivoResponse(
-        Long id,
+public record TrabajadorAsignadoEstanteriaResponse(
+        Long trabajadorId,
         String nombre,
         String apellidos,
         String emailContacto,

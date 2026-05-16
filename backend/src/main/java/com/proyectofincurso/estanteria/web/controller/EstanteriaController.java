@@ -5,6 +5,7 @@ import com.proyectofincurso.estanteria.service.ModeloOperativoService;
 import com.proyectofincurso.estanteria.web.dto.ActualizarEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaConfiguracionResponse;
+import com.proyectofincurso.estanteria.web.dto.TrabajadorAsignadoEstanteriaResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/estanterias")
@@ -66,5 +69,27 @@ public class EstanteriaController {
     @Operation(summary = "Obtener configuracion de estanteria", description = "Requiere autenticacion. Devuelve datos, seccion y slots de una estanteria.")
     public EstanteriaConfiguracionResponse obtenerConfiguracion(@PathVariable String codigo) {
         return modeloOperativoService.obtenerConfiguracionDeEstanteria(codigo);
+    }
+
+    @GetMapping(value = "/{codigo}/trabajadores", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Listar trabajadores de estanteria", description = "Requiere autenticacion. Devuelve trabajadores asignados activos a una estanteria.")
+    public List<TrabajadorAsignadoEstanteriaResponse> obtenerTrabajadoresAsignados(@PathVariable String codigo) {
+        return modeloOperativoService.obtenerTrabajadoresAsignadosEstanteria(codigo);
+    }
+
+    @PostMapping(value = "/{codigo}/trabajadores/{trabajadorId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Asignar trabajador a estanteria", description = "Requiere ADMIN/SUPERADMIN. Asigna un trabajador disponible a una estanteria activa.")
+    public TrabajadorAsignadoEstanteriaResponse asignarTrabajador(@PathVariable String codigo,
+                                                                  @PathVariable Long trabajadorId) {
+        return modeloOperativoService.asignarTrabajadorEstanteria(codigo, trabajadorId);
+    }
+
+    @PatchMapping(value = "/{codigo}/trabajadores/{trabajadorId}/desasignar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Desasignar trabajador de estanteria", description = "Requiere ADMIN/SUPERADMIN. Marca la asignacion como inactiva sin borrar historico.")
+    public TrabajadorAsignadoEstanteriaResponse desasignarTrabajador(@PathVariable String codigo,
+                                                                     @PathVariable Long trabajadorId) {
+        return modeloOperativoService.desasignarTrabajadorEstanteria(codigo, trabajadorId);
     }
 }

@@ -54,6 +54,10 @@ public class Trabajador {
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_disponibilidad", length = 30)
+    private EstadoDisponibilidadTrabajador estadoDisponibilidad = EstadoDisponibilidadTrabajador.DISPONIBLE;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

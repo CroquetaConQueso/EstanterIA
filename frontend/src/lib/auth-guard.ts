@@ -1,8 +1,11 @@
 import { clearAuthSession, getAuthRole, getAuthToken, isStructuralAdmin, isTokenExpired } from "./api";
 
 export function requireAuth(): void {
-  if (getAuthToken()) return;
+  const token = getAuthToken();
 
+  if (token && !isTokenExpired(token)) return;
+
+  clearAuthSession();
   window.location.replace("/html/login.html");
 }
 

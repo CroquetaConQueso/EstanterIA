@@ -66,7 +66,7 @@
       <select id="filtro-estado">
         <option value="">Todos</option>
         <option value="PENDIENTE">PENDIENTE</option>
-        <option value="EN_PROGRESO">EN PROGRESO</option>
+        <option value="EN_PROGRESO">EN_PROGRESO</option>
         <option value="RESUELTA">RESUELTA</option>
         <option value="CANCELADA">CANCELADA</option>
       </select>
@@ -83,21 +83,51 @@
       </select>
     </label>
 
+    <label>
+      Tipo
+      <select id="filtro-tipo">
+        <option value="">Todos</option>
+      </select>
+    </label>
+
+    <label>
+      Trabajador
+      <select id="filtro-trabajador">
+        <option value="">Todos</option>
+      </select>
+    </label>
+
+    <label>
+      Sección
+      <select id="filtro-seccion">
+        <option value="">Todas</option>
+      </select>
+    </label>
+
+    <label>
+      Estantería
+      <select id="filtro-estanteria">
+        <option value="">Todas</option>
+      </select>
+    </label>
+
     <label class="grow">
       Buscar
       <input type="text" id="filtro-texto" placeholder="Título, producto, estantería, slot..." />
     </label>
 
     <label>
-      Trabajador
+      Asignar a
       <select id="trabajador-select">
         <option value="">Cargando trabajadores...</option>
       </select>
     </label>
 
-    <button class="btn ghost" id="btn-limpiar" type="button">Reiniciar filtros</button>
+    <button class="btn ghost" id="btn-limpiar" type="button">Limpiar filtros</button>
     <a class="btn primary" id="btn-nueva-tarea" href="tarea_formulario.html">Nueva tarea</a>
   </section>
+
+  <p class="filter-summary" id="filter-summary">Mostrando 0 de 0 tareas</p>
 
   <section class="priority-legend" aria-label="Leyenda de prioridad">
     <h2>Leyenda de prioridad</h2>

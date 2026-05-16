@@ -160,14 +160,14 @@ button, input, select {
    TOOLBAR (Filtros)
    ========================================================================== */
 .toolbar {
-  display: flex;
-  gap: 20px;
-  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  padding: 20px;
   background: var(--surface);
   border: var(--border-heavy);
   box-shadow: var(--shadow-solid);
-  margin-bottom: 40px;
-  flex-wrap: wrap;
+  margin-bottom: 14px;
   align-items: flex-end;
 }
 
@@ -182,8 +182,10 @@ button, input, select {
 }
 
 .toolbar input, .toolbar select {
-  height: 48px;
-  padding: 0 16px;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
   background: var(--paper);
   border: var(--border-main);
   color: var(--ink);
@@ -208,14 +210,25 @@ button, input, select {
 }
 
 .grow {
-  flex: 1;
-  min-width: 200px;
+  min-width: 0;
+}
+
+.filter-summary {
+  margin: 0 0 28px;
+  padding: 10px 14px;
+  border: var(--border-main);
+  background: var(--ink);
+  color: var(--gold);
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  text-transform: none;
 }
 
 .priority-legend {
   display: grid;
   gap: 12px;
-  margin: -18px 0 32px;
+  margin: 0 0 32px;
   padding: 16px 18px;
   border: var(--border-heavy);
   background: var(--paper);

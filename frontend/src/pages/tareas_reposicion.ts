@@ -106,15 +106,22 @@ type ApiErrorResponse = {
 
 const API_TAREAS = "/api/tareas";
 const API_TRABAJADORES_ACTIVOS = "/api/trabajadores/activos";
+const CODIGO_EMPRESA_DEMO = "EMP-DEMO";
+const VALOR_SIN_ASIGNAR = "__SIN_ASIGNAR__";
 
 const tasksGrid = document.querySelector<HTMLElement>("#tasks-grid");
 const filtroEstado = document.querySelector<HTMLSelectElement>("#filtro-estado");
 const filtroPrioridad = document.querySelector<HTMLSelectElement>("#filtro-prioridad");
+const filtroTipo = document.querySelector<HTMLSelectElement>("#filtro-tipo");
+const filtroTrabajador = document.querySelector<HTMLSelectElement>("#filtro-trabajador");
+const filtroSeccion = document.querySelector<HTMLSelectElement>("#filtro-seccion");
+const filtroEstanteria = document.querySelector<HTMLSelectElement>("#filtro-estanteria");
 const filtroTexto = document.querySelector<HTMLInputElement>("#filtro-texto");
 const trabajadorSelect = document.querySelector<HTMLSelectElement>("#trabajador-select");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar");
 const btnNuevaTarea = document.querySelector<HTMLAnchorElement>("#btn-nueva-tarea");
 const tasksFeedback = document.querySelector<HTMLElement>("#tasks-feedback");
+const filterSummary = document.querySelector<HTMLElement>("#filter-summary");
 
 const metricPendientes = document.querySelector<HTMLElement>("#metric-pendientes");
 const metricCurso = document.querySelector<HTMLElement>("#metric-curso");
@@ -122,6 +129,8 @@ const metricCompletadas = document.querySelector<HTMLElement>("#metric-completad
 
 let tareas: TareaOperativaResponse[] = [];
 let trabajadoresActivos: TrabajadorActivoResponse[] = [];
+let seccionesDisponibles: SeccionResponse[] = [];
+let estanteriasFiltro: EstanteriaResumenResponse[] = [];
 const puedeGestionarTareas = isStructuralAdmin();
 
 if (!puedeGestionarTareas && btnNuevaTarea) {
@@ -193,6 +202,33 @@ function etiquetaTrabajadorActivo(trabajador: TrabajadorActivoResponse): string 
   return `${textoSeguro(nombre, "Trabajador sin nombre")} - ${textoSeguro(trabajador.tipoTrabajador, "Sin tipo")}`;
 }
 
+function etiquetaSeccion(seccion: SeccionResponse): string {
+  const nombre = textoSeguro(seccion.nombre ?? seccion.codigo, "Sección sin nombre");
+  const codigo = seccion.codigo ? ` · ${seccion.codigo}` : "";
+  return `${nombre}${codigo}`;
+}
+
+function etiquetaEstanteria(estanteria: EstanteriaResumenResponse): string {
+  const codigo = textoSeguro(estanteria.codigo, "Sin código");
+  const nombre = estanteria.nombre ? ` · ${estanteria.nombre}` : "";
+  return `${codigo}${nombre}`;
+}
+
+function valorSeccion(seccion: SeccionResponse): string {
+  return seccion.id != null ? String(seccion.id) : (seccion.codigo ?? textoSeguro(seccion.nombre, ""));
+}
+
+function valorEstanteria(estanteria: EstanteriaResumenResponse): string {
+  return estanteria.id != null ? String(estanteria.id) : (estanteria.codigo ?? textoSeguro(estanteria.nombre, ""));
+}
+
+function crearOption(value: string, label: string): HTMLOptionElement {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = label;
+  return option;
+}
+
 function productoTarea(tarea: TareaOperativaResponse): string {
   return textoSeguro(
     tarea.productoNombre ?? tarea.asignacion?.producto?.nombre ?? tarea.slot?.productoEsperado?.nombre,
@@ -254,6 +290,35 @@ function blobBusqueda(tarea: TareaOperativaResponse): string {
     tarea.asignacion?.claveProductoProveedor,
     nombreTrabajador(tarea.trabajadorAsignado)
   ].join(" ").toLowerCase();
+}
+
+function idsTrabajadorTarea(tarea: TareaOperativaResponse): string[] {
+  const id = tarea.trabajadorAsignado?.id;
+  return id != null ? [String(id)] : [];
+}
+
+function idsSeccionTarea(tarea: TareaOperativaResponse): string[] {
+  return [
+    tarea.seccion?.id != null ? String(tarea.seccion.id) : "",
+    tarea.seccion?.codigo ?? "",
+    tarea.seccion?.nombre ?? ""
+  ].filter(Boolean);
+}
+
+function idsEstanteriaTarea(tarea: TareaOperativaResponse): string[] {
+  return [
+    tarea.estanteria?.id != null ? String(tarea.estanteria.id) : "",
+    tarea.estanteria?.codigo ?? "",
+    tarea.estanteria?.nombre ?? ""
+  ].filter(Boolean);
+}
+
+function tareaCoincideConSeccion(tarea: TareaOperativaResponse, value: string): boolean {
+  return !value || idsSeccionTarea(tarea).includes(value);
+}
+
+function tareaCoincideConEstanteria(tarea: TareaOperativaResponse, value: string): boolean {
+  return !value || idsEstanteriaTarea(tarea).includes(value);
 }
 
 async function parseErrorResponse(response: Response): Promise<ApiErrorResponse | null> {
@@ -336,16 +401,114 @@ function actualizarMetricas(): void {
   }
 }
 
+function actualizarResumenFiltrado(cantidad: number): void {
+  if (!filterSummary) return;
+  filterSummary.textContent = `Mostrando ${cantidad} de ${tareas.length} tareas`;
+}
+
+function setOpciones(select: HTMLSelectElement | null, placeholder: string, opciones: Array<{ value: string; label: string }>): void {
+  if (!select) return;
+  const selected = select.value;
+  select.innerHTML = "";
+  select.appendChild(crearOption("", placeholder));
+  opciones.forEach((opcion) => {
+    select.appendChild(crearOption(opcion.value, opcion.label));
+  });
+  select.value = opciones.some((opcion) => opcion.value === selected) ? selected : "";
+}
+
+function opcionesTipoDesdeTareas(): Array<{ value: string; label: string }> {
+  const tipos = Array.from(new Set(tareas.map((tarea) => tarea.tipoTarea).filter(Boolean))).sort();
+  return tipos.map((tipo) => ({ value: tipo, label: etiquetaTipo(tipo) }));
+}
+
+function opcionesTrabajadorFiltro(): Array<{ value: string; label: string }> {
+  const porId = new Map<string, string>();
+  trabajadoresActivos.forEach((trabajador) => {
+    porId.set(String(trabajador.id), etiquetaTrabajadorActivo(trabajador));
+  });
+  tareas.forEach((tarea) => {
+    const trabajador = tarea.trabajadorAsignado;
+    if (!trabajador) return;
+    porId.set(String(trabajador.id), nombreTrabajador(trabajador));
+  });
+
+  return [
+    { value: VALOR_SIN_ASIGNAR, label: "Sin asignar" },
+    ...Array.from(porId.entries())
+      .sort((a, b) => a[1].localeCompare(b[1], "es"))
+      .map(([value, label]) => ({ value, label }))
+  ];
+}
+
+function opcionesSeccionFallback(): Array<{ value: string; label: string }> {
+  const porValor = new Map<string, string>();
+  tareas.forEach((tarea) => {
+    if (!tarea.seccion) return;
+    const value = idsSeccionTarea(tarea)[0];
+    if (!value) return;
+    porValor.set(value, etiquetaSeccion(tarea.seccion));
+  });
+  return Array.from(porValor.entries())
+    .sort((a, b) => a[1].localeCompare(b[1], "es"))
+    .map(([value, label]) => ({ value, label }));
+}
+
+function opcionesEstanteriaDesdeTareas(seccionValue = ""): Array<{ value: string; label: string }> {
+  const porValor = new Map<string, string>();
+  tareas
+    .filter((tarea) => tareaCoincideConSeccion(tarea, seccionValue))
+    .forEach((tarea) => {
+      if (!tarea.estanteria) return;
+      const value = idsEstanteriaTarea(tarea)[0];
+      if (!value) return;
+      porValor.set(value, etiquetaEstanteria(tarea.estanteria));
+    });
+  return Array.from(porValor.entries())
+    .sort((a, b) => a[1].localeCompare(b[1], "es"))
+    .map(([value, label]) => ({ value, label }));
+}
+
+function renderFiltrosDinamicos(): void {
+  setOpciones(filtroTipo, "Todos", opcionesTipoDesdeTareas());
+  setOpciones(filtroTrabajador, "Todos", opcionesTrabajadorFiltro());
+  setOpciones(
+    filtroSeccion,
+    "Todas",
+    seccionesDisponibles.length > 0
+      ? seccionesDisponibles.map((seccion) => ({ value: valorSeccion(seccion), label: etiquetaSeccion(seccion) }))
+      : opcionesSeccionFallback()
+  );
+  renderFiltroEstanteria();
+}
+
+function renderFiltroEstanteria(): void {
+  const seccionValue = filtroSeccion?.value ?? "";
+  const opciones = estanteriasFiltro.length > 0
+    ? estanteriasFiltro.map((estanteria) => ({ value: valorEstanteria(estanteria), label: etiquetaEstanteria(estanteria) }))
+    : opcionesEstanteriaDesdeTareas(seccionValue);
+  setOpciones(filtroEstanteria, "Todas", opciones);
+}
+
 function tareasFiltradas(): TareaOperativaResponse[] {
   const estado = filtroEstado?.value ?? "";
   const prioridad = filtroPrioridad?.value ?? "";
+  const tipo = filtroTipo?.value ?? "";
+  const trabajador = filtroTrabajador?.value ?? "";
+  const seccion = filtroSeccion?.value ?? "";
+  const estanteria = filtroEstanteria?.value ?? "";
   const texto = filtroTexto?.value.trim().toLowerCase() ?? "";
 
   return tareas.filter((tarea) => {
     const okEstado = !estado || tarea.estadoTarea === estado;
     const okPrioridad = !prioridad || tarea.prioridad === prioridad;
+    const okTipo = !tipo || tarea.tipoTarea === tipo;
+    const okTrabajador = !trabajador
+      || (trabajador === VALOR_SIN_ASIGNAR ? !tarea.trabajadorAsignado : idsTrabajadorTarea(tarea).includes(trabajador));
+    const okSeccion = tareaCoincideConSeccion(tarea, seccion);
+    const okEstanteria = tareaCoincideConEstanteria(tarea, estanteria);
     const okTexto = !texto || blobBusqueda(tarea).includes(texto);
-    return okEstado && okPrioridad && okTexto;
+    return okEstado && okPrioridad && okTipo && okTrabajador && okSeccion && okEstanteria && okTexto;
   });
 }
 
@@ -463,6 +626,7 @@ function renderTareas(): void {
   if (!tasksGrid) return;
 
   const filtradas = tareasFiltradas();
+  actualizarResumenFiltrado(filtradas.length);
   tasksGrid.innerHTML = "";
 
   if (tareas.length === 0) {
@@ -471,7 +635,7 @@ function renderTareas(): void {
   }
 
   if (filtradas.length === 0) {
-    setGridMessage("No hay tareas que coincidan con los filtros");
+    setGridMessage("No hay tareas que coincidan con los filtros.");
     return;
   }
 
@@ -488,10 +652,13 @@ async function cargarTareas(): Promise<void> {
     const data = await fetchJson<TareaOperativaResponse[]>(API_TAREAS);
     tareas = data.slice().sort((a, b) => new Date(b.createdAt ?? "").getTime() - new Date(a.createdAt ?? "").getTime());
     actualizarMetricas();
+    renderFiltrosDinamicos();
     renderTareas();
   } catch (err) {
     tareas = [];
     actualizarMetricas();
+    renderFiltrosDinamicos();
+    actualizarResumenFiltrado(0);
     setGridMessage(err instanceof Error ? err.message : "No se pudieron cargar las tareas");
   }
 }
@@ -526,6 +693,44 @@ async function cargarTrabajadoresActivos(): Promise<void> {
   }
 
   renderTrabajadoresActivos();
+  renderFiltrosDinamicos();
+}
+
+async function cargarSeccionesFiltro(): Promise<void> {
+  try {
+    seccionesDisponibles = await fetchJson<SeccionResponse[]>(`/api/empresas/${encodeURIComponent(CODIGO_EMPRESA_DEMO)}/secciones`);
+  } catch {
+    seccionesDisponibles = [];
+  }
+
+  renderFiltrosDinamicos();
+}
+
+async function cargarEstanteriasFiltroPorSeccion(): Promise<void> {
+  const seccionValue = filtroSeccion?.value ?? "";
+  estanteriasFiltro = [];
+
+  if (!seccionValue) {
+    renderFiltroEstanteria();
+    renderTareas();
+    return;
+  }
+
+  const seccion = seccionesDisponibles.find((item) => valorSeccion(item) === seccionValue);
+  if (seccion?.id == null) {
+    renderFiltroEstanteria();
+    renderTareas();
+    return;
+  }
+
+  try {
+    estanteriasFiltro = await fetchJson<EstanteriaResumenResponse[]>(`/api/secciones/${encodeURIComponent(String(seccion.id))}/estanterias`);
+  } catch {
+    estanteriasFiltro = [];
+  }
+
+  renderFiltroEstanteria();
+  renderTareas();
 }
 
 async function cambiarEstado(id: number, estado: EstadoTareaOperativa): Promise<void> {
@@ -582,17 +787,31 @@ tasksGrid?.addEventListener("click", (event) => {
 
 filtroEstado?.addEventListener("change", renderTareas);
 filtroPrioridad?.addEventListener("change", renderTareas);
+filtroTipo?.addEventListener("change", renderTareas);
+filtroTrabajador?.addEventListener("change", renderTareas);
+filtroSeccion?.addEventListener("change", () => {
+  if (filtroEstanteria) filtroEstanteria.value = "";
+  void cargarEstanteriasFiltroPorSeccion();
+});
+filtroEstanteria?.addEventListener("change", renderTareas);
 filtroTexto?.addEventListener("input", renderTareas);
 
 btnLimpiar?.addEventListener("click", () => {
   setTaskFeedback(null);
   if (filtroEstado) filtroEstado.value = "";
   if (filtroPrioridad) filtroPrioridad.value = "";
+  if (filtroTipo) filtroTipo.value = "";
+  if (filtroTrabajador) filtroTrabajador.value = "";
+  if (filtroSeccion) filtroSeccion.value = "";
+  if (filtroEstanteria) filtroEstanteria.value = "";
   if (filtroTexto) filtroTexto.value = "";
+  estanteriasFiltro = [];
+  renderFiltroEstanteria();
   renderTareas();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
   void cargarTrabajadoresActivos();
+  void cargarSeccionesFiltro();
   void cargarTareas();
 });

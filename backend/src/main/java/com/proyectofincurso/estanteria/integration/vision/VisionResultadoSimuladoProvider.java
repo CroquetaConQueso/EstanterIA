@@ -23,11 +23,17 @@ public class VisionResultadoSimuladoProvider implements VisionResultadoProvider 
     private static final DateTimeFormatter CAPTURE_FORMAT =
             DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").withZone(ZoneOffset.UTC);
 
+    private final CapturePathNormalizer capturePathNormalizer;
+
+    public VisionResultadoSimuladoProvider(CapturePathNormalizer capturePathNormalizer) {
+        this.capturePathNormalizer = capturePathNormalizer;
+    }
+
     @Override
     public ResultadoVisualResponse obtenerResultado(String estanteriaCodigo, String modo, String imagePath) {
         Instant capturadaEn = Instant.now();
         String nombreArchivo = resolverNombreArchivo(imagePath, capturadaEn);
-        String ruta = "/captures/" + nombreArchivo;
+        String ruta = "/captures/" + estanteriaCodigo + "/" + nombreArchivo;
 
         List<SlotVisualResponse> slots = List.of(
                 new SlotVisualResponse("slot_1", 1, EstadoVisualSlot.OCUPADO, 0.97),
@@ -46,7 +52,7 @@ public class VisionResultadoSimuladoProvider implements VisionResultadoProvider 
                 true
         );
 
-        return new ResultadoVisualResponse(
+        ResultadoVisualResponse resultado = new ResultadoVisualResponse(
                 estanteriaCodigo,
                 MODELO_VERSION,
                 capturadaEn,
@@ -54,6 +60,7 @@ public class VisionResultadoSimuladoProvider implements VisionResultadoProvider 
                 resumen,
                 slots
         );
+        return capturePathNormalizer.normalizar(resultado, estanteriaCodigo);
     }
 
     private String resolverNombreArchivo(String imagePath, Instant capturadaEn) {

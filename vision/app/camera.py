@@ -5,7 +5,7 @@ from app.config import CAMERA_SOURCE, RAW_DIR
 from app.file_naming import get_next_capture_path
 
 
-def capture_image_from_camera() -> Path:
+def capture_image_from_camera(estanteria_codigo: str | None = None) -> Path:
     cap = cv2.VideoCapture(CAMERA_SOURCE)
 
     if not cap.isOpened():
@@ -17,7 +17,7 @@ def capture_image_from_camera() -> Path:
     if not ret or frame is None:
         raise RuntimeError("No se pudo capturar un frame desde la cámara")
 
-    capture_path = get_next_capture_path(RAW_DIR)
+    capture_path = get_next_capture_path(RAW_DIR, estanteria_codigo)
     cv2.imwrite(str(capture_path), frame)
 
     return capture_path

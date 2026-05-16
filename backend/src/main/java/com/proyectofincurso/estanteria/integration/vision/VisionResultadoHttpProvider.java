@@ -11,9 +11,11 @@ import com.proyectofincurso.estanteria.web.error.ApiException;
 public class VisionResultadoHttpProvider implements VisionResultadoProvider {
 
     private final VisionClient visionClient;
+    private final CapturePathNormalizer capturePathNormalizer;
 
-    public VisionResultadoHttpProvider(VisionClient visionClient) {
+    public VisionResultadoHttpProvider(VisionClient visionClient, CapturePathNormalizer capturePathNormalizer) {
         this.visionClient = visionClient;
+        this.capturePathNormalizer = capturePathNormalizer;
     }
 
     @Override
@@ -30,6 +32,7 @@ public class VisionResultadoHttpProvider implements VisionResultadoProvider {
         if (resultado.getEstanteriaCodigo() == null || resultado.getEstanteriaCodigo().isBlank()) {
             resultado.setEstanteriaCodigo(estanteriaCodigo);
         }
+        capturePathNormalizer.normalizar(resultado, estanteriaCodigo);
         validarContrato(resultado);
 
         return resultado;

@@ -128,6 +128,19 @@
               </ul>
             </div>
           </div>
+
+          <div class="product-actions" id="product-actions" hidden>
+            <button class="btn ghost" id="btn-edit-product" type="button">
+              Editar producto
+            </button>
+            <button class="btn danger" id="btn-deactivate-product" type="button">
+              Desactivar producto
+            </button>
+            <button class="btn primary" id="btn-reactivate-product" type="button">
+              Reactivar producto
+            </button>
+          </div>
+          <p class="form-status" id="inventory-action-status" role="status" aria-live="polite"></p>
         </aside>
       </section>
 
@@ -173,6 +186,28 @@
 
           <div class="dialog-actions">
             <button class="btn primary" id="btn-save-product" type="submit">Crear producto</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog class="product-dialog confirm-dialog" id="deactivate-product-dialog">
+        <form class="product-form" method="dialog">
+          <div class="dialog-head">
+            <div>
+              <p class="eyebrow">Producto</p>
+              <h2>Desactivar producto</h2>
+            </div>
+            <button class="btn ghost compact" id="btn-cancel-deactivate-product" type="button">Cancelar</button>
+          </div>
+
+          <p class="help">
+            Este producto dejará de estar disponible para nuevas configuraciones, pero se conservará el histórico.
+          </p>
+
+          <div class="dialog-actions">
+            <button class="btn danger" id="btn-confirm-deactivate-product" type="button">
+              Desactivar producto
+            </button>
           </div>
         </form>
       </dialog>

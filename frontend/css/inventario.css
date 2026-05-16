@@ -260,7 +260,8 @@ select {
 
 .badge-ok,
 .badge-gap,
-.badge-neutral {
+.badge-neutral,
+.badge-inactive {
   display: inline-block;
   padding: 5px 10px;
   border: var(--border-light);
@@ -280,6 +281,18 @@ select {
 .badge-neutral {
   background: var(--paper);
   color: var(--muted);
+}
+
+.badge-inactive {
+  background: var(--black);
+  color: var(--gold);
+}
+
+.product-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .detail-shell {
@@ -345,9 +358,31 @@ select {
   color: var(--gold);
 }
 
+.btn.danger {
+  background: var(--red);
+  color: var(--white);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
 .btn.compact {
   min-height: 40px;
   padding: 0 12px;
+}
+
+.product-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.product-actions[hidden] {
+  display: none;
 }
 
 .product-dialog {
@@ -410,6 +445,10 @@ select {
 
 .check-row input {
   width: auto;
+}
+
+.check-row input:disabled + * {
+  color: var(--muted);
 }
 
 .form-status {

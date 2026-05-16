@@ -12,4 +12,7 @@ public interface ProductoProveedorRepository extends JpaRepository<ProductoProve
     List<ProductoProveedor> findByProductoIdAndActivoTrueOrderByProveedorNombreAsc(Long productoId);
 
     Optional<ProductoProveedor> findByProductoIdAndProveedorId(Long productoId, Long proveedorId);
+
+    @EntityGraph(attributePaths = {"producto", "proveedor"})
+    Optional<ProductoProveedor> findByProductoIdAndProveedorCodigoIgnoreCase(Long productoId, String proveedorCodigo);
 }

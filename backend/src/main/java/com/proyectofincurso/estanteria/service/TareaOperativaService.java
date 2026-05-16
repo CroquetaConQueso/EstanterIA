@@ -207,6 +207,31 @@ public class TareaOperativaService {
         return toResponse(tarea);
     }
 
+    @Transactional
+    public TareaOperativaResponse reabrirTarea(Long id) {
+        TareaOperativa tarea = tareaOperativaRepository.findByIdConContexto(id)
+                .orElseThrow(() -> ApiException.notFound(
+                        "TAREA_OPERATIVA_NOT_FOUND",
+                        "No existe la tarea operativa indicada"
+                ));
+
+        if (tarea.getEstadoTarea() == EstadoTareaOperativa.PENDIENTE) {
+            return toResponse(tarea);
+        }
+
+        if (tarea.getEstadoTarea() == EstadoTareaOperativa.EN_PROGRESO) {
+            throw ApiException.conflict(
+                    "TAREA_NO_FINALIZADA",
+                    "Solo se pueden reabrir tareas resueltas o canceladas"
+            );
+        }
+
+        tarea.setEstadoTarea(EstadoTareaOperativa.PENDIENTE);
+        tarea.setResueltaAt(null);
+
+        return toResponse(tarea);
+    }
+
     private void aplicarCamposEditables(
             TareaOperativa tarea,
             TipoTareaOperativa tipoTarea,

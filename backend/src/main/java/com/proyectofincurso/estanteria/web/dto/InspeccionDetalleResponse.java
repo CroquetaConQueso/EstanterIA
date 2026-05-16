@@ -16,4 +16,6 @@ public class InspeccionDetalleResponse {
     private EstanteriaEstado estado;
     private Instant createdAt;
     private ResultadoVisualResponse resultadoVisual;
+    private Boolean eliminable;
+    private String motivoNoEliminable;
 }

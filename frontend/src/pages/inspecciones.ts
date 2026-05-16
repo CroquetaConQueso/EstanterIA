@@ -1,4 +1,4 @@
-import { authFetch } from "../lib/api";
+import { authFetch, isStructuralAdmin } from "../lib/api";
 import { requireAuth } from "../lib/auth-guard";
 import { imageFallbackText, normalizeImageUrl } from "../lib/image-paths";
 
@@ -53,6 +53,8 @@ type InspeccionResponse = {
     modeloVersion?: string | null;
     capturadaEn?: string | null;
     resultadoVisual?: ResultadoVisualResponse | null;
+    eliminable?: boolean | null;
+    motivoNoEliminable?: string | null;
 };
 
 type SeccionResponse = {
@@ -81,6 +83,7 @@ type ApiErrorResponse = {
 };
 
 const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-inspecciones");
+const filtroInspeccion = document.querySelector<HTMLSelectElement>("#filtro-inspeccion");
 const filtroSeccion = document.querySelector<HTMLSelectElement>("#filtro-seccion");
 const filtroPlano = document.querySelector<HTMLInputElement>("#filtro-plano");
 const filtroEstado = document.querySelector<HTMLSelectElement>("#filtro-estado");
@@ -97,13 +100,22 @@ const detalleVisual = document.querySelector<HTMLUListElement>("#detalle-visual"
 const detalleSlots = document.querySelector<HTMLUListElement>("#detalle-slots");
 const detalleError = document.querySelector<HTMLElement>("#detalle-error");
 const detalleCompletoLink = document.querySelector<HTMLAnchorElement>("#detalle-completo-link");
+const btnEliminarInspeccion = document.querySelector<HTMLButtonElement>("#btn-eliminar-inspeccion");
+const detalleDeleteReason = document.querySelector<HTMLElement>("#detalle-delete-reason");
+const deleteDialog = document.querySelector<HTMLDialogElement>("#delete-inspection-dialog");
+const deleteConfirmInput = document.querySelector<HTMLInputElement>("#delete-confirm-input");
+const btnCancelDelete = document.querySelector<HTMLButtonElement>("#btn-cancel-delete");
+const btnConfirmDelete = document.querySelector<HTMLButtonElement>("#btn-confirm-delete");
 
 let inspecciones: InspeccionResponse[] = [];
 let estanteriasPorCodigo = new Map<string, EstanteriaConSeccion>();
 let selectedInspeccionId: number | null = null;
+let detalleActual: InspeccionResponse | null = null;
 
 const API_URL = "/api/inspecciones";
 const EMPRESA_CODIGO = "EMP-DEMO";
+const CONFIRM_DELETE_TEXT = "BORRAR INSPECCION";
+const puedeEliminarInspecciones = isStructuralAdmin();
 
 function setError(msg: string | null) {
     if (!errorEl) return;
@@ -142,6 +154,19 @@ function setDetalleError(msg: string | null) {
 
     detalleError.textContent = msg;
     detalleError.removeAttribute("hidden");
+}
+
+function setDeleteReason(msg: string | null) {
+    if (!detalleDeleteReason) return;
+
+    if (!msg) {
+        detalleDeleteReason.textContent = "";
+        detalleDeleteReason.setAttribute("hidden", "");
+        return;
+    }
+
+    detalleDeleteReason.textContent = msg;
+    detalleDeleteReason.removeAttribute("hidden");
 }
 
 function clearElement(el: Element | null) {
@@ -193,6 +218,10 @@ function formatFecha(value: string | null | undefined): string {
         dateStyle: "short",
         timeStyle: "short"
     }).format(fecha);
+}
+
+function formatInspeccionOption(ins: InspeccionResponse): string {
+    return `#${ins.id} · ${ins.estanteriaCodigo} · ${formatFecha(ins.capturadaEn ?? ins.createdAt)}`;
 }
 
 function getFechaFiltro(ins: InspeccionResponse): Date | null {
@@ -279,16 +308,19 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
     if (status === 401) return "No autorizado";
     if (status === 403) return "No tienes permisos para realizar esta acción";
     if (status === 404) return "No se encontró la inspección solicitada";
-    if (status === 409) return "Conflicto al recuperar los datos";
+    if (status === 409) return "No se puede eliminar esta inspección porque generó alertas operativas.";
     if (status >= 500) return "Error interno del servidor";
 
     return `Error HTTP ${status}`;
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchApi<T>(url: string, init: RequestInit = {}): Promise<T | null> {
+    const headers = new Headers(init.headers);
+    headers.set("Accept", "application/json");
+
     const res = await authFetch(url, {
-        method: "GET",
-        headers: { "Accept": "application/json" }
+        ...init,
+        headers
     });
 
     if (!res.ok) {
@@ -296,11 +328,24 @@ async function fetchJson<T>(url: string): Promise<T> {
         throw new Error(getBackendErrorMessage(errorData, res.status));
     }
 
+    if (res.status === 204) return null;
     return res.json() as Promise<T>;
+}
+
+async function fetchJson<T>(url: string): Promise<T> {
+    const data = await fetchApi<T>(url, { method: "GET" });
+    if (data === null) {
+        throw new Error("La respuesta del servidor está vacía");
+    }
+    return data;
 }
 
 async function fetchInspeccionDetalle(id: number): Promise<InspeccionResponse> {
     return fetchJson<InspeccionResponse>(`${API_URL}/${encodeURIComponent(String(id))}`);
+}
+
+async function deleteInspeccion(id: number): Promise<void> {
+    await fetchApi<void>(`${API_URL}/${encodeURIComponent(String(id))}`, { method: "DELETE" });
 }
 
 async function cargarMapaSeccionesEstanterias(): Promise<void> {
@@ -324,6 +369,38 @@ async function cargarMapaSeccionesEstanterias(): Promise<void> {
             label: `${seccion.codigo} · ${seccion.nombre}`
         }))
     );
+}
+
+function renderFiltroInspeccion(): void {
+    setSelectOptions(
+        filtroInspeccion,
+        "Todas",
+        inspecciones.map((ins) => ({
+            value: String(ins.id),
+            label: formatInspeccionOption(ins)
+        }))
+    );
+
+    if (filtroInspeccion && selectedInspeccionId !== null) {
+        filtroInspeccion.value = String(selectedInspeccionId);
+    }
+}
+
+function limpiarDetalle(): void {
+    detalleActual = null;
+    selectedInspeccionId = null;
+    clearElement(detalleResumen);
+    clearElement(detalleVisual);
+    clearElement(detalleSlots);
+    setDeleteReason(null);
+    if (detalleCompletoLink) detalleCompletoLink.setAttribute("hidden", "");
+    if (btnEliminarInspeccion) btnEliminarInspeccion.setAttribute("hidden", "");
+    if (photoPlaceholder) {
+        photoPlaceholder.innerHTML = "";
+        const span = document.createElement("span");
+        span.textContent = "Vista de estantería";
+        photoPlaceholder.appendChild(span);
+    }
 }
 
 function renderPhoto(ins: InspeccionResponse) {
@@ -364,8 +441,30 @@ function renderPhoto(ins: InspeccionResponse) {
     photoPlaceholder.appendChild(img);
 }
 
+function renderDeleteAction(ins: InspeccionResponse): void {
+    if (!btnEliminarInspeccion) return;
+
+    if (!puedeEliminarInspecciones) {
+        btnEliminarInspeccion.setAttribute("hidden", "");
+        setDeleteReason(null);
+        return;
+    }
+
+    btnEliminarInspeccion.removeAttribute("hidden");
+
+    if (ins.eliminable === false) {
+        btnEliminarInspeccion.disabled = true;
+        setDeleteReason(ins.motivoNoEliminable || "No se puede eliminar porque generó alertas operativas.");
+        return;
+    }
+
+    btnEliminarInspeccion.disabled = false;
+    setDeleteReason(null);
+}
+
 function renderDetalle(ins: InspeccionResponse) {
     setDetalleError(null);
+    detalleActual = ins;
 
     clearElement(detalleResumen);
     clearElement(detalleVisual);
@@ -416,6 +515,7 @@ function renderDetalle(ins: InspeccionResponse) {
     }
 
     renderPhoto(ins);
+    renderDeleteAction(ins);
 }
 
 async function renderDetalleDesdeBackend(id: number) {
@@ -432,6 +532,7 @@ async function renderDetalleDesdeBackend(id: number) {
 }
 
 function getInspeccionesFiltradas(): InspeccionResponse[] {
+    const inspeccionId = filtroInspeccion?.value ?? "";
     const texto = filtroPlano?.value.trim().toLowerCase() ?? "";
     const estado = filtroEstado?.value ?? "";
     const seccionId = filtroSeccion?.value ?? "";
@@ -442,6 +543,7 @@ function getInspeccionesFiltradas(): InspeccionResponse[] {
         const resumen = getResumenPersistido(ins);
         const fecha = getFechaFiltro(ins);
         const info = getEstanteriaInfo(ins.estanteriaCodigo);
+        const coincideInspeccion = !inspeccionId || String(ins.id) === inspeccionId;
         const coincideSeccion = !seccionId || String(info?.seccion.id ?? "") === seccionId;
         const coincideTexto =
             !texto ||
@@ -459,7 +561,7 @@ function getInspeccionesFiltradas(): InspeccionResponse[] {
         const coincideDesde = !desde || (fecha !== null && fecha.getTime() >= desde.getTime());
         const coincideHasta = !hasta || (fecha !== null && fecha.getTime() <= hasta.getTime());
 
-        return coincideSeccion && coincideTexto && coincideEstado && coincideDesde && coincideHasta;
+        return coincideInspeccion && coincideSeccion && coincideTexto && coincideEstado && coincideDesde && coincideHasta;
     });
 }
 
@@ -567,6 +669,7 @@ async function cargarInspecciones() {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
+        renderFiltroInspeccion();
         renderTabla();
 
         const nuevaInspeccionId = sessionStorage.getItem("nuevaInspeccionId");
@@ -594,10 +697,100 @@ async function cargarInspecciones() {
 
 function onFilterChange() {
     setSuccess(null);
-    selectedInspeccionId = null;
+    const inspeccionId = Number(filtroInspeccion?.value);
+    selectedInspeccionId = Number.isFinite(inspeccionId) && inspeccionId > 0 ? inspeccionId : null;
     renderTabla();
 }
 
+function onInspeccionFilterChange() {
+    setSuccess(null);
+    const inspeccionId = Number(filtroInspeccion?.value);
+
+    if (Number.isFinite(inspeccionId) && inspeccionId > 0) {
+        if (filtroSeccion) filtroSeccion.value = "";
+        if (filtroPlano) filtroPlano.value = "";
+        if (filtroEstado) filtroEstado.value = "";
+        if (filtroFechaDesde) filtroFechaDesde.value = "";
+        if (filtroFechaHasta) filtroFechaHasta.value = "";
+        void renderDetalleDesdeBackend(inspeccionId);
+        return;
+    }
+
+    selectedInspeccionId = null;
+    renderTabla();
+
+    const primera = getInspeccionesFiltradas()[0];
+    if (primera) {
+        void renderDetalleDesdeBackend(primera.id);
+    } else {
+        limpiarDetalle();
+        setDetalleError("No hay detalle disponible para los filtros actuales");
+    }
+}
+
+function abrirConfirmacionEliminacion(): void {
+    setError(null);
+    setSuccess(null);
+
+    if (!detalleActual) {
+        setDetalleError("Selecciona una inspección antes de eliminar.");
+        return;
+    }
+
+    if (detalleActual.eliminable === false) {
+        setDetalleError(detalleActual.motivoNoEliminable || "No se puede eliminar porque generó alertas operativas.");
+        return;
+    }
+
+    if (deleteConfirmInput) deleteConfirmInput.value = "";
+
+    if (deleteDialog?.showModal) {
+        deleteDialog.showModal();
+        deleteConfirmInput?.focus();
+        return;
+    }
+
+    setDetalleError("No se pudo abrir la confirmación de eliminación.");
+}
+
+async function confirmarEliminacion(): Promise<void> {
+    if (!detalleActual) return;
+
+    const confirmacion = deleteConfirmInput?.value.trim() ?? "";
+    if (confirmacion !== CONFIRM_DELETE_TEXT) {
+        setDetalleError(`Debes escribir exactamente ${CONFIRM_DELETE_TEXT} para eliminar.`);
+        return;
+    }
+
+    const id = detalleActual.id;
+    btnConfirmDelete?.setAttribute("disabled", "");
+
+    try {
+        await deleteInspeccion(id);
+        deleteDialog?.close();
+        inspecciones = inspecciones.filter((ins) => ins.id !== id);
+        renderFiltroInspeccion();
+        if (filtroInspeccion) filtroInspeccion.value = "";
+        setSuccess(`Inspección #${id} eliminada correctamente.`);
+        setError(null);
+
+        const siguiente = getInspeccionesFiltradas()[0] ?? null;
+        if (siguiente) {
+            await renderDetalleDesdeBackend(siguiente.id);
+        } else {
+            limpiarDetalle();
+            renderTabla();
+            setDetalleError("No hay detalle disponible porque no existen inspecciones");
+        }
+    } catch (err) {
+        deleteDialog?.close();
+        setError(err instanceof Error ? err.message : "No se pudo eliminar la inspección");
+    } finally {
+        btnConfirmDelete?.removeAttribute("disabled");
+    }
+}
+
+filtroInspeccion?.addEventListener("change", onInspeccionFilterChange);
 filtroSeccion?.addEventListener("change", onFilterChange);
 filtroPlano?.addEventListener("input", onFilterChange);
 filtroEstado?.addEventListener("change", onFilterChange);
@@ -605,6 +798,7 @@ filtroFechaDesde?.addEventListener("change", onFilterChange);
 filtroFechaHasta?.addEventListener("change", onFilterChange);
 
 btnLimpiar?.addEventListener("click", () => {
+    if (filtroInspeccion) filtroInspeccion.value = "";
     if (filtroSeccion) filtroSeccion.value = "";
     if (filtroPlano) filtroPlano.value = "";
     if (filtroEstado) filtroEstado.value = "";
@@ -615,6 +809,20 @@ btnLimpiar?.addEventListener("click", () => {
     setSuccess(null);
     selectedInspeccionId = null;
     renderTabla();
+
+    const primera = getInspeccionesFiltradas()[0];
+    if (primera) {
+        void renderDetalleDesdeBackend(primera.id);
+    } else {
+        limpiarDetalle();
+        setDetalleError("No hay detalle disponible porque no existen inspecciones");
+    }
+});
+
+btnEliminarInspeccion?.addEventListener("click", abrirConfirmacionEliminacion);
+btnCancelDelete?.addEventListener("click", () => deleteDialog?.close());
+btnConfirmDelete?.addEventListener("click", () => {
+    void confirmarEliminacion();
 });
 
 document.addEventListener("DOMContentLoaded", () => {

@@ -514,6 +514,24 @@ function selectedEstanteriaCodigo(): string | null {
   return codigo || null;
 }
 
+function seccionIdParaCrearEstanteria(): number | null {
+  if (mode === "rack") {
+    const seccionId = selectedSeccionId();
+    if (seccionId) return seccionId;
+  }
+
+  const zone = selectedZone();
+  if (zone) return zone.seccionId;
+
+  const rack = selectedRack();
+  if (rack) return rack.seccionId;
+
+  const seccionId = selectedSeccionId();
+  if (seccionId && zones.some((item) => item.seccionId === seccionId)) return seccionId;
+
+  return zones[0]?.seccionId ?? null;
+}
+
 function estanteriaDisponibleParaAnadir(estanteria: EstanteriaResumenResponse): boolean {
   return estanteria.activa !== false
     && !racks.some((rack) => rack.estanteriaCodigo === estanteria.codigo);
@@ -1435,11 +1453,11 @@ function buildSeccionPayload(): CrearSeccionPayload | string {
 }
 
 function buildEstanteriaPayload(): CrearEstanteriaPayload | string {
-  const seccionId = selectedSeccionId();
+  const seccionId = seccionIdParaCrearEstanteria();
   const codigo = textValue(newRackCodigoInput);
   const nombre = textValue(newRackNombreInput);
 
-  if (!seccionId) return "Selecciona una sección válida antes de crear la estantería.";
+  if (!seccionId) return "Dibuja primero una zona en el plano antes de crear una estantería para añadir.";
   if (!codigo) return "El código de estantería es obligatorio.";
   if (!nombre) return "El nombre de estantería es obligatorio.";
   if (productos.length === 0) return "No hay productos activos para asignar a los slots.";
@@ -1616,6 +1634,19 @@ async function crearEstanteriaInline(event: SubmitEvent): Promise<void> {
     creatingRack = false;
     if (btnCreateRack) btnCreateRack.disabled = false;
   }
+}
+
+async function abrirDialogoCrearEstanteria(): Promise<void> {
+  setInlineStatus(rackCreateStatus, "", "info");
+  const seccionId = seccionIdParaCrearEstanteria();
+  if (!seccionId) {
+    setStatus("Dibuja primero una zona en el plano antes de crear una estantería para añadir.", "error");
+    return;
+  }
+
+  await setMode("rack", { seccionId });
+  renderInlineSlots();
+  openDialog(rackDialog);
 }
 
 async function guardarPlano(): Promise<void> {
@@ -2182,9 +2213,7 @@ function bindEvents(): void {
     openDialog(sectionDialog);
   });
   btnOpenRackDialog?.addEventListener("click", () => {
-    setInlineStatus(rackCreateStatus, "", "info");
-    renderInlineSlots();
-    openDialog(rackDialog);
+    void abrirDialogoCrearEstanteria();
   });
   btnCloseSectionDialog?.addEventListener("click", () => closeDialog(sectionDialog));
   btnCancelSectionDialog?.addEventListener("click", () => closeDialog(sectionDialog));

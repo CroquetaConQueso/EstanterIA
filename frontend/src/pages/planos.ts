@@ -441,24 +441,29 @@ function getCodigoQueryParam(): string | null {
 function getEstadoQueryParam(): EstadoListadoPlanos {
   const params = new URLSearchParams(window.location.search);
   const estado = params.get("estado")?.trim().toUpperCase();
-  return estadoPlanosPermitidos.includes(estado as EstadoListadoPlanos) ? estado as EstadoListadoPlanos : "ACTIVOS";
+  return estadoPlanosPermitidos.includes(estado as EstadoListadoPlanos) ? estado as EstadoListadoPlanos : "TODOS";
 }
 
 function estadoPlanosSeleccionado(): EstadoListadoPlanos {
   const estado = planoEstadoFilter?.value as EstadoListadoPlanos | undefined;
-  return estadoPlanosPermitidos.includes(estado as EstadoListadoPlanos) ? estado as EstadoListadoPlanos : "ACTIVOS";
+  return estadoPlanosPermitidos.includes(estado as EstadoListadoPlanos) ? estado as EstadoListadoPlanos : "TODOS";
 }
 
 function actualizarUrlPlano(codigo: string): void {
   const url = new URL(window.location.href);
   url.searchParams.set("codigo", codigo);
   const estado = estadoPlanosSeleccionado();
-  if (estado === "ACTIVOS") {
+  if (estado === "TODOS") {
     url.searchParams.delete("estado");
   } else {
     url.searchParams.set("estado", estado);
   }
   window.history.replaceState({}, "", url);
+}
+
+function actualizarVisibilidadCrearPlano(): void {
+  if (!btnCrearPlano) return;
+  btnCrearPlano.hidden = !puedeConfigurarEstructura || estadoPlanosSeleccionado() === "INACTIVOS";
 }
 
 function estadoPlanoLabel(plano: { activo: boolean | null }): string {
@@ -534,6 +539,7 @@ function renderEstadoPlano(plano: PlanoOperativoResponse | null): void {
   btnTogglePlano.textContent = inactivo ? "REACTIVAR PLANO" : "DESACTIVAR PLANO";
   btnTogglePlano.classList.toggle("danger", !inactivo);
   btnTogglePlano.classList.toggle("plan-action-primary", inactivo);
+  actualizarVisibilidadCrearPlano();
 }
 
 function cerrarModalEstadoPlano(): void {
@@ -582,7 +588,7 @@ function abrirModalEstadoPlano(accion: "desactivar" | "reactivar"): void {
     planoEstadoModalError.textContent = "";
   }
 
-  planoEstadoModalConfirm.textContent = desactivar ? "DESACTIVAR PLANO" : "Reactivar plano";
+  planoEstadoModalConfirm.textContent = desactivar ? "DESACTIVAR PLANO" : "REACTIVAR PLANO";
   planoEstadoModalConfirm.classList.toggle("danger", desactivar);
   planoEstadoModalConfirm.classList.toggle("plan-action-primary", !desactivar);
   planoEstadoModal.hidden = false;
@@ -1211,6 +1217,7 @@ async function cargarPlanosDisponibles(): Promise<void> {
   const codigoQuery = getCodigoQueryParam();
   const estado = estadoPlanosSeleccionado();
 
+  actualizarVisibilidadCrearPlano();
   try {
     planosDisponibles = await fetchJson<PlanoResumenResponse[]>(
       `/api/empresas/${encodeURIComponent(EMPRESA_DEMO)}/planos?estado=${encodeURIComponent(estado)}`
@@ -1242,12 +1249,13 @@ planoEstadoFilter?.addEventListener("change", () => {
   const url = new URL(window.location.href);
   url.searchParams.delete("codigo");
   const estado = estadoPlanosSeleccionado();
-  if (estado === "ACTIVOS") {
+  if (estado === "TODOS") {
     url.searchParams.delete("estado");
   } else {
     url.searchParams.set("estado", estado);
   }
   window.history.replaceState({}, "", url);
+  actualizarVisibilidadCrearPlano();
   void cargarPlanosDisponibles();
 });
 
@@ -1273,5 +1281,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (planoEstadoFilter) {
     planoEstadoFilter.value = getEstadoQueryParam();
   }
+  actualizarVisibilidadCrearPlano();
   void cargarPlanosDisponibles();
 });

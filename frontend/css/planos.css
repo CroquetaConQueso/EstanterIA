@@ -692,7 +692,9 @@ button {
 
 .slot-node small {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.62rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
   text-transform: none;
 }
 
@@ -972,6 +974,10 @@ button {
   display: grid;
   gap: 8px;
   margin-top: 18px;
+}
+
+.plan-modal-confirm[hidden] {
+  display: none;
 }
 
 .plan-modal-confirm input {

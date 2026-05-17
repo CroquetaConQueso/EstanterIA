@@ -2,6 +2,7 @@ package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.config.OpenApiConfig;
 import com.proyectofincurso.estanteria.service.ModeloOperativoService;
+import com.proyectofincurso.estanteria.service.PlanoService;
 import com.proyectofincurso.estanteria.web.dto.EmpresaResponse;
 import com.proyectofincurso.estanteria.web.dto.SeccionResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +26,7 @@ import java.util.List;
 public class EmpresaController {
 
     private final ModeloOperativoService modeloOperativoService;
+    private final PlanoService planoService;
 
     @GetMapping(value = "/{codigo}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Obtener empresa", description = "Requiere autenticacion. Devuelve una empresa activa por codigo.")
@@ -38,5 +40,13 @@ public class EmpresaController {
             @PathVariable String codigoEmpresa,
             @RequestParam(name = "incluirInactivas", defaultValue = "false") boolean incluirInactivas) {
         return modeloOperativoService.obtenerSeccionesDeEmpresa(codigoEmpresa, incluirInactivas);
+    }
+
+    @GetMapping(value = "/{codigoEmpresa}/secciones/disponibles-para-plano", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Listar secciones disponibles para plano", description = "Requiere autenticacion. Devuelve secciones activas que no estan representadas en otros planos activos.")
+    public List<SeccionResponse> obtenerSeccionesDisponiblesParaPlano(
+            @PathVariable String codigoEmpresa,
+            @RequestParam(name = "planoCodigo", required = false) String planoCodigo) {
+        return planoService.listarSeccionesDisponiblesParaPlano(codigoEmpresa, planoCodigo);
     }
 }

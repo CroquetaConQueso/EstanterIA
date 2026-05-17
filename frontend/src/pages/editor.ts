@@ -323,6 +323,7 @@ let selected: SelectedElement = null;
 let zones: LocalZone[] = [];
 let racks: LocalRack[] = [];
 let secciones: SeccionResponse[] = [];
+let seccionesDisponiblesParaZona: SeccionResponse[] = [];
 let estanteriasSeccion: EstanteriaResumenResponse[] = [];
 let productos: ProductoResumenResponse[] = [];
 let trabajadoresActivos: TrabajadorActivoResponse[] = [];
@@ -461,6 +462,48 @@ function selectedSeccionId(): number | null {
   return Number.isFinite(seccionId) && seccionId > 0 ? seccionId : null;
 }
 
+function seccionesDisponiblesParaDibujarZona(): SeccionResponse[] {
+  const colocadas = new Set(zones.map((zone) => zone.seccionId));
+  return seccionesDisponiblesParaZona.filter((seccion) => !colocadas.has(seccion.id));
+}
+
+function seccionesColocadasEnPlano(): SeccionResponse[] {
+  return zones.map((zone) => secciones.find((seccion) => seccion.id === zone.seccionId) ?? {
+    id: zone.seccionId,
+    codigo: zone.seccionCodigo,
+    nombre: zone.seccionNombre,
+    descripcion: null,
+    activa: true
+  });
+}
+
+function seccionesParaSelectorActual(): SeccionResponse[] {
+  return mode === "rack" ? seccionesColocadasEnPlano() : seccionesDisponiblesParaDibujarZona();
+}
+
+function renderSeccionOptions(selectedId?: number): void {
+  if (!seccionSelect) return;
+
+  const previousValue = selectedId ? String(selectedId) : seccionSelect.value;
+  const opciones = seccionesParaSelectorActual();
+  seccionSelect.innerHTML = "";
+
+  if (opciones.length === 0) {
+    seccionSelect.appendChild(option("", mode === "rack"
+      ? "No hay zonas en este plano"
+      : "No hay secciones disponibles para añadir"));
+    seccionSelect.disabled = true;
+  } else {
+    seccionSelect.disabled = false;
+    opciones.forEach((seccion) => {
+      seccionSelect.appendChild(option(String(seccion.id), `${seccion.nombre} · ${seccion.codigo}`));
+    });
+    if (previousValue && opciones.some((seccion) => String(seccion.id) === previousValue)) {
+      seccionSelect.value = previousValue;
+    }
+  }
+}
+
 function selectedEstanteriaCodigo(): string | null {
   const codigo = estanteriaSelect?.value.trim();
   return codigo || null;
@@ -473,14 +516,18 @@ function updateToolFeedback(): void {
   const estanteriaCodigo = selectedEstanteriaCodigo();
 
   if (!seccionId) {
-    toolFeedback.textContent = "Selecciona una sección para dibujar zonas o estanterías.";
+    if (mode === "zone" && seccionesDisponiblesParaDibujarZona().length === 0) {
+      toolFeedback.textContent = "No hay secciones disponibles para añadir. Crea una nueva sección o revisa los planos existentes.";
+    } else if (mode === "rack" && zones.length === 0) {
+      toolFeedback.textContent = "Crea primero una zona antes de colocar estanterías.";
+    } else {
+      toolFeedback.textContent = "Selecciona una sección para dibujar zonas o estanterías.";
+    }
     return;
   }
 
-  const todasSeccionesColocadas = secciones.length > 0
-    && secciones.every((seccion) => zones.some((zone) => zone.seccionId === seccion.id));
-  if (mode === "zone" && todasSeccionesColocadas) {
-    toolFeedback.textContent = "Todas las secciones disponibles ya tienen zona en este plano.";
+  if (mode === "zone" && seccionesDisponiblesParaDibujarZona().length === 0) {
+    toolFeedback.textContent = "No hay secciones disponibles para añadir.";
     return;
   }
 
@@ -519,6 +566,8 @@ function setMode(nextMode: EditorMode): void {
   document.querySelectorAll<HTMLButtonElement>(".tool").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.mode === mode);
   });
+  renderSeccionOptions();
+  void cargarEstanteriasDeSeccion();
   setText(canvasHelp, mode === "zone"
     ? "Arrastra para dibujar una zona de la sección seleccionada."
     : mode === "rack"
@@ -558,6 +607,7 @@ function getPointerCoords(event: PointerEvent): { x: number; y: number } {
 
 function render(): void {
   updateCanvasSize();
+  renderSeccionOptions();
   renderCanvas();
   renderLists();
   renderSelectionPanel();
@@ -771,21 +821,15 @@ async function fetchJson<T>(url: string, init: RequestInit = {}): Promise<T> {
 }
 
 async function cargarSecciones(selectedId?: number): Promise<void> {
-  secciones = await fetchJson<SeccionResponse[]>("/api/empresas/EMP-DEMO/secciones");
-  if (seccionSelect) {
-    const previousValue = selectedId ? String(selectedId) : seccionSelect.value;
-    seccionSelect.innerHTML = "";
-    if (secciones.length === 0) {
-      seccionSelect.appendChild(option("", "No hay secciones disponibles"));
-    } else {
-      secciones.forEach((seccion) => {
-        seccionSelect.appendChild(option(String(seccion.id), `${seccion.nombre} · ${seccion.codigo}`));
-      });
-      if (previousValue && secciones.some((seccion) => String(seccion.id) === previousValue)) {
-        seccionSelect.value = previousValue;
-      }
-    }
-  }
+  const disponiblesUrl = new URL("/api/empresas/EMP-DEMO/secciones/disponibles-para-plano", window.location.origin);
+  if (codigoInicial) disponiblesUrl.searchParams.set("planoCodigo", codigoInicial);
+
+  [secciones, seccionesDisponiblesParaZona] = await Promise.all([
+    fetchJson<SeccionResponse[]>("/api/empresas/EMP-DEMO/secciones"),
+    fetchJson<SeccionResponse[]>(`${disponiblesUrl.pathname}${disponiblesUrl.search}`)
+  ]);
+
+  renderSeccionOptions(selectedId);
   await cargarEstanteriasDeSeccion();
 }
 
@@ -1554,6 +1598,10 @@ function addZone(box: { x: number; y: number; width: number; height: number }): 
     setStatus("Selecciona una sección válida antes de dibujar la zona.", "error");
     return;
   }
+  if (!seccionesDisponiblesParaDibujarZona().some((item) => item.id === seccionId)) {
+    setStatus("La sección seleccionada ya está representada en otro plano o no está disponible.", "error");
+    return;
+  }
   if (zones.some((zone) => zone.seccionId === seccionId)) {
     setStatus("La sección seleccionada ya está representada en este plano.", "error");
     return;
@@ -2094,7 +2142,7 @@ function bindEvents(): void {
 async function init(): Promise<void> {
   setText(editorModeLabel, isEditMode ? "Edición persistente" : "Creación persistente");
   setText(editorTitle, isEditMode ? "Editar plano 2D" : "Crear plano 2D");
-  if (btnSave) btnSave.textContent = isEditMode ? "Guardar cambios" : "Guardar plano";
+  if (btnSave) btnSave.textContent = "Guardar plano";
   if (empresaInput) empresaInput.value = "EMP-DEMO";
 
   bindEvents();

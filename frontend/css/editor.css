@@ -576,6 +576,7 @@ textarea {
 }
 
 #element-edit-status,
+.selection-save-note,
 .element-form > .form-actions {
   grid-column: 1 / -1;
 }
@@ -864,6 +865,7 @@ textarea {
 
   #element-slots-field,
   #element-edit-status,
+  .selection-save-note,
   .element-form > .form-actions {
     grid-column: 1 / -1;
   }
@@ -900,6 +902,7 @@ textarea {
   .rack-status-actions,
   .rack-worker-panel,
   #element-edit-status,
+  .selection-save-note,
   .element-form > .form-actions {
     grid-column: 1 / -1;
   }

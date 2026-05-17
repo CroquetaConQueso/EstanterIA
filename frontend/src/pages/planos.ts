@@ -209,7 +209,8 @@ const tipoAlertaLabels: Record<string, string> = {
   REVISION_MANUAL: "Revisión manual",
   PRODUCTO_PROXIMO_A_CADUCAR: "Producto próximo a caducar",
   RETIRADA_PROGRAMADA_PENDIENTE: "Retirada programada pendiente",
-  PRESENCIA_TRAS_RETIRADA_PROGRAMADA: "Presencia tras retirada programada"
+  PRESENCIA_TRAS_RETIRADA_PROGRAMADA: "Presencia tras retirada programada",
+  TRABAJADOR_NO_DISPONIBLE_ASIGNADO: "Trabajador no disponible"
 };
 
 const prioridadLabels: Record<string, string> = {

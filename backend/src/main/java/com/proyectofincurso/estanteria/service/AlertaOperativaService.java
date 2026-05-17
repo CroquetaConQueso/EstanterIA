@@ -5,6 +5,7 @@ import com.proyectofincurso.estanteria.persistence.entity.AlertaTrabajador;
 import com.proyectofincurso.estanteria.persistence.entity.AsignacionProductoSlot;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoAlerta;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoAsignacionProductoSlot;
+import com.proyectofincurso.estanteria.persistence.entity.EstadoDisponibilidadTrabajador;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoVisualSlot;
 import com.proyectofincurso.estanteria.persistence.entity.Estanteria;
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaSlotConfiguracion;
@@ -17,6 +18,8 @@ import com.proyectofincurso.estanteria.persistence.entity.Proveedor;
 import com.proyectofincurso.estanteria.persistence.entity.Seccion;
 import com.proyectofincurso.estanteria.persistence.entity.SeccionEncargado;
 import com.proyectofincurso.estanteria.persistence.entity.TipoAlerta;
+import com.proyectofincurso.estanteria.persistence.entity.Trabajador;
+import com.proyectofincurso.estanteria.persistence.entity.TrabajadorEstanteria;
 import com.proyectofincurso.estanteria.persistence.repository.AlertaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.AlertaTrabajadorRepository;
 import com.proyectofincurso.estanteria.persistence.repository.AsignacionProductoSlotRepository;
@@ -24,6 +27,7 @@ import com.proyectofincurso.estanteria.persistence.repository.EstanteriaReposito
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConfiguracionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.InspeccionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
+import com.proyectofincurso.estanteria.persistence.repository.TrabajadorEstanteriaRepository;
 import com.proyectofincurso.estanteria.web.dto.AlertaAsignacionResponse;
 import com.proyectofincurso.estanteria.web.dto.AlertaResponse;
 import com.proyectofincurso.estanteria.web.dto.AlertaSlotResponse;
@@ -34,6 +38,7 @@ import com.proyectofincurso.estanteria.web.dto.EvaluacionInspeccionAlertasRespon
 import com.proyectofincurso.estanteria.web.dto.ProductoResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.ProveedorResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.RevisionCaducidadesResponse;
+import com.proyectofincurso.estanteria.web.dto.RevisionTrabajadoresNoDisponiblesResponse;
 import com.proyectofincurso.estanteria.web.dto.SeccionResponse;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +50,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -60,6 +67,7 @@ public class AlertaOperativaService {
     private final EstanteriaSlotConfiguracionRepository slotConfiguracionRepository;
     private final AsignacionProductoSlotRepository asignacionProductoSlotRepository;
     private final SeccionEncargadoRepository seccionEncargadoRepository;
+    private final TrabajadorEstanteriaRepository trabajadorEstanteriaRepository;
     private final AlertaRepository alertaRepository;
     private final AlertaTrabajadorRepository alertaTrabajadorRepository;
     private final TareaOperativaService tareaOperativaService;
@@ -220,6 +228,30 @@ public class AlertaOperativaService {
         );
     }
 
+    @Transactional
+    public RevisionTrabajadoresNoDisponiblesResponse revisarTrabajadoresNoDisponiblesAsignados() {
+        ResultadoRevisionTrabajadores resultado = revisarTrabajadoresNoDisponiblesInterno(null);
+        return new RevisionTrabajadoresNoDisponiblesResponse(
+                resultado.asignacionesRevisadas(),
+                resultado.estanteriasAfectadas(),
+                resultado.alertasCreadas(),
+                resultado.alertasExistentes(),
+                "Revisión de trabajadores no disponibles completada."
+        );
+    }
+
+    @Transactional
+    public RevisionTrabajadoresNoDisponiblesResponse revisarTrabajadorNoDisponibleAsignado(Long trabajadorId) {
+        ResultadoRevisionTrabajadores resultado = revisarTrabajadoresNoDisponiblesInterno(trabajadorId);
+        return new RevisionTrabajadoresNoDisponiblesResponse(
+                resultado.asignacionesRevisadas(),
+                resultado.estanteriasAfectadas(),
+                resultado.alertasCreadas(),
+                resultado.alertasExistentes(),
+                "Revisión de trabajador asignado completada."
+        );
+    }
+
     private ResultadoRevisionCaducidad revisarCaducidadesInterno() {
         LocalDate hoy = LocalDate.now();
         LocalDate limite = hoy.plusDays(diasUmbralCaducidad);
@@ -234,6 +266,45 @@ public class AlertaOperativaService {
 
         return new ResultadoRevisionCaducidad(
                 asignaciones.size(),
+                contador.alertasCreadas,
+                contador.alertasExistentes,
+                contador.notificacionesCreadas
+        );
+    }
+
+    private ResultadoRevisionTrabajadores revisarTrabajadoresNoDisponiblesInterno(Long trabajadorId) {
+        List<TrabajadorEstanteria> asignaciones = trabajadorEstanteriaRepository
+                .findActivasConTrabajadorNoDisponible(EnumSet.of(
+                        EstadoDisponibilidadTrabajador.AUSENTE,
+                        EstadoDisponibilidadTrabajador.ENFERMO
+                ))
+                .stream()
+                .filter(asignacion -> trabajadorId == null
+                        || asignacion.getTrabajador().getId().equals(trabajadorId))
+                .toList();
+
+        Map<Long, List<TrabajadorEstanteria>> asignacionesPorEstanteria = new LinkedHashMap<>();
+        for (TrabajadorEstanteria asignacion : asignaciones) {
+            asignacionesPorEstanteria
+                    .computeIfAbsent(asignacion.getEstanteria().getId(), id -> new java.util.ArrayList<>())
+                    .add(asignacion);
+        }
+
+        ContadorEvaluacion contador = new ContadorEvaluacion();
+        for (List<TrabajadorEstanteria> asignacionesEstanteria : asignacionesPorEstanteria.values()) {
+            Estanteria estanteria = asignacionesEstanteria.get(0).getEstanteria();
+            crearOReutilizarAlertaPorEstanteria(
+                    TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO,
+                    prioridadTrabajadoresNoDisponibles(asignacionesEstanteria),
+                    mensajeTrabajadoresNoDisponibles(estanteria, asignacionesEstanteria),
+                    estanteria,
+                    contador
+            );
+        }
+
+        return new ResultadoRevisionTrabajadores(
+                asignaciones.size(),
+                asignacionesPorEstanteria.size(),
                 contador.alertasCreadas,
                 contador.alertasExistentes,
                 contador.notificacionesCreadas
@@ -449,6 +520,30 @@ public class AlertaOperativaService {
         return "asignado";
     }
 
+    private PrioridadAlerta prioridadTrabajadoresNoDisponibles(List<TrabajadorEstanteria> asignaciones) {
+        boolean hayEnfermo = asignaciones.stream()
+                .anyMatch(asignacion -> asignacion.getTrabajador().getEstadoDisponibilidad() == EstadoDisponibilidadTrabajador.ENFERMO);
+        return hayEnfermo ? PrioridadAlerta.ALTA : PrioridadAlerta.MEDIA;
+    }
+
+    private String mensajeTrabajadoresNoDisponibles(Estanteria estanteria, List<TrabajadorEstanteria> asignaciones) {
+        String trabajadores = asignaciones.stream()
+                .map(asignacion -> nombreTrabajadorConDisponibilidad(asignacion.getTrabajador()))
+                .collect(Collectors.joining(", "));
+        return "La estanteria " + estanteria.getCodigo()
+                + " tiene trabajadores asignados no disponibles: " + trabajadores + ".";
+    }
+
+    private String nombreTrabajadorConDisponibilidad(Trabajador trabajador) {
+        String nombre = java.util.stream.Stream.of(trabajador.getNombre(), trabajador.getApellidos())
+                .filter(valor -> valor != null && !valor.isBlank())
+                .collect(Collectors.joining(" "));
+        String disponibilidad = trabajador.getEstadoDisponibilidad() != null
+                ? trabajador.getEstadoDisponibilidad().name()
+                : "NO DISPONIBLE";
+        return (nombre.isBlank() ? "Trabajador " + trabajador.getId() : nombre) + " (" + disponibilidad + ")";
+    }
+
     private void crearOReutilizarAlertaVisual(TipoAlerta tipo,
                                               PrioridadAlerta prioridad,
                                               String mensaje,
@@ -534,6 +629,31 @@ public class AlertaOperativaService {
 
         Alerta alerta = construirAlerta(tipo, prioridad, mensaje, inspeccion, slotVisual, estanteria,
                 slotConfigurado, asignacionActiva);
+        alertaRepository.save(alerta);
+        contador.alertasCreadas++;
+        notificarDestinatarios(alerta, contador);
+        tareaOperativaService.crearAutomaticaSiNoExiste(alerta);
+    }
+
+    private void crearOReutilizarAlertaPorEstanteria(TipoAlerta tipo,
+                                                     PrioridadAlerta prioridad,
+                                                     String mensaje,
+                                                     Estanteria estanteria,
+                                                     ContadorEvaluacion contador) {
+        List<Alerta> existentes = alertaRepository.findAlertasAbiertasPorEstanteria(
+                tipo,
+                EstadoAlerta.ABIERTA,
+                estanteria.getId()
+        );
+        if (!existentes.isEmpty()) {
+            Alerta alertaExistente = existentes.get(0);
+            contador.alertasExistentes++;
+            notificarDestinatarios(alertaExistente, contador);
+            tareaOperativaService.crearAutomaticaSiNoExiste(alertaExistente);
+            return;
+        }
+
+        Alerta alerta = construirAlerta(tipo, prioridad, mensaje, null, null, estanteria, null, null);
         alertaRepository.save(alerta);
         contador.alertasCreadas++;
         notificarDestinatarios(alerta, contador);
@@ -753,6 +873,15 @@ public class AlertaOperativaService {
 
     private record ResultadoRevisionCaducidad(
             int asignacionesRevisadas,
+            int alertasCreadas,
+            int alertasExistentes,
+            int notificacionesCreadas
+    ) {
+    }
+
+    private record ResultadoRevisionTrabajadores(
+            int asignacionesRevisadas,
+            int estanteriasAfectadas,
             int alertasCreadas,
             int alertasExistentes,
             int notificacionesCreadas

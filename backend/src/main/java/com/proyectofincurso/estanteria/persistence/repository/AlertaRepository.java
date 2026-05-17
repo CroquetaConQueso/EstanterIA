@@ -89,6 +89,17 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
             from Alerta alerta
             where alerta.estadoAlerta = :estado
               and alerta.tipoAlerta = :tipo
+              and alerta.estanteria.id = :estanteriaId
+            """)
+    List<Alerta> findAlertasAbiertasPorEstanteria(@Param("tipo") TipoAlerta tipo,
+                                                  @Param("estado") EstadoAlerta estado,
+                                                  @Param("estanteriaId") Long estanteriaId);
+
+    @Query("""
+            select alerta
+            from Alerta alerta
+            where alerta.estadoAlerta = :estado
+              and alerta.tipoAlerta = :tipo
               and alerta.asignacionProductoSlot.id = :asignacionId
             """)
     List<Alerta> findAlertasAbiertasPorAsignacion(@Param("tipo") TipoAlerta tipo,

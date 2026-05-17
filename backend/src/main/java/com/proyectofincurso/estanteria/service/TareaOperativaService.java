@@ -394,6 +394,7 @@ public class TareaOperativaService {
             case PRODUCTO_PROXIMO_A_CADUCAR -> TipoTareaOperativa.REVISION_CADUCIDAD;
             case PRESENCIA_TRAS_RETIRADA_PROGRAMADA -> TipoTareaOperativa.RETIRADA_PRODUCTO;
             case RETIRADA_PROGRAMADA_PENDIENTE -> TipoTareaOperativa.RETIRADA_PRODUCTO;
+            case TRABAJADOR_NO_DISPONIBLE_ASIGNADO -> TipoTareaOperativa.VERIFICACION_MANUAL;
         };
     }
 
@@ -402,7 +403,9 @@ public class TareaOperativaService {
         return switch (tipoTarea) {
             case REPOSICION -> "Reponer producto en estanteria " + estanteria;
             case REVISION_VISUAL -> "Revisar anomalia visual en estanteria " + estanteria;
-            case VERIFICACION_MANUAL -> "Verificar inspeccion de baja confianza";
+            case VERIFICACION_MANUAL -> alerta.getTipoAlerta() == TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO
+                    ? "Revisar cobertura de trabajadores en estanteria " + estanteria
+                    : "Verificar inspeccion de baja confianza";
             case REVISION_CADUCIDAD -> "Revisar producto proximo a caducar";
             case RETIRADA_PRODUCTO -> "Comprobar retirada pendiente de producto";
         };
@@ -418,8 +421,10 @@ public class TareaOperativaService {
                     + ". Revisar y reponer el producto esperado si procede.";
             case REVISION_VISUAL -> "La inspeccion visual ha detectado una anomalia en " + estanteria + ", "
                     + slot + ". Revisar colocacion o producto presente.";
-            case VERIFICACION_MANUAL -> "La clasificacion visual no ha alcanzado el umbral de confianza establecido. "
-                    + "Se recomienda revision manual.";
+            case VERIFICACION_MANUAL -> alerta.getTipoAlerta() == TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO
+                    ? "La estanteria tiene trabajadores asignados marcados como ausentes o enfermos. Revisar cobertura operativa."
+                    : "La clasificacion visual no ha alcanzado el umbral de confianza establecido. "
+                            + "Se recomienda revision manual.";
             case REVISION_CADUCIDAD -> "Existe una asignacion activa cuya fecha de caducidad se aproxima al umbral definido.";
             case RETIRADA_PRODUCTO -> "Se ha detectado presencia en un slot cuya asignacion tenia retirada programada pendiente.";
         };

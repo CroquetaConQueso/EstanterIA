@@ -199,23 +199,6 @@ select {
   color: var(--black);
 }
 
-.review-status {
-  flex-basis: 100%;
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-  line-height: 1.35;
-  text-transform: none;
-}
-
-.review-status[data-type="success"] {
-  color: var(--ok);
-}
-
-.review-status[data-type="error"] {
-  color: var(--red);
-}
-
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) 420px;

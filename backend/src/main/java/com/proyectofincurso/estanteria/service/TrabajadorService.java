@@ -39,6 +39,7 @@ public class TrabajadorService {
     private final EmpresaRepository empresaRepository;
     private final TrabajadorEstanteriaRepository trabajadorEstanteriaRepository;
     private final TareaOperativaRepository tareaOperativaRepository;
+    private final AlertaOperativaService alertaOperativaService;
 
     @Transactional(readOnly = true)
     public List<TrabajadorResponse> listarTrabajadores(boolean incluirInactivos) {
@@ -115,6 +116,7 @@ public class TrabajadorService {
         trabajador.setTipoTrabajador(request.tipoTrabajador());
         trabajador.setEstadoDisponibilidad(request.estadoDisponibilidad());
         trabajador.setUpdatedAt(Instant.now());
+        revisarAlertaSiNoDisponible(trabajador);
 
         return toResponse(trabajador);
     }
@@ -143,7 +145,16 @@ public class TrabajadorService {
             trabajador.setEstadoDisponibilidad(EstadoDisponibilidadTrabajador.DISPONIBLE);
         }
         trabajador.setUpdatedAt(Instant.now());
+        revisarAlertaSiNoDisponible(trabajador);
         return toResponse(trabajador);
+    }
+
+    private void revisarAlertaSiNoDisponible(Trabajador trabajador) {
+        EstadoDisponibilidadTrabajador disponibilidad = estadoDisponibilidad(trabajador);
+        if (disponibilidad == EstadoDisponibilidadTrabajador.AUSENTE
+                || disponibilidad == EstadoDisponibilidadTrabajador.ENFERMO) {
+            alertaOperativaService.revisarTrabajadorNoDisponibleAsignado(trabajador.getId());
+        }
     }
 
     private void validarEmailDisponible(String email, Long trabajadorIdActual) {

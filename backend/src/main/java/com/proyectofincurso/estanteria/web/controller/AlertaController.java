@@ -6,6 +6,7 @@ import com.proyectofincurso.estanteria.web.dto.AlertaResponse;
 import com.proyectofincurso.estanteria.web.dto.AlertaTrabajadorResponse;
 import com.proyectofincurso.estanteria.web.dto.EvaluacionCaducidadResponse;
 import com.proyectofincurso.estanteria.web.dto.RevisionCaducidadesResponse;
+import com.proyectofincurso.estanteria.web.dto.RevisionTrabajadoresNoDisponiblesResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,6 +49,13 @@ public class AlertaController {
     @Operation(summary = "Revisar caducidades", description = "Requiere ADMIN/SUPERADMIN. Revisa asignaciones activas y genera alertas pendientes de caducidad o retirada.")
     public RevisionCaducidadesResponse revisarCaducidades() {
         return alertaOperativaService.revisarCaducidades();
+    }
+
+    @PostMapping(value = "/alertas/revisar-trabajadores-no-disponibles", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Revisar trabajadores no disponibles", description = "Requiere ADMIN/SUPERADMIN. Genera alertas para estanterias con trabajadores asignados ausentes o enfermos.")
+    public RevisionTrabajadoresNoDisponiblesResponse revisarTrabajadoresNoDisponibles() {
+        return alertaOperativaService.revisarTrabajadoresNoDisponiblesAsignados();
     }
 
     @PatchMapping(value = "/alertas/{id}/resolver", produces = MediaType.APPLICATION_JSON_VALUE)

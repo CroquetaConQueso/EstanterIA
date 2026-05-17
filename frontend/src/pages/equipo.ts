@@ -207,8 +207,12 @@ function normalizarTrabajador(trabajador: TrabajadorResponse): TrabajadorRespons
 function renderWorkers(): void {
   if (!workersBody) return;
   const visibles = trabajadoresFiltrados();
+  if (selectedWorkerId != null && !visibles.some((trabajador) => trabajador.id === selectedWorkerId)) {
+    selectedWorkerId = null;
+  }
   workersBody.innerHTML = "";
   setText(workersSummary, `Mostrando ${visibles.length} de ${trabajadores.length} trabajadores`);
+  renderDetail();
 
   if (visibles.length === 0) {
     const row = document.createElement("tr");
@@ -264,7 +268,6 @@ function tdBadge(value: string, className: string): HTMLTableCellElement {
 function seleccionarTrabajador(id: number): void {
   selectedWorkerId = id;
   renderWorkers();
-  renderDetail();
 }
 
 function selectedWorker(): TrabajadorResponse | null {
@@ -479,10 +482,9 @@ async function cargarTrabajadores(preserveSelection = false): Promise<void> {
       .map(normalizarTrabajador)
       .filter((trabajador) => trabajador.id > 0);
     if (!preserveSelection || !trabajadores.some((trabajador) => trabajador.id === selectedWorkerId)) {
-      selectedWorkerId = trabajadores[0]?.id ?? null;
+      selectedWorkerId = null;
     }
     renderWorkers();
-    renderDetail();
   } catch (err) {
     if (workersBody) workersBody.innerHTML = "";
     setText(workersSummary, err instanceof Error ? err.message : "No se pudo cargar el equipo operativo.");

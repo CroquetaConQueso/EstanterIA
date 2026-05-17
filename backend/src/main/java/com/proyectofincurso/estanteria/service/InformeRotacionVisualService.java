@@ -82,6 +82,8 @@ public class InformeRotacionVisualService {
         Instant desdeInstant = desde.atStartOfDay(zona).toInstant();
         Instant hastaExclusiva = hasta.plusDays(1).atStartOfDay(zona).toInstant();
 
+        // El informe mide estados visuales de inspeccion, no ventas: el filtro de plano solo acota
+        // que estanterias participan en el calculo sin reinterpretar el historico operativo.
         List<Inspeccion> inspecciones = cargarInspeccionesParaInforme(
                 desdeInstant,
                 hastaExclusiva,
@@ -125,6 +127,8 @@ public class InformeRotacionVisualService {
                                                            Instant hastaExclusiva,
                                                            Long seccionId,
                                                            Estanteria estanteria) {
+        // PostgreSQL no infiere bien parametros null dentro de lower(:param), por eso se usan
+        // consultas separadas con/sin estanteria y el codigo llega normalizado desde el servicio.
         if (estanteria == null) {
             return inspeccionRepository.findParaInformeRotacionVisual(
                     desde,

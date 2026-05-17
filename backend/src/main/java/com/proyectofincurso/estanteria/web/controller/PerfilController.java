@@ -6,6 +6,8 @@ import com.proyectofincurso.estanteria.web.dto.ActualizarPerfilRequest;
 import com.proyectofincurso.estanteria.web.dto.PerfilResponse;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,12 +32,22 @@ public class PerfilController {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Obtener perfil", description = "Requiere autenticacion. Devuelve cuenta, rol, empresa y trabajador vinculado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Perfil del usuario devuelto"),
+            @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
     public PerfilResponse obtenerPerfil(@AuthenticationPrincipal Jwt jwt) {
         return perfilService.obtenerPerfilActual(extraerUserId(jwt));
     }
 
     @PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Actualizar perfil", description = "Requiere autenticacion. Actualiza username/email del propio usuario y fuerza nuevo login.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Perfil actualizado"),
+            @ApiResponse(responseCode = "400", description = "Datos de perfil invalidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "409", description = "Username o email ya usados")
+    })
     public PerfilResponse actualizarPerfil(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ActualizarPerfilRequest request

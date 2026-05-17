@@ -13,6 +13,9 @@ import com.proyectofincurso.estanteria.service.CapturaService;
 import com.proyectofincurso.estanteria.web.dto.CapturaResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -30,7 +33,14 @@ public class CapturaController {
 
     @GetMapping(value = "/capturas", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Listar capturas", description = "Requiere autenticacion. Devuelve capturas disponibles sin exponer rutas fisicas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Capturas disponibles devueltas"),
+            @ApiResponse(responseCode = "400", description = "Codigo de estanteria invalido"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "503", description = "Directorio de capturas no disponible")
+    })
     public List<CapturaResponse> listarCapturas(
+            @Parameter(description = "Codigo de estanteria para limitar la busqueda de capturas")
             @RequestParam(value = "estanteriaCodigo", required = false) String estanteriaCodigo
     ) {
         return capturaService.listarCapturas(estanteriaCodigo);

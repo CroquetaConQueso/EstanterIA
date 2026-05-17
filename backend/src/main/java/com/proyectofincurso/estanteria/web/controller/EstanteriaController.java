@@ -7,6 +7,9 @@ import com.proyectofincurso.estanteria.web.dto.CrearEstanteriaRequest;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaConfiguracionResponse;
 import com.proyectofincurso.estanteria.web.dto.TrabajadorAsignadoEstanteriaResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -38,6 +41,14 @@ public class EstanteriaController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Crear estanteria", description = "Requiere ADMIN/SUPERADMIN. Crea una estanteria con su configuracion de slots.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Estanteria creada"),
+            @ApiResponse(responseCode = "400", description = "Datos o slots invalidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Seccion o producto inexistente"),
+            @ApiResponse(responseCode = "409", description = "Codigo duplicado")
+    })
     public EstanteriaConfiguracionResponse crearEstanteria(@Valid @RequestBody CrearEstanteriaRequest request) {
         return modeloOperativoService.crearEstanteria(request);
     }
@@ -46,7 +57,16 @@ public class EstanteriaController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Actualizar estanteria", description = "Requiere ADMIN/SUPERADMIN. Actualiza datos y slots configurados.")
-    public EstanteriaConfiguracionResponse actualizarEstanteria(@PathVariable String codigo,
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estanteria actualizada"),
+            @ApiResponse(responseCode = "400", description = "Datos o slots invalidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Estanteria, seccion o producto inexistente")
+    })
+    public EstanteriaConfiguracionResponse actualizarEstanteria(
+                                                                @Parameter(description = "Codigo de estanteria")
+                                                                @PathVariable String codigo,
                                                                 @Valid @RequestBody ActualizarEstanteriaRequest request) {
         return modeloOperativoService.actualizarEstanteria(codigo, request);
     }
@@ -54,33 +74,73 @@ public class EstanteriaController {
     @PatchMapping(value = "/{codigo}/desactivar", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Desactivar estanteria", description = "Requiere ADMIN/SUPERADMIN. Desactiva la estanteria sin borrar historico operativo.")
-    public EstanteriaConfiguracionResponse desactivarEstanteria(@PathVariable String codigo) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estanteria desactivada o ya inactiva"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Estanteria inexistente")
+    })
+    public EstanteriaConfiguracionResponse desactivarEstanteria(
+            @Parameter(description = "Codigo de estanteria")
+            @PathVariable String codigo) {
         return modeloOperativoService.desactivarEstanteria(codigo);
     }
 
     @PatchMapping(value = "/{codigo}/reactivar", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Reactivar estanteria", description = "Requiere ADMIN/SUPERADMIN. Vuelve a marcar la estanteria como activa.")
-    public EstanteriaConfiguracionResponse reactivarEstanteria(@PathVariable String codigo) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estanteria reactivada o ya activa"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Estanteria inexistente")
+    })
+    public EstanteriaConfiguracionResponse reactivarEstanteria(
+            @Parameter(description = "Codigo de estanteria")
+            @PathVariable String codigo) {
         return modeloOperativoService.reactivarEstanteria(codigo);
     }
 
     @GetMapping(value = "/{codigo}/configuracion", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Obtener configuracion de estanteria", description = "Requiere autenticacion. Devuelve datos, seccion y slots de una estanteria.")
-    public EstanteriaConfiguracionResponse obtenerConfiguracion(@PathVariable String codigo) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Configuracion de estanteria devuelta"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "404", description = "Estanteria inexistente")
+    })
+    public EstanteriaConfiguracionResponse obtenerConfiguracion(
+            @Parameter(description = "Codigo de estanteria")
+            @PathVariable String codigo) {
         return modeloOperativoService.obtenerConfiguracionDeEstanteria(codigo);
     }
 
     @GetMapping(value = "/{codigo}/trabajadores", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Listar trabajadores de estanteria", description = "Requiere autenticacion. Devuelve trabajadores asignados activos a una estanteria.")
-    public List<TrabajadorAsignadoEstanteriaResponse> obtenerTrabajadoresAsignados(@PathVariable String codigo) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Trabajadores asignados devueltos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "404", description = "Estanteria inexistente")
+    })
+    public List<TrabajadorAsignadoEstanteriaResponse> obtenerTrabajadoresAsignados(
+            @Parameter(description = "Codigo de estanteria")
+            @PathVariable String codigo) {
         return modeloOperativoService.obtenerTrabajadoresAsignadosEstanteria(codigo);
     }
 
     @PostMapping(value = "/{codigo}/trabajadores/{trabajadorId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Asignar trabajador a estanteria", description = "Requiere ADMIN/SUPERADMIN. Asigna un trabajador disponible a una estanteria activa.")
-    public TrabajadorAsignadoEstanteriaResponse asignarTrabajador(@PathVariable String codigo,
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Trabajador asignado"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Estanteria o trabajador inexistente"),
+            @ApiResponse(responseCode = "409", description = "Trabajador o estanteria no disponibles para asignacion")
+    })
+    public TrabajadorAsignadoEstanteriaResponse asignarTrabajador(
+                                                                  @Parameter(description = "Codigo de estanteria")
+                                                                  @PathVariable String codigo,
+                                                                  @Parameter(description = "Identificador del trabajador")
                                                                   @PathVariable Long trabajadorId) {
         return modeloOperativoService.asignarTrabajadorEstanteria(codigo, trabajadorId);
     }
@@ -88,7 +148,16 @@ public class EstanteriaController {
     @PatchMapping(value = "/{codigo}/trabajadores/{trabajadorId}/desasignar", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Desasignar trabajador de estanteria", description = "Requiere ADMIN/SUPERADMIN. Marca la asignacion como inactiva sin borrar historico.")
-    public TrabajadorAsignadoEstanteriaResponse desasignarTrabajador(@PathVariable String codigo,
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Asignacion desactivada sin borrar historico"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Asignacion, estanteria o trabajador inexistente")
+    })
+    public TrabajadorAsignadoEstanteriaResponse desasignarTrabajador(
+                                                                     @Parameter(description = "Codigo de estanteria")
+                                                                     @PathVariable String codigo,
+                                                                     @Parameter(description = "Identificador del trabajador")
                                                                      @PathVariable Long trabajadorId) {
         return modeloOperativoService.desasignarTrabajadorEstanteria(codigo, trabajadorId);
     }

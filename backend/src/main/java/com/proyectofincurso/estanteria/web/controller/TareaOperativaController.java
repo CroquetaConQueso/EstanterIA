@@ -8,6 +8,9 @@ import com.proyectofincurso.estanteria.web.dto.TareaAsignarRequest;
 import com.proyectofincurso.estanteria.web.dto.TareaEstadoRequest;
 import com.proyectofincurso.estanteria.web.dto.TareaOperativaResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -37,19 +40,34 @@ public class TareaOperativaController {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Listar tareas", description = "Requiere autenticacion. Devuelve tareas operativas con contexto de producto y stock si aplica.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tareas devueltas"),
+            @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
     public List<TareaOperativaResponse> obtenerTareas() {
         return tareaOperativaService.obtenerTareas();
     }
 
     @GetMapping(value = "/pendientes", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Listar tareas pendientes", description = "Requiere autenticacion. Devuelve tareas no finalizadas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tareas pendientes devueltas"),
+            @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
     public List<TareaOperativaResponse> obtenerTareasPendientes() {
         return tareaOperativaService.obtenerTareasPendientes();
     }
 
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Obtener tarea", description = "Requiere autenticacion. Devuelve el detalle de una tarea operativa.")
-    public TareaOperativaResponse obtenerDetalle(@PathVariable Long id) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Detalle de tarea devuelto"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "404", description = "Tarea inexistente")
+    })
+    public TareaOperativaResponse obtenerDetalle(
+            @Parameter(description = "Identificador de la tarea")
+            @PathVariable Long id) {
         return tareaOperativaService.obtenerDetalle(id);
     }
 
@@ -57,6 +75,14 @@ public class TareaOperativaController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Crear tarea manual", description = "Requiere ADMIN/SUPERADMIN. Crea una tarea operativa manual sin cerrar alertas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Tarea manual creada"),
+            @ApiResponse(responseCode = "400", description = "Datos o contexto de tarea invalidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Contexto operativo inexistente"),
+            @ApiResponse(responseCode = "409", description = "Trabajador no disponible para asignacion")
+    })
     public TareaOperativaResponse crearTareaManual(@Valid @RequestBody CrearTareaManualRequest request) {
         return tareaOperativaService.crearTareaManual(request);
     }
@@ -64,7 +90,17 @@ public class TareaOperativaController {
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Editar tarea", description = "Requiere ADMIN/SUPERADMIN. Actualiza campos operativos de una tarea no finalizada.")
-    public TareaOperativaResponse actualizarTarea(@PathVariable Long id,
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tarea actualizada"),
+            @ApiResponse(responseCode = "400", description = "Datos o estado de tarea invalidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Tarea o contexto inexistente"),
+            @ApiResponse(responseCode = "409", description = "Tarea finalizada o trabajador no disponible")
+    })
+    public TareaOperativaResponse actualizarTarea(
+                                                  @Parameter(description = "Identificador de la tarea")
+                                                  @PathVariable Long id,
                                                   @Valid @RequestBody ActualizarTareaOperativaRequest request) {
         return tareaOperativaService.actualizarTarea(id, request);
     }
@@ -72,7 +108,16 @@ public class TareaOperativaController {
     @PatchMapping(value = "/{id}/asignar", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Asignar trabajador", description = "Requiere autenticacion. Asigna trabajador a una tarea segun el flujo operativo existente.")
-    public TareaOperativaResponse asignarTrabajador(@PathVariable Long id,
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Trabajador asignado a la tarea"),
+            @ApiResponse(responseCode = "400", description = "Solicitud de asignacion invalida"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "404", description = "Tarea o trabajador inexistente"),
+            @ApiResponse(responseCode = "409", description = "Trabajador no disponible o tarea no asignable")
+    })
+    public TareaOperativaResponse asignarTrabajador(
+                                                    @Parameter(description = "Identificador de la tarea")
+                                                    @PathVariable Long id,
                                                     @Valid @RequestBody TareaAsignarRequest request) {
         return tareaOperativaService.asignarTrabajador(id, request.trabajadorId());
     }
@@ -80,7 +125,16 @@ public class TareaOperativaController {
     @PatchMapping(value = "/{id}/estado", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Cambiar estado de tarea", description = "Requiere autenticacion. Cambia el estado de una tarea. Resolver tarea no cierra alertas.")
-    public TareaOperativaResponse cambiarEstado(@PathVariable Long id,
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estado de tarea actualizado"),
+            @ApiResponse(responseCode = "400", description = "Estado o transicion invalida"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "404", description = "Tarea inexistente"),
+            @ApiResponse(responseCode = "409", description = "Transicion no permitida")
+    })
+    public TareaOperativaResponse cambiarEstado(
+                                                @Parameter(description = "Identificador de la tarea")
+                                                @PathVariable Long id,
                                                 @Valid @RequestBody TareaEstadoRequest request) {
         return tareaOperativaService.cambiarEstado(id, request.estado());
     }
@@ -88,7 +142,16 @@ public class TareaOperativaController {
     @PatchMapping(value = "/{id}/reabrir", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     @Operation(summary = "Reabrir tarea", description = "Requiere ADMIN/SUPERADMIN. Devuelve una tarea resuelta o cancelada a pendiente sin modificar alertas.")
-    public TareaOperativaResponse reabrirTarea(@PathVariable Long id) {
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tarea reabierta"),
+            @ApiResponse(responseCode = "400", description = "La tarea no esta en estado reabrible"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Tarea inexistente")
+    })
+    public TareaOperativaResponse reabrirTarea(
+            @Parameter(description = "Identificador de la tarea")
+            @PathVariable Long id) {
         return tareaOperativaService.reabrirTarea(id);
     }
 }

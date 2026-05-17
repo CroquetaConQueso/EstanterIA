@@ -1,8 +1,8 @@
 {
   "info": {
     "name": "EstanterIA API",
-    "_postman_id": "4d4e7d4e-b4d1-4b96-9c1c-000000000053",
-    "description": "Coleccion base para validar la API REST de EstanterIA en local.",
+    "_postman_id": "4d4e7d4e-b4d1-4b96-9c1c-000000000115",
+    "description": "Coleccion unificada para validar los endpoints principales de EstanterIA en local. Importa tambien EstanterIA.local.postman_environment.json y ejecuta primero los login.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -16,6 +16,27 @@
     ]
   },
   "item": [
+    {
+      "name": "OpenAPI",
+      "item": [
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": "{{baseUrl}}/v3/api-docs"
+          }
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": "{{baseUrl}}/swagger-ui.html"
+          }
+        }
+      ]
+    },
     {
       "name": "Auth",
       "item": [
@@ -35,10 +56,36 @@
           ],
           "request": {
             "method": "POST",
+            "auth": { "type": "noauth" },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/login"
+          }
+        },
+        {
+          "name": "Login superadmin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) { pm.environment.set('tokenSuperadmin', json.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{superadminEmail}}\",\n  \"password\": \"{{superadminPassword}}\"\n}"
             },
             "url": "{{baseUrl}}/api/login"
           }
@@ -59,6 +106,7 @@
           ],
           "request": {
             "method": "POST",
+            "auth": { "type": "noauth" },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
@@ -71,8 +119,30 @@
           "name": "Logout",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
             "url": "{{baseUrl}}/api/logout"
+          }
+        },
+        {
+          "name": "Registro",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"postman-admin\",\n  \"email\": \"postman-admin@example.com\",\n  \"password\": \"admin123\",\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": "{{baseUrl}}/api/registro"
+          }
+        },
+        {
+          "name": "Solicitar recuperacion",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\"\n}" },
+            "url": "{{baseUrl}}/api/forgot-password"
           }
         }
       ]
@@ -80,22 +150,12 @@
     {
       "name": "Perfil",
       "item": [
-        {
-          "name": "GET perfil",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/perfil"
-          }
-        },
+        { "name": "GET perfil", "request": { "method": "GET", "url": "{{baseUrl}}/api/perfil" } },
         {
           "name": "PATCH perfil",
           "request": {
             "method": "PATCH",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"admin\",\n  \"email\": \"admin@example.com\"\n}"
@@ -108,30 +168,16 @@
     {
       "name": "Planos",
       "item": [
-        {
-          "name": "Listar planos",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/empresas/EMP-DEMO/planos"
-          }
-        },
-        {
-          "name": "Obtener plano operativo",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/planos/{{planoCodigo}}/operativo"
-          }
-        },
+        { "name": "Listar planos activos", "request": { "method": "GET", "url": "{{baseUrl}}/api/empresas/EMP-DEMO/planos?estado=ACTIVOS" } },
+        { "name": "Listar planos inactivos", "request": { "method": "GET", "url": "{{baseUrl}}/api/empresas/EMP-DEMO/planos?estado=INACTIVOS" } },
+        { "name": "Listar todos los planos", "request": { "method": "GET", "url": "{{baseUrl}}/api/empresas/EMP-DEMO/planos?estado=TODOS" } },
+        { "name": "Obtener plano", "request": { "method": "GET", "url": "{{baseUrl}}/api/planos/{{planoCodigo}}" } },
+        { "name": "Obtener plano operativo", "request": { "method": "GET", "url": "{{baseUrl}}/api/planos/{{planoCodigo}}/operativo" } },
         {
           "name": "Crear plano",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"empresaCodigo\": \"EMP-DEMO\",\n  \"codigo\": \"PLANO-POSTMAN\",\n  \"nombre\": \"Plano Postman\",\n  \"descripcion\": \"Plano creado desde Postman.\",\n  \"ancho\": 1200,\n  \"alto\": 700,\n  \"zonas\": [],\n  \"estanterias\": []\n}"
@@ -143,30 +189,29 @@
           "name": "Actualizar plano",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nombre\": \"Plano Postman actualizado\",\n  \"descripcion\": \"Actualizacion desde Postman.\",\n  \"ancho\": 1200,\n  \"alto\": 700,\n  \"zonas\": [],\n  \"estanterias\": []\n}"
             },
             "url": "{{baseUrl}}/api/planos/PLANO-POSTMAN"
           }
-        }
+        },
+        { "name": "Desactivar plano", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/planos/{{planoCodigo}}/desactivar" } },
+        { "name": "Reactivar plano", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/planos/{{planoCodigo}}/reactivar" } }
       ]
     },
     {
-      "name": "Configuracion operativa",
+      "name": "Editor - configuracion operativa",
       "item": [
+        { "name": "Obtener empresa", "request": { "method": "GET", "url": "{{baseUrl}}/api/empresas/EMP-DEMO" } },
+        { "name": "Listar secciones", "request": { "method": "GET", "url": "{{baseUrl}}/api/empresas/EMP-DEMO/secciones" } },
+        { "name": "Secciones disponibles para plano", "request": { "method": "GET", "url": "{{baseUrl}}/api/empresas/EMP-DEMO/secciones/disponibles-para-plano?planoCodigo={{planoCodigo}}" } },
         {
           "name": "Crear seccion",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"empresaCodigo\": \"EMP-DEMO\",\n  \"codigo\": \"SEC-POSTMAN\",\n  \"nombre\": \"Seccion Postman\",\n  \"descripcion\": \"Seccion creada desde Postman.\"\n}"
@@ -174,14 +219,16 @@
             "url": "{{baseUrl}}/api/secciones"
           }
         },
+        { "name": "Actualizar seccion", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"codigo\": \"SEC-POSTMAN\",\n  \"nombre\": \"Seccion Postman actualizada\",\n  \"descripcion\": \"Actualizada desde Postman.\"\n}" }, "url": "{{baseUrl}}/api/secciones/{{seccionId}}" } },
+        { "name": "Desactivar seccion", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/secciones/{{seccionId}}/desactivar" } },
+        { "name": "Reactivar seccion", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/secciones/{{seccionId}}/reactivar" } },
+        { "name": "Estanterias por seccion", "request": { "method": "GET", "url": "{{baseUrl}}/api/secciones/{{seccionId}}/estanterias" } },
+        { "name": "Alertas abiertas por seccion", "request": { "method": "GET", "url": "{{baseUrl}}/api/secciones/{{seccionId}}/alertas/abiertas" } },
         {
           "name": "Crear estanteria",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"seccionId\": {{seccionId}},\n  \"codigo\": \"EST-POSTMAN\",\n  \"nombre\": \"Estanteria Postman\",\n  \"descripcion\": \"Estanteria creada desde Postman.\",\n  \"slots\": [\n    { \"slotId\": \"slot_1\", \"orden\": 1, \"productoId\": 1, \"cantidadObjetivo\": 8 }\n  ]\n}"
@@ -189,182 +236,125 @@
             "url": "{{baseUrl}}/api/estanterias"
           }
         },
+        { "name": "Configuracion estanteria", "request": { "method": "GET", "url": "{{baseUrl}}/api/estanterias/{{estanteriaCodigo}}/configuracion" } },
+        { "name": "Desactivar estanteria", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/estanterias/{{estanteriaCodigo}}/desactivar" } },
+        { "name": "Reactivar estanteria", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/estanterias/{{estanteriaCodigo}}/reactivar" } }
+      ]
+    },
+    {
+      "name": "Productos e inventario",
+      "item": [
+        { "name": "Listar productos", "request": { "method": "GET", "url": "{{baseUrl}}/api/productos" } },
+        { "name": "Productos proveedor activos", "request": { "method": "GET", "url": "{{baseUrl}}/api/productos-proveedor/activos" } },
         {
           "name": "Crear producto",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"codigoInterno\": \"PROD-POSTMAN\",\n  \"nombre\": \"Producto Postman\",\n  \"descripcion\": \"Producto creado desde Postman.\",\n  \"vincularProveedorDemo\": true,\n  \"stockDisponible\": true\n}"
             },
             "url": "{{baseUrl}}/api/productos"
           }
-        }
+        },
+        { "name": "Desactivar producto", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/productos/1/desactivar" } },
+        { "name": "Reactivar producto", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/productos/1/reactivar" } },
+        {
+          "name": "Guardar asignacion activa",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoProveedorId\": 1,\n  \"fechaColocacion\": \"2026-05-01\",\n  \"fechaCaducidad\": \"2026-06-01\",\n  \"fechaRetiradaProgramada\": \"2026-05-28\"\n}"
+            },
+            "url": "{{baseUrl}}/api/slots/{{slotConfiguracionId}}/asignacion-activa"
+          }
+        },
+        { "name": "Retirar asignacion activa", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/slots/{{slotConfiguracionId}}/asignacion-activa/retirar" } }
       ]
     },
     {
-      "name": "Vision e Inspecciones",
+      "name": "Capturas y Vision",
       "item": [
+        { "name": "Listar capturas", "request": { "method": "GET", "url": "{{baseUrl}}/api/capturas?estanteriaCodigo={{estanteriaCodigo}}" } },
         {
           "name": "Lanzar inspeccion Vision",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"modo\": \"DEMO\",\n  \"imagePath\": \"\",\n  \"notas\": \"Prueba desde Postman\"\n}"
+              "raw": "{\n  \"modo\": \"predict-existing\",\n  \"imagePath\": \"/captures/capture_000001.png\",\n  \"notas\": \"Prueba desde Postman\"\n}"
             },
             "url": "{{baseUrl}}/api/vision/inspeccionar/{{estanteriaCodigo}}"
           }
-        },
-        {
-          "name": "Listar inspecciones",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/inspecciones"
-          }
-        },
-        {
-          "name": "Detalle inspeccion",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/inspecciones/1"
-          }
         }
+      ]
+    },
+    {
+      "name": "Inspecciones",
+      "item": [
+        { "name": "Listar inspecciones", "request": { "method": "GET", "url": "{{baseUrl}}/api/inspecciones" } },
+        { "name": "Detalle inspeccion", "request": { "method": "GET", "url": "{{baseUrl}}/api/inspecciones/{{inspeccionId}}" } },
+        {
+          "name": "Crear inspeccion manual",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"estanteriaCodigo\": \"{{estanteriaCodigo}}\",\n  \"notas\": \"Inspeccion manual desde Postman\",\n  \"imagenPath\": null\n}" },
+            "url": "{{baseUrl}}/api/inspeccion_nueva"
+          }
+        },
+        { "name": "Actualizar imagen inspeccion", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"imagenPath\": \"/captures/capture_000001.png\"\n}" }, "url": "{{baseUrl}}/api/inspecciones/{{inspeccionId}}/imagen" } },
+        { "name": "Eliminar inspeccion", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/inspecciones/{{inspeccionId}}" } }
       ]
     },
     {
       "name": "Alertas",
       "item": [
-        {
-          "name": "Listar abiertas",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/alertas/abiertas"
-          }
-        },
-        {
-          "name": "Resolver alerta",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/alertas/{{alertaId}}/resolver"
-          }
-        },
-        {
-          "name": "Descartar alerta",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/alertas/{{alertaId}}/descartar"
-          }
-        }
+        { "name": "Listar abiertas", "request": { "method": "GET", "url": "{{baseUrl}}/api/alertas/abiertas" } },
+        { "name": "Evaluar caducidad", "request": { "method": "POST", "url": "{{baseUrl}}/api/alertas/evaluar-caducidad" } },
+        { "name": "Revisar caducidades", "request": { "method": "POST", "url": "{{baseUrl}}/api/alertas/revisar-caducidades" } },
+        { "name": "Revisar trabajadores no disponibles", "request": { "method": "POST", "url": "{{baseUrl}}/api/alertas/revisar-trabajadores-no-disponibles" } },
+        { "name": "Resolver alerta", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/alertas/{{alertaId}}/resolver" } },
+        { "name": "Descartar alerta", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/alertas/{{alertaId}}/descartar" } }
       ]
     },
     {
       "name": "Tareas",
       "item": [
-        {
-          "name": "Listar tareas",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/tareas"
-          }
-        },
-        {
-          "name": "Crear tarea manual",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipoTarea\": \"REPOSICION\",\n  \"prioridad\": \"MEDIA\",\n  \"titulo\": \"Tarea manual Postman\",\n  \"descripcion\": \"Validacion manual desde Postman.\",\n  \"seccionId\": {{seccionId}},\n  \"estanteriaId\": null,\n  \"slotConfiguracionId\": null,\n  \"trabajadorAsignadoId\": null,\n  \"fechaLimite\": null\n}"
-            },
-            "url": "{{baseUrl}}/api/tareas"
-          }
-        },
-        {
-          "name": "Editar tarea",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipoTarea\": \"REPOSICION\",\n  \"prioridad\": \"ALTA\",\n  \"titulo\": \"Tarea manual Postman actualizada\",\n  \"descripcion\": \"Cambio de prioridad desde Postman.\",\n  \"seccionId\": {{seccionId}},\n  \"estanteriaId\": null,\n  \"slotConfiguracionId\": null,\n  \"trabajadorAsignadoId\": null,\n  \"fechaLimite\": null\n}"
-            },
-            "url": "{{baseUrl}}/api/tareas/{{tareaId}}"
-          }
-        },
-        {
-          "name": "Asignar trabajador",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"trabajadorId\": 1\n}" },
-            "url": "{{baseUrl}}/api/tareas/{{tareaId}}/asignar"
-          }
-        },
-        {
-          "name": "Cambiar estado",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"EN_PROGRESO\"\n}" },
-            "url": "{{baseUrl}}/api/tareas/{{tareaId}}/estado"
-          }
-        }
+        { "name": "Listar tareas", "request": { "method": "GET", "url": "{{baseUrl}}/api/tareas" } },
+        { "name": "Tareas pendientes", "request": { "method": "GET", "url": "{{baseUrl}}/api/tareas/pendientes" } },
+        { "name": "Detalle tarea", "request": { "method": "GET", "url": "{{baseUrl}}/api/tareas/{{tareaId}}" } },
+        { "name": "Crear tarea manual", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"tipoTarea\": \"REPOSICION\",\n  \"prioridad\": \"MEDIA\",\n  \"titulo\": \"Tarea manual Postman\",\n  \"descripcion\": \"Validacion manual desde Postman.\",\n  \"seccionId\": {{seccionId}},\n  \"estanteriaId\": null,\n  \"slotConfiguracionId\": null,\n  \"trabajadorAsignadoId\": null,\n  \"fechaLimite\": null\n}" }, "url": "{{baseUrl}}/api/tareas" } },
+        { "name": "Editar tarea", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"tipoTarea\": \"REPOSICION\",\n  \"prioridad\": \"ALTA\",\n  \"titulo\": \"Tarea manual Postman actualizada\",\n  \"descripcion\": \"Cambio de prioridad desde Postman.\",\n  \"seccionId\": {{seccionId}},\n  \"estanteriaId\": null,\n  \"slotConfiguracionId\": null,\n  \"trabajadorAsignadoId\": null,\n  \"fechaLimite\": null\n}" }, "url": "{{baseUrl}}/api/tareas/{{tareaId}}" } },
+        { "name": "Asignar trabajador", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"trabajadorId\": {{trabajadorId}}\n}" }, "url": "{{baseUrl}}/api/tareas/{{tareaId}}/asignar" } },
+        { "name": "Cambiar estado", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"estado\": \"EN_PROGRESO\"\n}" }, "url": "{{baseUrl}}/api/tareas/{{tareaId}}/estado" } },
+        { "name": "Reabrir tarea", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/tareas/{{tareaId}}/reabrir" } }
       ]
     },
     {
-      "name": "Inventario",
+      "name": "Equipo y trabajadores",
       "item": [
-        {
-          "name": "Listar productos",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/productos"
-          }
-        },
-        {
-          "name": "Obtener configuracion de estanteria",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/estanterias/{{estanteriaCodigo}}/configuracion"
-          }
-        },
-        {
-          "name": "Listar secciones de empresa",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
-            "url": "{{baseUrl}}/api/empresas/EMP-DEMO/secciones"
-          }
-        }
+        { "name": "Listar trabajadores", "request": { "method": "GET", "url": "{{baseUrl}}/api/trabajadores" } },
+        { "name": "Listar trabajadores activos", "request": { "method": "GET", "url": "{{baseUrl}}/api/trabajadores/activos" } },
+        { "name": "Detalle trabajador", "request": { "method": "GET", "url": "{{baseUrl}}/api/trabajadores/{{trabajadorId}}" } },
+        { "name": "Crear trabajador", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Trabajador\",\n  \"apellidos\": \"Postman\",\n  \"emailContacto\": \"trabajador.postman@example.com\",\n  \"telefonoContacto\": \"600000000\",\n  \"tipoTrabajador\": \"REPONEDOR\",\n  \"estadoDisponibilidad\": \"DISPONIBLE\"\n}" }, "url": "{{baseUrl}}/api/trabajadores" } },
+        { "name": "Desactivar trabajador", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/trabajadores/{{trabajadorId}}/desactivar" } },
+        { "name": "Reactivar trabajador", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/trabajadores/{{trabajadorId}}/reactivar" } },
+        { "name": "Alertas de trabajador", "request": { "method": "GET", "url": "{{baseUrl}}/api/trabajadores/{{trabajadorId}}/alertas" } },
+        { "name": "Trabajadores de estanteria", "request": { "method": "GET", "url": "{{baseUrl}}/api/estanterias/{{estanteriaCodigo}}/trabajadores" } },
+        { "name": "Asignar trabajador a estanteria", "request": { "method": "POST", "url": "{{baseUrl}}/api/estanterias/{{estanteriaCodigo}}/trabajadores/{{trabajadorId}}" } },
+        { "name": "Desasignar trabajador de estanteria", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/estanterias/{{estanteriaCodigo}}/trabajadores/{{trabajadorId}}/desasignar" } }
+      ]
+    },
+    {
+      "name": "Informes",
+      "item": [
+        { "name": "Rotacion visual JSON", "request": { "method": "GET", "url": "{{baseUrl}}/api/informes/rotacion-visual?planoCodigo={{planoCodigo}}" } },
+        { "name": "Rotacion visual PDF", "request": { "method": "GET", "url": "{{baseUrl}}/api/informes/rotacion-visual/pdf?planoCodigo={{planoCodigo}}" } }
       ]
     }
   ]

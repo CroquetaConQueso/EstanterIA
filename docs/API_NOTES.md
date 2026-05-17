@@ -14,6 +14,30 @@ La API usa JWT Bearer. Para probar endpoints privados:
 4. Introduce el token JWT en el esquema `bearerAuth`.
 5. Ejecuta endpoints privados normalmente.
 
+La configuracion OpenAPI declara el esquema:
+
+- `bearerAuth`
+- tipo HTTP
+- esquema `bearer`
+- formato `JWT`
+
+Esto hace que Swagger UI muestre el boton `Authorize` y aplique el token como `Authorization: Bearer <token>` en endpoints privados.
+
+## Importar OpenAPI en Postman
+
+Con el backend levantado:
+
+1. Abre Postman.
+2. Pulsa `Import`.
+3. Selecciona `Link`.
+4. Usa `http://localhost:8080/v3/api-docs`.
+5. Importa la definicion OpenAPI.
+
+Tambien puedes usar la coleccion versionada incluida en este repositorio:
+
+- `docs/postman/EstanterIA.postman_collection.json`
+- `docs/postman/EstanterIA.local.postman_environment.json`
+
 En Postman, las peticiones privadas usan el header:
 
 ```text
@@ -23,10 +47,16 @@ Authorization: Bearer {{tokenAdmin}}
 o:
 
 ```text
+Authorization: Bearer {{tokenSuperadmin}}
+```
+
+o:
+
+```text
 Authorization: Bearer {{tokenWorker}}
 ```
 
-segun el rol que se quiera probar.
+segun el rol que se quiera probar. En la version actual, el panel web principal esta reservado a ADMIN/SUPERADMIN; el login de WORKER puede devolver acceso denegado para ese flujo y solo guardara `tokenWorker` si el backend devuelve token.
 
 ## Usuarios demo
 
@@ -61,16 +91,23 @@ Archivos incluidos:
 - `docs/postman/EstanterIA.postman_collection.json`
 - `docs/postman/EstanterIA.local.postman_environment.json`
 
-Importa ambos en Postman. Ejecuta primero `Auth / Login admin` o `Auth / Login worker`; los scripts guardan `tokenAdmin` y `tokenWorker` automaticamente en variables de entorno.
+Importa ambos en Postman. Ejecuta primero:
+
+- `Auth / Login admin`
+- `Auth / Login superadmin`
+- `Auth / Login worker`
+
+Los scripts guardan `tokenAdmin`, `tokenSuperadmin` y `tokenWorker` automaticamente si la respuesta contiene el campo `token`.
 
 Variables principales:
 
 - `baseUrl`: URL del backend local.
 - `tokenAdmin`: JWT de admin.
+- `tokenSuperadmin`: JWT de superadmin.
 - `tokenWorker`: JWT de worker.
 - `planoCodigo`: codigo de plano usado en pruebas.
 - `estanteriaCodigo`: codigo de estanteria usado en pruebas.
-- `seccionId`, `tareaId`, `alertaId`: ids para endpoints parametrizados.
+- `seccionId`, `slotConfiguracionId`, `trabajadorId`, `tareaId`, `alertaId`, `inspeccionId`: ids para endpoints parametrizados.
 
 ## Permisos basicos
 

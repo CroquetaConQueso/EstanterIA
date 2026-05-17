@@ -128,7 +128,7 @@ textarea {
 }
 
 .page {
-  width: min(1560px, calc(100vw - 32px));
+  width: min(1760px, calc(100vw - 32px));
   margin: 32px auto;
   padding-bottom: 80px;
 }
@@ -288,8 +288,9 @@ textarea {
 }
 
 label {
-  font-size: 0.76rem;
+  font-size: 0.84rem;
   letter-spacing: 1px;
+  line-height: 1.2;
 }
 
 input,
@@ -301,9 +302,11 @@ textarea {
   border: var(--border-light);
   background: var(--paper);
   color: var(--black);
-  padding: 10px;
+  min-height: 48px;
+  padding: 12px;
   font-family: 'Courier New', Courier, monospace;
   font-weight: 800;
+  font-size: 0.95rem;
   text-transform: none;
 }
 
@@ -313,7 +316,7 @@ textarea {
 
 .btn,
 .tool {
-  min-height: 44px;
+  min-height: 48px;
   border: var(--border-heavy);
   background: var(--white);
   color: var(--black);
@@ -350,13 +353,13 @@ textarea {
 
 .editor-workspace {
   display: grid;
-  grid-template-columns: minmax(240px, 260px) minmax(640px, 1fr) minmax(360px, 400px);
-  gap: 18px;
+  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+  gap: 22px;
   align-items: start;
+  margin-bottom: 22px;
 }
 
-.tools-panel,
-.detail-panel {
+.tools-panel {
   position: sticky;
   top: 92px;
   align-self: start;
@@ -367,6 +370,7 @@ textarea {
 
 .tool-buttons {
   display: grid;
+  gap: 12px;
 }
 
 .tool {
@@ -395,9 +399,9 @@ textarea {
 
 .canvas-panel {
   min-width: 0;
-  padding: 18px;
+  padding: 20px;
   align-self: start;
-  min-height: calc(100vh - 112px);
+  min-height: calc(100vh - 140px);
 }
 
 .canvas-head {
@@ -423,14 +427,14 @@ textarea {
   padding: 16px;
   box-shadow: var(--shadow-red);
   overflow: auto;
-  min-height: 640px;
+  min-height: clamp(650px, calc(100vh - 300px), 820px);
 }
 
 .editor-canvas {
   position: relative;
-  min-width: 720px;
+  min-width: 860px;
   width: 100%;
-  min-height: 600px;
+  min-height: 640px;
   background:
     linear-gradient(rgba(244,240,236,0.88), rgba(244,240,236,0.88)),
     repeating-linear-gradient(0deg, transparent 0, transparent 34px, rgba(17,17,17,0.12) 34px, rgba(17,17,17,0.12) 36px),
@@ -523,9 +527,11 @@ textarea {
 
 .detail-panel {
   display: grid;
-  gap: 14px;
+  gap: 18px;
   min-height: 0;
   align-content: start;
+  margin-top: 0;
+  padding: 24px;
 }
 
 .element-form {
@@ -534,10 +540,44 @@ textarea {
 
 .element-form.is-visible {
   display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
 }
 
 .geometry-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.element-form > .element-metadata.field-grid {
+  grid-column: span 4;
+}
+
+.element-form > .element-metadata.field {
+  grid-column: span 4;
+}
+
+.element-form > .geometry-grid {
+  grid-column: span 4;
+}
+
+#element-orientation-field,
+#element-responsible-field {
+  grid-column: span 4;
+}
+
+#element-slots-field {
+  grid-column: span 8;
+}
+
+.rack-status-actions,
+.rack-worker-panel {
+  grid-column: span 4;
+}
+
+#element-edit-status,
+.element-form > .form-actions {
+  grid-column: 1 / -1;
 }
 
 .inline-status:not(:empty) {
@@ -563,8 +603,8 @@ textarea {
 
 .rack-worker-panel {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: 14px;
+  padding: 16px;
   border: var(--border-light);
   background: var(--white);
 }
@@ -583,14 +623,15 @@ textarea {
 
 .assigned-worker-item {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   border: var(--border-light);
   background: var(--paper);
-  padding: 10px;
+  padding: 12px;
   box-shadow: 3px 3px 0 var(--black);
   font-family: 'Courier New', Courier, monospace;
   font-weight: 800;
   text-transform: none;
+  overflow-wrap: anywhere;
 }
 
 .assigned-worker-main {
@@ -603,7 +644,8 @@ textarea {
 
 .assigned-worker-meta {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.86rem;
+  line-height: 1.35;
 }
 
 .availability-badge {
@@ -613,7 +655,7 @@ textarea {
   background: var(--gold);
   color: var(--black);
   padding: 2px 6px;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
 }
 
 .availability-badge.is-unavailable {
@@ -656,8 +698,9 @@ textarea {
   font-family: 'Courier New', Courier, monospace;
   font-weight: 800;
   text-transform: none;
-  font-size: 0.82rem;
-  line-height: 1.25;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .entity-list li.is-active {
@@ -666,7 +709,7 @@ textarea {
 
 .slot-editor {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 #element-slots-container {
@@ -677,18 +720,18 @@ textarea {
 
 .slot-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: minmax(120px, 0.75fr) minmax(96px, 0.45fr) minmax(240px, 1.6fr) minmax(120px, 0.65fr);
+  gap: 12px;
   border: var(--border-light);
   background: var(--paper);
-  padding: 10px;
+  padding: 12px;
 }
 
 .slot-field {
   display: grid;
   gap: 6px;
   min-width: 0;
-  font-size: 0.72rem;
+  font-size: 0.84rem;
 }
 
 .slot-field span {
@@ -760,7 +803,11 @@ textarea {
 
 @media (max-width: 1280px) {
   .editor-workspace {
-    grid-template-columns: minmax(230px, 250px) minmax(600px, 1fr) minmax(340px, 380px);
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+  }
+
+  .slot-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -801,6 +848,26 @@ textarea {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .element-form.is-visible {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .element-form > .element-metadata.field-grid,
+  .element-form > .element-metadata.field,
+  .element-form > .geometry-grid,
+  #element-orientation-field,
+  #element-responsible-field,
+  .rack-status-actions,
+  .rack-worker-panel {
+    grid-column: span 1;
+  }
+
+  #element-slots-field,
+  #element-edit-status,
+  .element-form > .form-actions {
+    grid-column: 1 / -1;
+  }
+
   .entity-list {
     max-height: 220px;
   }
@@ -818,16 +885,27 @@ textarea {
   .plan-form,
   .field-grid,
   .geometry-grid,
-  .tool-buttons {
+  .tool-buttons,
+  .element-form.is-visible,
+  .slot-row {
     grid-template-columns: 1fr;
+  }
+
+  .element-form > .element-metadata.field-grid,
+  .element-form > .element-metadata.field,
+  .element-form > .geometry-grid,
+  #element-orientation-field,
+  #element-responsible-field,
+  #element-slots-field,
+  .rack-status-actions,
+  .rack-worker-panel,
+  #element-edit-status,
+  .element-form > .form-actions {
+    grid-column: 1 / -1;
   }
 
   .editor-canvas {
     min-width: 620px;
     min-height: 460px;
-  }
-
-  .slot-row {
-    grid-template-columns: 1fr;
   }
 }

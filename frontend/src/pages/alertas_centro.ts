@@ -195,6 +195,34 @@ function getStockMensaje(alerta: AlertaResponse): string {
   return "Sin dato de stock";
 }
 
+function getProductoEsperado(alerta: AlertaResponse): string {
+  const producto = alerta.slot?.productoEsperado;
+  if (!producto) return "Sin producto esperado configurado";
+  const codigo = textoSeguro(producto.codigoInterno, "Sin codigo");
+  return `${textoSeguro(producto.nombre, "Sin nombre")} · ${codigo}`;
+}
+
+function getProductoAsignado(asignacion: AlertaAsignacionResponse): string {
+  const producto = asignacion.producto;
+  if (!producto) return "Sin producto asignado";
+  const codigo = textoSeguro(producto.codigoInterno, "Sin codigo");
+  return `${textoSeguro(producto.nombre, "Sin nombre")} · ${codigo}`;
+}
+
+function getProveedorAsignacion(asignacion: AlertaAsignacionResponse): string {
+  const proveedor = asignacion.proveedor;
+  if (!proveedor) return "Sin proveedor asociado";
+  const codigo = proveedor.codigo ? ` · ${proveedor.codigo}` : "";
+  return `${textoSeguro(proveedor.nombre, "Sin nombre")}${codigo}`;
+}
+
+function getStockAsignacion(asignacion: AlertaAsignacionResponse): string {
+  if (asignacion.stockDisponible === true) return "Si";
+  if (asignacion.stockDisponible === false) return "No · requiere pedido o reposicion externa";
+  if (asignacion.stockMensaje) return asignacion.stockMensaje.replace(/^Stock disponible:\s*/i, "");
+  return "Sin dato de stock";
+}
+
 function getSeccion(alerta: AlertaResponse): string {
   const seccion = alerta.seccion;
   if (!seccion) return "No disponible";
@@ -235,6 +263,7 @@ function getBlobBusqueda(alerta: AlertaResponse): string {
     getSlot(alerta),
     getProducto(alerta),
     getProveedor(alerta),
+    getStockMensaje(alerta),
     alerta.asignacion?.claveProductoProveedor
   ].join(" ").toLowerCase();
 }
@@ -301,9 +330,23 @@ function addDetailItem(label: string, value: string): void {
   if (!detalle) return;
 
   const li = document.createElement("li");
+  li.className = "meta-item";
   const strong = document.createElement("strong");
+  strong.className = "meta-label";
   strong.textContent = `${label}:`;
-  li.append(strong, ` ${value}`);
+  const span = document.createElement("span");
+  span.className = "meta-value";
+  span.textContent = value;
+  li.append(strong, span);
+  detalle.appendChild(li);
+}
+
+function addDetailSection(title: string): void {
+  if (!detalle) return;
+
+  const li = document.createElement("li");
+  li.className = "detail-section-title";
+  li.textContent = title;
   detalle.appendChild(li);
 }
 
@@ -356,6 +399,7 @@ function renderDetail(alerta: AlertaResponse): void {
 
   renderAlertPreview(alerta);
 
+  addDetailSection("Contexto");
   addDetailItem("ID", String(alerta.id));
   addDetailItem("Inspeccion", textoSeguro(alerta.inspeccionId, "Sin inspeccion asociada"));
   addDetailItem("Imagen", getAlertaImagePath(alerta) ?? "Sin imagen asociada");
@@ -367,12 +411,23 @@ function renderDetail(alerta: AlertaResponse): void {
   addDetailItem("Seccion", getSeccion(alerta));
   addDetailItem("Estanteria", getEstanteria(alerta));
   addDetailItem("Slot", getSlot(alerta));
-  addDetailItem("Producto", getProducto(alerta));
-  addDetailItem("Proveedor", getProveedor(alerta));
-  addDetailItem("Stock", getStockMensaje(alerta));
-  addDetailItem("Clave proveedor", textoSeguro(alerta.asignacion?.claveProductoProveedor, "Sin asignacion asociada"));
-  addDetailItem("Caducidad", textoSeguro(alerta.asignacion?.fechaCaducidad, "Sin fecha de caducidad"));
-  addDetailItem("Retirada programada", textoSeguro(alerta.asignacion?.fechaRetiradaProgramada, "Sin retirada programada"));
+
+  addDetailSection("Producto esperado");
+  addDetailItem("Producto esperado", getProductoEsperado(alerta));
+
+  addDetailSection("Asignacion activa");
+  if (alerta.asignacion) {
+    addDetailItem("Asignacion activa", `#${alerta.asignacion.id} · ${textoSeguro(alerta.asignacion.estadoAsignacion, "Sin estado")}`);
+    addDetailItem("Producto asignado", getProductoAsignado(alerta.asignacion));
+    addDetailItem("Proveedor", getProveedorAsignacion(alerta.asignacion));
+    addDetailItem("Clave proveedor", textoSeguro(alerta.asignacion.claveProductoProveedor, "Sin clave de proveedor"));
+    addDetailItem("Stock disponible", getStockAsignacion(alerta.asignacion));
+    addDetailItem("Caducidad", textoSeguro(alerta.asignacion.fechaCaducidad, "Sin fecha de caducidad"));
+    addDetailItem("Retirada programada", textoSeguro(alerta.asignacion.fechaRetiradaProgramada, "Sin retirada programada"));
+  } else {
+    addDetailItem("Asignacion activa", "No vinculada a esta alerta");
+    addDetailItem("Datos de asignacion", "No disponibles para esta alerta");
+  }
 
   const alertaAbierta = alerta.estado === "ABIERTA";
   if (btnResolver) {

@@ -224,6 +224,31 @@ class AlertaOperativaServiceTest {
     }
 
     @Test
+    void alertaSinAsignacionVinculadaNoExponeStockDeAsignacionActivaDelSlot() {
+        AsignacionProductoSlot asignacion = asignacionBase();
+        Alerta alerta = new Alerta();
+        alerta.setId(77L);
+        alerta.setTipoAlerta(TipoAlerta.ANOMALIA_VISUAL);
+        alerta.setPrioridad(PrioridadAlerta.ALTA);
+        alerta.setEstadoAlerta(EstadoAlerta.ABIERTA);
+        alerta.setMensaje("Anomalia visual");
+        alerta.setCreatedAt(java.time.Instant.now());
+        alerta.setSeccion(asignacion.getSlotConfiguracion().getEstanteria().getSeccion());
+        alerta.setEstanteria(asignacion.getSlotConfiguracion().getEstanteria());
+        alerta.setSlotConfiguracion(asignacion.getSlotConfiguracion());
+        when(alertaRepository.findAlertasConContextoByEstado(EstadoAlerta.ABIERTA)).thenReturn(List.of(alerta));
+
+        var response = service.obtenerAlertasAbiertas();
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).asignacion()).isNull();
+        assertThat(response.get(0).proveedorNombre()).isNull();
+        assertThat(response.get(0).stockDisponible()).isNull();
+        assertThat(response.get(0).stockMensaje()).isEqualTo("Sin dato de stock");
+        verify(asignacionProductoSlotRepository, never()).findAsignacionActivaDeSlot(any(), any());
+    }
+
+    @Test
     void siNoHayAsignacionActivaNoGeneraAlerta() {
         when(asignacionProductoSlotRepository.findActivaConContextoById(1L, EstadoAsignacionProductoSlot.ACTIVA))
                 .thenReturn(Optional.empty());

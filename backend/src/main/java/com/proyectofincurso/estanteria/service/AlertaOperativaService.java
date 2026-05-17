@@ -600,8 +600,7 @@ public class AlertaOperativaService {
     }
 
     private AlertaResponse toAlertaResponse(Alerta alerta) {
-        AsignacionProductoSlot asignacionStock = resolverAsignacionParaStock(alerta);
-        StockResumen stock = toStockResumen(asignacionStock);
+        StockResumen stock = toStockResumen(alerta.getAsignacionProductoSlot());
         return new AlertaResponse(
                 alerta.getId(),
                 alerta.getTipoAlerta(),
@@ -624,18 +623,6 @@ public class AlertaOperativaService {
                 stock.stockDisponible(),
                 stock.stockMensaje()
         );
-    }
-
-    private AsignacionProductoSlot resolverAsignacionParaStock(Alerta alerta) {
-        if (alerta.getAsignacionProductoSlot() != null) {
-            return alerta.getAsignacionProductoSlot();
-        }
-        if (alerta.getSlotConfiguracion() == null || alerta.getSlotConfiguracion().getId() == null) {
-            return null;
-        }
-        return asignacionProductoSlotRepository
-                .findAsignacionActivaDeSlot(alerta.getSlotConfiguracion().getId(), EstadoAsignacionProductoSlot.ACTIVA)
-                .orElse(null);
     }
 
     private StockResumen toStockResumen(AsignacionProductoSlot asignacion) {

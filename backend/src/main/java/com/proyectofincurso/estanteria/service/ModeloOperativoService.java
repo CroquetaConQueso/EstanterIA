@@ -781,6 +781,15 @@ public class ModeloOperativoService {
             );
         }
 
+        if (fechaColocacion != null
+                && fechaRetiradaProgramada != null
+                && fechaRetiradaProgramada.isBefore(fechaColocacion)) {
+            throw ApiException.badRequest(
+                    "ASIGNACION_FECHAS_INVALIDAS",
+                    "La fecha de retirada programada no puede ser anterior a la fecha de colocacion"
+            );
+        }
+
         if (fechaCaducidad != null
                 && fechaRetiradaProgramada != null
                 && fechaRetiradaProgramada.isAfter(fechaCaducidad)) {

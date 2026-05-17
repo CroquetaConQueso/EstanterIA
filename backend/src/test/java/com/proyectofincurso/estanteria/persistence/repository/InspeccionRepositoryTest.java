@@ -87,6 +87,49 @@ class InspeccionRepositoryTest {
         assertThat(resultado.get(0).getId()).isEqualTo(reciente.getId());
     }
 
+    @Test
+    void informeRotacionVisualSinEstanteriaCargaInspeccionesConSlots() {
+        Estanteria estanteria = crearEstanteria("EST-TEST-04");
+        Inspeccion visual = crearInspeccion(estanteria, Instant.parse("2026-05-16T10:00:00Z"), EstadoGeneralVisual.MIXTO);
+        crearSlot(visual, "slot_1", 1, EstadoVisualSlot.OCUPADO);
+        crearSlot(visual, "slot_2", 2, EstadoVisualSlot.VACIO);
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Inspeccion> resultado = inspeccionRepository.findParaInformeRotacionVisual(
+                Instant.parse("2026-05-16T00:00:00Z"),
+                Instant.parse("2026-05-17T00:00:00Z"),
+                null
+        );
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getId()).isEqualTo(visual.getId());
+        assertThat(resultado.get(0).getSlots()).hasSize(2);
+    }
+
+    @Test
+    void informeRotacionVisualConEstanteriaFiltraPorCodigoYCargaSlots() {
+        Estanteria estanteria = crearEstanteria("EST-TEST-05");
+        Inspeccion visual = crearInspeccion(estanteria, Instant.parse("2026-05-16T10:00:00Z"), EstadoGeneralVisual.MIXTO);
+        crearSlot(visual, "slot_1", 1, EstadoVisualSlot.OCUPADO);
+        Estanteria otraEstanteria = crearEstanteria("EST-TEST-06");
+        Inspeccion otraVisual = crearInspeccion(otraEstanteria, Instant.parse("2026-05-16T10:30:00Z"), EstadoGeneralVisual.HUECOS_VACIOS);
+        crearSlot(otraVisual, "slot_1", 1, EstadoVisualSlot.VACIO);
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Inspeccion> resultado = inspeccionRepository.findParaInformeRotacionVisualPorEstanteria(
+                Instant.parse("2026-05-16T00:00:00Z"),
+                Instant.parse("2026-05-17T00:00:00Z"),
+                null,
+                "est-test-05"
+        );
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getId()).isEqualTo(visual.getId());
+        assertThat(resultado.get(0).getSlots()).hasSize(1);
+    }
+
     private Estanteria crearEstanteria(String codigo) {
         Instant now = Instant.parse("2026-05-16T09:00:00Z");
 

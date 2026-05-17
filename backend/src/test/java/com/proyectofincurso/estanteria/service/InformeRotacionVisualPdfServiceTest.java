@@ -29,6 +29,14 @@ class InformeRotacionVisualPdfServiceTest {
         assertThat(new String(pdf, 0, 4, StandardCharsets.US_ASCII)).isEqualTo("%PDF");
     }
 
+    @Test
+    void generaPdfNoVacioSinFiltroDeEstanteria() {
+        byte[] pdf = service.generarPdf(informeDemoSinEstanteria());
+
+        assertThat(pdf).isNotEmpty();
+        assertThat(new String(pdf, 0, 4, StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+    }
+
     private InformeRotacionVisualResponse informeDemo() {
         return new InformeRotacionVisualResponse(
                 new InformeRotacionVisualPeriodoResponse(
@@ -73,6 +81,26 @@ class InformeRotacionVisualPdfServiceTest {
                         0
                 )),
                 List.of(new ResumenDiaSemanaResponse("Lunes", 2))
+        );
+    }
+
+    private InformeRotacionVisualResponse informeDemoSinEstanteria() {
+        return new InformeRotacionVisualResponse(
+                new InformeRotacionVisualPeriodoResponse(
+                        LocalDate.of(2026, 5, 1),
+                        LocalDate.of(2026, 5, 17)
+                ),
+                new InformeRotacionVisualFiltrosResponse(
+                        "PLANO-DEMO",
+                        1L,
+                        "Despensa",
+                        null
+                ),
+                new InformeRotacionVisualResumenResponse(0, 0, 0, 0, 0),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(new ResumenDiaSemanaResponse("Lunes", 0))
         );
     }
 }

@@ -35,6 +35,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -151,6 +152,75 @@ class AlertaOperativaServiceTest {
         verify(alertaRepository).save(captor.capture());
         assertThat(captor.getValue().getTipoAlerta()).isEqualTo(TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE);
         assertThat(captor.getValue().getPrioridad()).isEqualTo(PrioridadAlerta.ALTA);
+    }
+
+    @Test
+    void revisionManualEvaluaCaducidadYRetiradaDeAsignacionesActivas() {
+        AsignacionProductoSlot asignacion = asignacionBase();
+        asignacion.setFechaCaducidad(LocalDate.now().minusDays(1));
+        asignacion.setFechaRetiradaProgramada(LocalDate.now().minusDays(1));
+        when(asignacionProductoSlotRepository.findActivasConCaducidadHasta(
+                any(EstadoAsignacionProductoSlot.class),
+                any(LocalDate.class)
+        )).thenReturn(List.of(asignacion));
+        when(asignacionProductoSlotRepository.findActivasConRetiradaProgramadaAntesDe(
+                any(EstadoAsignacionProductoSlot.class),
+                any(LocalDate.class)
+        )).thenReturn(List.of(asignacion));
+        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+                TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
+                EstadoAlerta.ABIERTA,
+                1L
+        )).thenReturn(List.of());
+        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+                TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE,
+                EstadoAlerta.ABIERTA,
+                1L
+        )).thenReturn(List.of());
+        when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
+
+        var response = service.revisarCaducidades();
+
+        ArgumentCaptor<Alerta> captor = ArgumentCaptor.forClass(Alerta.class);
+        verify(alertaRepository, times(2)).save(captor.capture());
+        assertThat(captor.getAllValues())
+                .extracting(Alerta::getTipoAlerta)
+                .containsExactlyInAnyOrder(
+                        TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
+                        TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE
+                );
+        assertThat(response.asignacionesRevisadas()).isEqualTo(1);
+        assertThat(response.alertasCreadas()).isEqualTo(2);
+        assertThat(response.alertasExistentes()).isZero();
+    }
+
+    @Test
+    void revisionManualCuentaAlertaExistenteSinDuplicar() {
+        AsignacionProductoSlot asignacion = asignacionBase();
+        asignacion.setFechaCaducidad(LocalDate.now().plusDays(2));
+        Alerta existente = new Alerta();
+        existente.setId(88L);
+        existente.setTipoAlerta(TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR);
+        when(asignacionProductoSlotRepository.findActivasConCaducidadHasta(
+                any(EstadoAsignacionProductoSlot.class),
+                any(LocalDate.class)
+        )).thenReturn(List.of(asignacion));
+        when(asignacionProductoSlotRepository.findActivasConRetiradaProgramadaAntesDe(
+                any(EstadoAsignacionProductoSlot.class),
+                any(LocalDate.class)
+        )).thenReturn(List.of());
+        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+                TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
+                EstadoAlerta.ABIERTA,
+                1L
+        )).thenReturn(List.of(existente));
+
+        var response = service.revisarCaducidades();
+
+        verify(alertaRepository, never()).save(any(Alerta.class));
+        assertThat(response.asignacionesRevisadas()).isEqualTo(1);
+        assertThat(response.alertasCreadas()).isZero();
+        assertThat(response.alertasExistentes()).isEqualTo(1);
     }
 
     @Test

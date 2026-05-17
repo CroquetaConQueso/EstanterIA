@@ -5,6 +5,7 @@ import com.proyectofincurso.estanteria.service.AlertaOperativaService;
 import com.proyectofincurso.estanteria.web.dto.AlertaResponse;
 import com.proyectofincurso.estanteria.web.dto.AlertaTrabajadorResponse;
 import com.proyectofincurso.estanteria.web.dto.EvaluacionCaducidadResponse;
+import com.proyectofincurso.estanteria.web.dto.RevisionCaducidadesResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,6 +41,13 @@ public class AlertaController {
     @Operation(summary = "Evaluar caducidad", description = "Requiere ADMIN/SUPERADMIN. Evalua caducidades y genera alertas operativas.")
     public EvaluacionCaducidadResponse evaluarCaducidad() {
         return alertaOperativaService.evaluarCaducidad();
+    }
+
+    @PostMapping(value = "/alertas/revisar-caducidades", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Revisar caducidades", description = "Requiere ADMIN/SUPERADMIN. Revisa asignaciones activas y genera alertas pendientes de caducidad o retirada.")
+    public RevisionCaducidadesResponse revisarCaducidades() {
+        return alertaOperativaService.revisarCaducidades();
     }
 
     @PatchMapping(value = "/alertas/{id}/resolver", produces = MediaType.APPLICATION_JSON_VALUE)

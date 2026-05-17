@@ -210,6 +210,17 @@ select {
   background: var(--white);
 }
 
+.btn.close-action {
+  background: var(--black);
+  color: var(--white);
+}
+
+.btn.close-action:hover:not(:disabled),
+.btn.close-action:focus-visible {
+  background: var(--white);
+  color: var(--black);
+}
+
 .btn.danger {
   background: var(--red);
   color: var(--white);

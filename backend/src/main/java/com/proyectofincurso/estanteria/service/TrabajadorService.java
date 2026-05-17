@@ -42,7 +42,7 @@ public class TrabajadorService {
 
     @Transactional(readOnly = true)
     public List<TrabajadorResponse> listarTrabajadores(boolean incluirInactivos) {
-        return trabajadorRepository.findByEmpresaCodigoIgnoreCaseOrderByApellidosAscNombreAsc(CODIGO_EMPRESA_DEMO)
+        return trabajadorRepository.findAllByOrderByApellidosAscNombreAsc()
                 .stream()
                 .filter(trabajador -> incluirInactivos || Boolean.TRUE.equals(trabajador.getActivo()))
                 .map(this::toResponse)
@@ -61,11 +61,7 @@ public class TrabajadorService {
 
     @Transactional
     public TrabajadorResponse crearTrabajador(CrearTrabajadorRequest request) {
-        Empresa empresa = empresaRepository.findByCodigoAndActivaTrue(CODIGO_EMPRESA_DEMO)
-                .orElseThrow(() -> ApiException.notFound(
-                        "EMPRESA_NOT_FOUND",
-                        "No existe la empresa demo activa"
-                ));
+        Empresa empresa = resolverEmpresaOperativa();
 
         String email = normalizarNullable(request.emailContacto());
         validarEmailDisponible(email, null);
@@ -86,6 +82,15 @@ public class TrabajadorService {
         trabajador.setUpdatedAt(ahora);
 
         return toResponse(trabajadorRepository.save(trabajador));
+    }
+
+    private Empresa resolverEmpresaOperativa() {
+        return empresaRepository.findByCodigoAndActivaTrue(CODIGO_EMPRESA_DEMO)
+                .or(() -> empresaRepository.findFirstByActivaTrueOrderByIdAsc())
+                .orElseThrow(() -> ApiException.notFound(
+                        "EMPRESA_NOT_FOUND",
+                        "No existe una empresa activa para crear el trabajador"
+                ));
     }
 
     @Transactional

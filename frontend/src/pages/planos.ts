@@ -461,6 +461,14 @@ function actualizarUrlPlano(codigo: string): void {
   window.history.replaceState({}, "", url);
 }
 
+function estadoPlanoLabel(plano: { activo: boolean | null }): string {
+  return plano.activo === false ? "INACTIVO" : "ACTIVO";
+}
+
+function planoOptionLabel(plano: { codigo: string; nombre: string; activo: boolean | null }): string {
+  return `${plano.codigo} · ${plano.nombre} · ${estadoPlanoLabel(plano)}`.toUpperCase();
+}
+
 function renderSelectorPlanos(codigoSeleccionado: string | null): void {
   if (!planoSelect) return;
 
@@ -482,7 +490,7 @@ function renderSelectorPlanos(codigoSeleccionado: string | null): void {
   planosDisponibles.forEach((plano) => {
     const option = document.createElement("option");
     option.value = plano.codigo;
-    option.textContent = `${plano.codigo} · ${plano.nombre} · ${plano.activo === false ? "Inactivo" : "Activo"}`;
+    option.textContent = planoOptionLabel(plano);
     option.selected = plano.codigo === codigoSeleccionado;
     planoSelect.appendChild(option);
   });
@@ -490,7 +498,7 @@ function renderSelectorPlanos(codigoSeleccionado: string | null): void {
   if (codigoSeleccionado && !contieneSeleccionado && planoActual?.codigo === codigoSeleccionado) {
     const option = document.createElement("option");
     option.value = planoActual.codigo;
-    option.textContent = `${planoActual.codigo} · ${planoActual.nombre} · ${planoActual.activo === false ? "Inactivo" : "Activo"}`;
+    option.textContent = planoOptionLabel(planoActual);
     option.selected = true;
     planoSelect.appendChild(option);
     planoSelect.disabled = false;
@@ -523,7 +531,7 @@ function renderEstadoPlano(plano: PlanoOperativoResponse | null): void {
   }
 
   btnTogglePlano.hidden = false;
-  btnTogglePlano.textContent = inactivo ? "Reactivar plano" : "Desactivar plano";
+  btnTogglePlano.textContent = inactivo ? "REACTIVAR PLANO" : "DESACTIVAR PLANO";
   btnTogglePlano.classList.toggle("danger", !inactivo);
   btnTogglePlano.classList.toggle("plan-action-primary", inactivo);
 }
@@ -574,7 +582,7 @@ function abrirModalEstadoPlano(accion: "desactivar" | "reactivar"): void {
     planoEstadoModalError.textContent = "";
   }
 
-  planoEstadoModalConfirm.textContent = desactivar ? "Desactivar plano" : "Reactivar plano";
+  planoEstadoModalConfirm.textContent = desactivar ? "DESACTIVAR PLANO" : "Reactivar plano";
   planoEstadoModalConfirm.classList.toggle("danger", desactivar);
   planoEstadoModalConfirm.classList.toggle("plan-action-primary", !desactivar);
   planoEstadoModal.hidden = false;

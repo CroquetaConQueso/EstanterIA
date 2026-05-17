@@ -227,6 +227,47 @@
         </form>
       </dialog>
 
+      <dialog class="product-dialog confirm-dialog assignment-retire-dialog" id="retire-assignment-dialog" aria-labelledby="retire-assignment-dialog-title">
+        <form class="product-form" method="dialog">
+          <div class="dialog-head">
+            <div>
+              <p class="eyebrow">Inventario operativo</p>
+              <h2 id="retire-assignment-dialog-title">Retirar asignación</h2>
+            </div>
+            <button class="btn ghost compact" id="btn-cancel-retire-assignment" type="button">Cancelar</button>
+          </div>
+
+          <p class="help">
+            La asignación activa se marcará como retirada y se conservará el histórico operativo del slot.
+          </p>
+
+          <dl class="retire-assignment-summary">
+            <div>
+              <dt>Slot</dt>
+              <dd id="retire-assignment-slot">-</dd>
+            </div>
+            <div>
+              <dt>Producto asignado</dt>
+              <dd id="retire-assignment-product">-</dd>
+            </div>
+            <div>
+              <dt>Proveedor</dt>
+              <dd id="retire-assignment-provider">-</dd>
+            </div>
+          </dl>
+
+          <p class="assignment-retire-warning">
+            Esta acción no borra datos: solo cierra la asignación activa y mantiene la trazabilidad.
+          </p>
+
+          <div class="dialog-actions">
+            <button class="btn danger" id="btn-confirm-retire-assignment" type="button">
+              Retirar asignación
+            </button>
+          </div>
+        </form>
+      </dialog>
+
       <dialog class="product-dialog" id="assignment-dialog" aria-labelledby="assignment-dialog-title">
         <form class="product-form" id="assignment-form" method="dialog">
           <div class="dialog-head">

@@ -157,6 +157,12 @@ const inventoryActionStatus = document.querySelector<HTMLElement>("#inventory-ac
 const assignmentActions = document.querySelector<HTMLElement>("#assignment-actions");
 const btnEditAssignment = document.querySelector<HTMLButtonElement>("#btn-edit-assignment");
 const btnRetireAssignment = document.querySelector<HTMLButtonElement>("#btn-retire-assignment");
+const retireAssignmentDialog = document.querySelector<HTMLDialogElement>("#retire-assignment-dialog");
+const btnCancelRetireAssignment = document.querySelector<HTMLButtonElement>("#btn-cancel-retire-assignment");
+const btnConfirmRetireAssignment = document.querySelector<HTMLButtonElement>("#btn-confirm-retire-assignment");
+const retireAssignmentSlot = document.querySelector<HTMLElement>("#retire-assignment-slot");
+const retireAssignmentProduct = document.querySelector<HTMLElement>("#retire-assignment-product");
+const retireAssignmentProvider = document.querySelector<HTMLElement>("#retire-assignment-provider");
 const assignmentDialog = document.querySelector<HTMLDialogElement>("#assignment-dialog");
 const assignmentForm = document.querySelector<HTMLFormElement>("#assignment-form");
 const assignmentDialogTitle = document.querySelector<HTMLElement>("#assignment-dialog-title");
@@ -769,6 +775,32 @@ function cerrarDialogoAsignacion(): void {
   assignmentDialog?.close();
 }
 
+function renderRetireAssignmentSummary(slot: SlotConfiguradoResponse): void {
+  if (retireAssignmentSlot) {
+    retireAssignmentSlot.textContent = `${textoSeguro(slot.slotId, "Slot sin código")} · orden ${textoSeguro(slot.orden, "-")}`;
+  }
+  if (retireAssignmentProduct) retireAssignmentProduct.textContent = productoAsignadoNombre(slot);
+  if (retireAssignmentProvider) retireAssignmentProvider.textContent = proveedorNombre(slot);
+}
+
+function abrirConfirmacionRetirarAsignacion(): void {
+  if (!puedeGestionarProductos) {
+    setInventoryActionStatus("Solo un administrador puede retirar asignaciones.", "error");
+    return;
+  }
+
+  const slot = getSelectedSlot();
+  if (!slot?.id || !slot.asignacionActiva) {
+    setInventoryActionStatus("El slot seleccionado no tiene asignación activa.", "error");
+    return;
+  }
+
+  renderRetireAssignmentSummary(slot);
+  setInventoryActionStatus();
+  btnConfirmRetireAssignment?.removeAttribute("disabled");
+  retireAssignmentDialog?.showModal();
+}
+
 async function guardarAsignacionDesdeFormulario(): Promise<void> {
   if (!puedeGestionarProductos) {
     setAssignmentFormStatus("Solo un administrador puede gestionar asignaciones.", "error");
@@ -825,12 +857,12 @@ async function retirarAsignacionSeleccionada(): Promise<void> {
     return;
   }
 
-  const confirmed = window.confirm("La asignación activa se marcará como retirada y se conservará el histórico.");
-  if (!confirmed) return;
-
+  if (btnConfirmRetireAssignment) btnConfirmRetireAssignment.disabled = true;
   await patchJson<SlotConfiguradoResponse>(`/api/slots/${encodeURIComponent(String(slot.id))}/asignacion-activa/retirar`);
   await refrescarConfiguracionManteniendoSlot(slot.id);
+  retireAssignmentDialog?.close();
   setInventoryActionStatus("Asignación retirada. Se conserva el histórico operativo.", "success");
+  btnConfirmRetireAssignment?.removeAttribute("disabled");
 }
 
 async function cargarConfiguracion(codigoEstanteria: string): Promise<void> {
@@ -1235,9 +1267,12 @@ btnConfirmDeactivateProduct?.addEventListener("click", () => {
   });
 });
 btnEditAssignment?.addEventListener("click", abrirDialogoAsignacion);
-btnRetireAssignment?.addEventListener("click", () => {
+btnRetireAssignment?.addEventListener("click", abrirConfirmacionRetirarAsignacion);
+btnCancelRetireAssignment?.addEventListener("click", () => retireAssignmentDialog?.close());
+btnConfirmRetireAssignment?.addEventListener("click", () => {
   void retirarAsignacionSeleccionada().catch((err: unknown) => {
     setInventoryActionStatus(err instanceof Error ? err.message : "No se pudo retirar la asignación.", "error");
+    btnConfirmRetireAssignment?.removeAttribute("disabled");
   });
 });
 btnCloseAssignmentDialog?.addEventListener("click", cerrarDialogoAsignacion);

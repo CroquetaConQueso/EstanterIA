@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.Instant;
 
 public interface InspeccionRepository extends JpaRepository<Inspeccion,Long>{
     @Query("""
@@ -34,4 +35,21 @@ public interface InspeccionRepository extends JpaRepository<Inspeccion,Long>{
             """)
     List<Inspeccion> findUltimasConSlotsByEstanteriaId(@Param("estanteriaId") Long estanteriaId,
                                                        Pageable pageable);
+
+    @Query("""
+            select distinct inspeccion
+            from Inspeccion inspeccion
+            left join fetch inspeccion.slots
+            left join fetch inspeccion.estanteria estanteria
+            left join fetch estanteria.seccion seccion
+            where coalesce(inspeccion.capturadaEn, inspeccion.createdAt) >= :desde
+              and coalesce(inspeccion.capturadaEn, inspeccion.createdAt) < :hastaExclusiva
+              and (:seccionId is null or seccion.id = :seccionId)
+              and (:estanteriaCodigo is null or lower(estanteria.codigo) = lower(:estanteriaCodigo))
+            order by coalesce(inspeccion.capturadaEn, inspeccion.createdAt) asc
+            """)
+    List<Inspeccion> findParaInformeRotacionVisual(@Param("desde") Instant desde,
+                                                   @Param("hastaExclusiva") Instant hastaExclusiva,
+                                                   @Param("seccionId") Long seccionId,
+                                                   @Param("estanteriaCodigo") String estanteriaCodigo);
 }

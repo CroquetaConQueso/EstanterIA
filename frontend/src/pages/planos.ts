@@ -185,6 +185,13 @@ const tipoAlertaLabels: Record<string, string> = {
   PRESENCIA_TRAS_RETIRADA_PROGRAMADA: "Presencia tras retirada programada"
 };
 
+const prioridadLabels: Record<string, string> = {
+  CRITICA: "Crítica",
+  ALTA: "Alta",
+  MEDIA: "Media",
+  BAJA: "Baja"
+};
+
 function textoSeguro(value: string | number | null | undefined, fallback = "No disponible"): string {
   if (value === null || value === undefined || value === "") return fallback;
   return String(value);
@@ -197,6 +204,20 @@ function etiquetaEstado(value: string | null | undefined): string {
 
 function etiquetaAlerta(value: string): string {
   return tipoAlertaLabels[value] ?? value.replaceAll("_", " ").toLowerCase();
+}
+
+function etiquetaPrioridad(value: string): string {
+  return prioridadLabels[value] ?? value.replaceAll("_", " ").toLowerCase();
+}
+
+function esAlertaCaducidadRetirada(tipo: string): boolean {
+  return tipo === "PRODUCTO_PROXIMO_A_CADUCAR"
+    || tipo === "RETIRADA_PROGRAMADA_PENDIENTE"
+    || tipo === "PRESENCIA_TRAS_RETIRADA_PROGRAMADA";
+}
+
+function slotTieneAlertaCaducidadRetirada(slot: PlanoSlotOperativoResponse): boolean {
+  return slot.tiposAlertas.some(esAlertaCaducidadRetirada);
 }
 
 function formatFecha(value: string | null | undefined): string {
@@ -510,10 +531,11 @@ function renderCanvas(plano: PlanoOperativoResponse): void {
     slotsWrap.className = `rack-slots ${estanteria.orientacion.toLowerCase()}`;
 
     estanteria.slots.forEach((slot) => {
+      const alertaCaducidadRetirada = slotTieneAlertaCaducidadRetirada(slot);
       const slotButton = document.createElement("button");
       slotButton.type = "button";
-      slotButton.className = `slot-node ${claseEstado(slot.estadoVisual)}${slot.tieneAlertaAbierta ? " has-slot-alert" : ""}${slotSeleccionado?.slotId === slot.slotId && estanteriaSeleccionada?.layoutId === estanteria.layoutId ? " is-selected" : ""}`;
-      slotButton.setAttribute("aria-label", `${slot.slotId}: ${etiquetaEstado(slot.estadoVisual)}`);
+      slotButton.className = `slot-node ${claseEstado(slot.estadoVisual)}${slot.tieneAlertaAbierta ? " has-slot-alert" : ""}${alertaCaducidadRetirada ? " has-expiry-alert" : ""}${slotSeleccionado?.slotId === slot.slotId && estanteriaSeleccionada?.layoutId === estanteria.layoutId ? " is-selected" : ""}`;
+      slotButton.setAttribute("aria-label", `${slot.slotId}: ${etiquetaEstado(slot.estadoVisual)}${alertaCaducidadRetirada ? ", alerta de caducidad o retirada activa" : ""}`);
       slotButton.addEventListener("click", (event) => {
         event.stopPropagation();
         seleccionarEstanteria(estanteria, slot);
@@ -600,6 +622,7 @@ function renderDetalleSlot(slot: PlanoSlotOperativoResponse | null): void {
     crearLineaDetalle("Producto esperado", textoSeguro(slot.productoEsperado?.nombre ?? slot.productoEsperado?.codigoInterno)),
     crearLineaDetalle("Estado visual", etiquetaEstado(slot.estadoVisual)),
     crearLineaDetalle("Confianza", formatConfianza(slot.confianza)),
+    crearLineaDetalle("Caducidad/retirada", slotTieneAlertaCaducidadRetirada(slot) ? "Alerta de caducidad/retirada activa" : "Sin alerta de caducidad/retirada"),
     crearLineaDetalle("Alertas", slot.tiposAlertas.length > 0 ? slot.tiposAlertas.map(etiquetaAlerta).join(", ") : "Sin alertas de slot")
   );
 }
@@ -622,7 +645,7 @@ function renderDetalleAlertas(estanteria: PlanoEstanteriaOperativaResponse | nul
     const list = document.createElement("ul");
     estanteria.alertasAbiertas.forEach((alerta) => {
       const item = document.createElement("li");
-      item.textContent = `#${alerta.id} · ${etiquetaAlerta(alerta.tipo)} · ${alerta.prioridad} · ${textoSeguro(alerta.slotId, "sin slot")}`;
+      item.textContent = `#${alerta.id} · ${etiquetaAlerta(alerta.tipo)} · ${etiquetaPrioridad(alerta.prioridad)} · ${textoSeguro(alerta.slotId, "sin slot")}`;
       list.appendChild(item);
     });
     detalleAlertas.appendChild(list);
@@ -634,7 +657,7 @@ function renderDetalleAlertas(estanteria: PlanoEstanteriaOperativaResponse | nul
     const tareas = document.createElement("ul");
     estanteria.tareasActivas.forEach((tarea) => {
       const item = document.createElement("li");
-      item.textContent = `#${tarea.id} · ${tarea.titulo} · ${tarea.estadoTarea}`;
+      item.textContent = `#${tarea.id} · ${tarea.titulo} · ${etiquetaEstado(tarea.estadoTarea)}`;
       tareas.appendChild(item);
     });
     detalleAlertas.append(title, tareas);
@@ -664,7 +687,7 @@ function renderDetalleAlertasZona(zona: PlanoZonaOperativaResponse | null): void
   const list = document.createElement("ul");
   alertas.forEach(({ alerta, estanteria }) => {
     const item = document.createElement("li");
-    item.textContent = `${estanteria.estanteria.codigo} · #${alerta.id} · ${etiquetaAlerta(alerta.tipo)} · ${alerta.prioridad}`;
+    item.textContent = `${estanteria.estanteria.codigo} · #${alerta.id} · ${etiquetaAlerta(alerta.tipo)} · ${etiquetaPrioridad(alerta.prioridad)}`;
     list.appendChild(item);
   });
   detalleAlertas.appendChild(list);

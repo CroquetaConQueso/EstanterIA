@@ -53,6 +53,19 @@ public interface AsignacionProductoSlotRepository extends JpaRepository<Asignaci
                                                                 @Param("estado") EstadoAsignacionProductoSlot estado);
 
     @Query("""
+            select distinct asignacion
+            from AsignacionProductoSlot asignacion
+            join fetch asignacion.slotConfiguracion slot
+            join fetch slot.estanteria estanteria
+            join fetch estanteria.seccion
+            join fetch asignacion.productoProveedor productoProveedor
+            join fetch productoProveedor.proveedor
+            join fetch productoProveedor.producto
+            where asignacion.estadoAsignacion = :estado
+            """)
+    List<AsignacionProductoSlot> findActivasConContexto(@Param("estado") EstadoAsignacionProductoSlot estado);
+
+    @Query("""
             select asignacion
             from AsignacionProductoSlot asignacion
             join fetch asignacion.slotConfiguracion slot

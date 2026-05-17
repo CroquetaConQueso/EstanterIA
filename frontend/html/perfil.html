@@ -40,7 +40,7 @@
     <p class="eyebrow">Cuenta operativa</p>
     <h1>Mi perfil</h1>
     <p>
-      Gestiona tus datos de acceso y consulta la empresa o trabajador vinculados a tu usuario.
+      Gestiona tus datos de acceso y consulta el contexto operativo asociado a tu cuenta.
     </p>
   </header>
 
@@ -51,7 +51,7 @@
     <section class="card account-card">
       <div class="card-head">
         <div>
-          <p class="eyebrow">Cuenta</p>
+          <p class="eyebrow">Datos de acceso</p>
           <h2>Cuenta operativa</h2>
         </div>
         <span class="badge" id="perfil-estado">Sesión activa</span>
@@ -68,11 +68,6 @@
           <input id="perfil-email" name="email" type="email" autocomplete="email" required maxlength="120" />
         </label>
 
-        <label>
-          <span>Rol de cuenta</span>
-          <input id="perfil-role" type="text" readonly />
-        </label>
-
         <div class="form-actions">
           <button class="btn primary" id="btn-guardar-perfil" type="submit">Guardar cambios</button>
         </div>
@@ -81,37 +76,33 @@
           Si cambias el usuario o el email, se cerrará la sesión para que vuelvas a entrar con los datos actualizados.
         </p>
       </form>
+
+      <dl class="data-list account-summary">
+        <div>
+          <dt>Rol de cuenta</dt>
+          <dd id="perfil-role">Cargando...</dd>
+        </div>
+        <div>
+          <dt>Empresa</dt>
+          <dd>
+            <span id="perfil-empresa-nombre">Cargando...</span>
+            <span class="data-code" id="perfil-empresa-codigo">Cargando...</span>
+          </dd>
+        </div>
+      </dl>
     </section>
 
     <aside class="profile-side">
-      <section class="card">
+      <section class="card worker-card">
         <div class="card-head">
           <div>
-            <p class="eyebrow">Empresa</p>
-            <h2>Empresa asociada</h2>
-          </div>
-        </div>
-        <dl class="data-list">
-          <div>
-            <dt>Código</dt>
-            <dd id="perfil-empresa-codigo">Cargando...</dd>
-          </div>
-          <div>
-            <dt>Nombre</dt>
-            <dd id="perfil-empresa-nombre">Cargando...</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="card">
-        <div class="card-head">
-          <div>
-            <p class="eyebrow">Equipo</p>
+            <p class="eyebrow">Información operativa</p>
             <h2>Trabajador operativo</h2>
           </div>
+          <span class="badge badge-muted">Solo consulta</span>
         </div>
         <p class="help worker-help">
-          La gestión de trabajadores, disponibilidad y asignaciones se realiza desde el módulo Equipo.
+          La gestión de trabajadores, disponibilidad y asignaciones se realiza desde Equipo.
         </p>
         <p class="empty-state" id="perfil-trabajador-empty" hidden>No hay trabajador operativo vinculado a esta cuenta.</p>
         <dl class="data-list" id="perfil-trabajador-datos">
@@ -128,11 +119,11 @@
             <dd id="perfil-trabajador-disponibilidad">Cargando...</dd>
           </div>
           <div>
-            <dt>Email contacto</dt>
+            <dt>Correo de contacto</dt>
             <dd id="perfil-trabajador-email">Cargando...</dd>
           </div>
           <div>
-            <dt>Teléfono</dt>
+            <dt>Teléfono de contacto</dt>
             <dd id="perfil-trabajador-telefono">Cargando...</dd>
           </div>
           <div>

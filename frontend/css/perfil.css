@@ -126,7 +126,9 @@ body {
 }
 
 .account-card h2 {
-  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  font-size: clamp(2rem, 3.4vw, 2.8rem);
+  line-height: 0.95;
+  letter-spacing: 1.5px;
   text-shadow: 2px 2px 0 var(--profile-red);
 }
 
@@ -162,9 +164,16 @@ body {
   box-shadow: 3px 3px 0 var(--profile-black);
 }
 
+.badge-muted {
+  background: var(--profile-paper);
+  color: var(--profile-black);
+  white-space: normal;
+}
+
 .profile-form {
   display: grid;
   gap: 16px;
+  margin-bottom: 20px;
 }
 
 .profile-form label {
@@ -265,6 +274,17 @@ body {
   margin-bottom: 16px;
 }
 
+.worker-card {
+  border-color: var(--profile-black);
+}
+
+.worker-card .card-head {
+  background: var(--profile-paper);
+  margin: -22px -22px 18px;
+  padding: 18px 22px;
+  border-bottom: var(--profile-border-heavy);
+}
+
 .empty-state {
   margin: 0 0 16px;
   border: var(--profile-border-main);
@@ -307,6 +327,23 @@ body {
   color: var(--profile-black);
   font-weight: 800;
   overflow-wrap: anywhere;
+}
+
+.account-summary {
+  border-top: var(--profile-border-heavy);
+  padding-top: 18px;
+}
+
+.account-summary dd {
+  display: grid;
+  gap: 4px;
+}
+
+.data-code {
+  color: var(--profile-muted);
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.86rem;
+  font-weight: 900;
 }
 
 .status-message {

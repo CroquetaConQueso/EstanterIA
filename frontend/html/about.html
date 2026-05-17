@@ -32,8 +32,8 @@
     <p class="eyebrow">Acerca del proyecto</p>
     <h1>Acerca de Suite Tienda</h1>
     <p>
-      Suite Tienda es la interfaz operativa de EstanterIA: visión por computador,
-      inventario contextual, alertas y tareas conectadas en una misma demo funcional.
+      Suite Tienda es la interfaz operativa de EstanterIA: gestión de estanterías,
+      planos, inspecciones, alertas, tareas e inventario en una misma demo funcional.
     </p>
   </header>
 
@@ -50,12 +50,12 @@
         <li>Generar alertas y tareas para responsables operativos.</li>
       </ul>
       <p class="note">
-        Las vistas privadas consumen backend real y requieren iniciar sesión.
+        Las vistas privadas requieren iniciar sesión con una cuenta autorizada.
       </p>
     </article>
 
     <article class="card">
-      <h2>Flujo funcional y alcance</h2>
+      <h2>Flujo operativo</h2>
       <p>
         La demo cubre el ciclo típico de trabajo de un encargado:
       </p>
@@ -65,21 +65,20 @@
         <li>Atender alertas y tareas derivadas de incidencias.</li>
       </ul>
       <p>
-        Las pantallas se apoyan en endpoints REST de Spring Boot y datos persistidos
-        en PostgreSQL.
+        El flujo permite pasar del plano y la inspección al inventario, la alerta
+        y la tarea operativa sin perder el contexto.
       </p>
     </article>
 
     <article class="card">
-      <h2>Diseño técnico</h2>
+      <h2>Organización del sistema</h2>
       <p>
-        El diseño técnico mantiene una separación sencilla entre frontend, backend,
-        Vision FastAPI y persistencia:
+        El sistema separa la gestión operativa de las evidencias visuales:
       </p>
       <ul>
-        <li>Spring Boot expone inspecciones, inventario, alertas y tareas.</li>
-        <li>Vision devuelve el contrato visual por slots.</li>
-        <li>El frontend consume datos reales con JWT cuando procede.</li>
+        <li>Los planos muestran secciones, estanterías y slots.</li>
+        <li>Vision aporta resultados visuales para cada inspección.</li>
+        <li>Inventario, alertas y tareas mantienen la trazabilidad operativa.</li>
       </ul>
       <p>
         El foco visual es operativo: lectura rápida, contraste fuerte y navegación directa.
@@ -93,7 +92,7 @@
       </p>
       <ul>
         <li>No pretende cubrir un ERP completo.</li>
-        <li>No incluye edición avanzada de planos ni CRUD total de catálogo.</li>
+        <li>No incluye funciones de nóminas, pedidos ni stock numérico.</li>
         <li>Prioriza el flujo de inspección, alerta y tarea operativa.</li>
       </ul>
       <p class="note">

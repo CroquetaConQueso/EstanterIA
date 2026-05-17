@@ -163,15 +163,18 @@ textarea {
 .intro::before {
   content: '★';
   position: absolute;
-  top: 10px;
-  right: 20px;
-  font-size: 3rem;
+  top: 14px;
+  right: 18px;
+  font-size: 2.3rem;
   color: var(--red);
+  opacity: 0.28;
+  pointer-events: none;
 }
 
 .intro h1 {
   font-size: 2.6rem;
   margin-bottom: 12px;
+  padding-right: 64px;
   color: var(--black);
   text-shadow: 3px 3px 0 var(--gold);
   letter-spacing: 2px;
@@ -410,6 +413,7 @@ textarea {
 
   .intro h1 {
     font-size: 2rem;
+    padding-right: 44px;
   }
 
   .row-inline {

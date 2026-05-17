@@ -139,23 +139,23 @@ function setOperationalStatus(type: "idle" | "running" | "success" | "critical" 
   switch (type) {
     case "running":
       visionStatusChip.classList.add("media");
-      visionStatusChip.textContent = "EJECUTANDO";
+      visionStatusChip.textContent = "Ejecutando";
       break;
     case "success":
       visionStatusChip.classList.add("ok");
-      visionStatusChip.textContent = "COMPLETADA";
+      visionStatusChip.textContent = "Completada";
       break;
     case "critical":
       visionStatusChip.classList.add("critica");
-      visionStatusChip.textContent = "REVISAR";
+      visionStatusChip.textContent = "Revisar";
       break;
     case "error":
       visionStatusChip.classList.add("descartada");
-      visionStatusChip.textContent = "ERROR";
+      visionStatusChip.textContent = "Error";
       break;
     default:
       visionStatusChip.classList.add("pendiente");
-      visionStatusChip.textContent = "EN ESPERA";
+      visionStatusChip.textContent = "En espera";
       break;
   }
 }
@@ -185,12 +185,30 @@ function getResumen(resultadoVisual: ResultadoVisualResponse | null | undefined)
   return resultadoVisual?.resumen ?? null;
 }
 
+function labelEstadoVisual(value: string | null | undefined): string {
+  const normalized = value?.trim();
+  if (!normalized) return "";
+  const labels: Record<string, string> = {
+    OK: "Resultado correcto",
+    CON_HUECOS: "Con huecos vacíos",
+    CON_ANOMALIAS: "Con anomalías",
+    CON_ANOMALÍAS: "Con anomalías",
+    SIN_DATOS: "Sin datos",
+    OCUPADO: "Ocupado",
+    VACIO: "Vacío",
+    VACÍO: "Vacío",
+    ANOMALIA: "Anomalía",
+    ANOMALÍA: "Anomalía"
+  };
+  return labels[normalized.toUpperCase()] ?? normalized.replaceAll("_", " ").toLowerCase().replace(/^\p{L}/u, (char) => char.toUpperCase());
+}
+
 function getImagePath(result: Partial<VisionResponse>): string {
   return result.imageUrl || result.imagePath || result.resultadoVisual?.imagen?.ruta || "";
 }
 
 function getEstadoGeneral(result: Partial<VisionResponse>): string {
-  return getResumen(result.resultadoVisual)?.estadoGeneralVisual || "Sin análisis";
+  return labelEstadoVisual(getResumen(result.resultadoVisual)?.estadoGeneralVisual) || "Sin análisis";
 }
 
 function getSeccionSeleccionada(): SeccionResponse | null {
@@ -307,7 +325,7 @@ function setPreview(result: Partial<VisionResponse>): void {
 
 function setSummary(resultadoVisual: ResultadoVisualResponse | null | undefined): void {
   const resumen = getResumen(resultadoVisual);
-  if (sumEstado) sumEstado.textContent = resumen?.estadoGeneralVisual ?? "—";
+  if (sumEstado) sumEstado.textContent = labelEstadoVisual(resumen?.estadoGeneralVisual) || "—";
   if (sumOcupados) sumOcupados.textContent = String(resumen?.ocupados ?? 0);
   if (sumVacios) sumVacios.textContent = String(resumen?.vacios ?? 0);
   if (sumAnomalias) sumAnomalias.textContent = String(resumen?.anomalias ?? 0);
@@ -323,20 +341,20 @@ function setResultMeta(result: Partial<VisionResponse>): void {
   if (resultModel) resultModel.textContent = resultadoVisual?.modeloVersion || "—";
   if (resultSlots) {
     resultSlots.textContent = slots.length > 0
-      ? slots.map((slot) => `${slot.slotId}: ${slot.estadoVisual} (${Math.round((slot.confianza ?? 0) * 100)}%)`).join(" | ")
+      ? slots.map((slot) => `${slot.slotId}: ${labelEstadoVisual(slot.estadoVisual)} (${Math.round((slot.confianza ?? 0) * 100)}%)`).join(" | ")
       : "Sin análisis visual";
   }
 
   if (!resultChip) return;
 
   if (!resultadoVisual) {
-    resultChip.textContent = "SIN ANÁLISIS VISUAL";
+    resultChip.textContent = "Sin análisis visual";
     resultChip.className = "status-chip descartada";
   } else if (resumen?.hayHuecosVacios || resumen?.hayAnomalias) {
-    resultChip.textContent = resumen.estadoGeneralVisual || "REVISAR";
+    resultChip.textContent = labelEstadoVisual(resumen.estadoGeneralVisual) || "Revisar";
     resultChip.className = "status-chip critica";
   } else {
-    resultChip.textContent = resumen?.estadoGeneralVisual || "RESULTADO OK";
+    resultChip.textContent = labelEstadoVisual(resumen?.estadoGeneralVisual) || "Resultado correcto";
     resultChip.className = "status-chip ok";
   }
 }

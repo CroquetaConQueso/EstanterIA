@@ -918,7 +918,7 @@ async function cargarDashboard(): Promise<void> {
     renderActividad(alertas, inspecciones, tareas);
   } catch (err) {
     const message = err instanceof Error ? err.message : "No se pudo cargar el dashboard operativo";
-    renderError(`No se pudo conectar con el backend: ${message}`);
+    renderError(`No se pudo conectar con el servidor: ${message}`);
   }
 }
 

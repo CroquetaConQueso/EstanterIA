@@ -282,7 +282,7 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
   if (data?.message) return data.message;
   if (status === 404) return "No hay plano operativo disponible.";
   if (status === 401) return "La sesión no es válida o ha caducado.";
-  if (status >= 500) return "El backend no pudo cargar el plano operativo.";
+  if (status >= 500) return "El servidor no pudo cargar el plano operativo.";
   return `Error HTTP ${status}`;
 }
 

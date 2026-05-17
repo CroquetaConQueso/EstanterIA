@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Configuracion operativa - Suite Tienda</title>
+  <title>Configuración operativa · Suite Tienda</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
   <link href="../css/configuracion_operativa.css" rel="stylesheet" />
@@ -24,7 +24,7 @@
         <a class="nav-link" href="alertas_centro.html">Alertas</a>
         <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
         <a class="nav-link" href="equipo.html">Equipo</a>
-        <a class="nav-link" href="vision.html">Vision</a>
+        <a class="nav-link" href="vision.html">Visión</a>
       </nav>
     </div>
     <div class="right">
@@ -37,10 +37,10 @@
   <header class="page-head">
     <div>
       <p class="eyebrow">Modelo operativo</p>
-      <h1>Configuracion de secciones y estanterias</h1>
+      <h1>Configuración de secciones y estanterías</h1>
       <p>
-        Alta minima de estructura operativa para ampliar los planos: secciones reales,
-        estanterias activas y slots con producto esperado.
+        Alta mínima de estructura operativa para ampliar los planos: secciones reales,
+        estanterías activas y slots con producto esperado.
       </p>
     </div>
     <div class="toolbar">
@@ -54,12 +54,12 @@
       <div class="panel-head">
         <div>
           <p class="eyebrow">Empresa EMP-DEMO</p>
-          <h2>Crear seccion</h2>
+          <h2>Crear sección</h2>
         </div>
       </div>
       <form id="form-seccion" class="form">
         <div class="field">
-          <label for="seccion-codigo">Codigo</label>
+          <label for="seccion-codigo">Código</label>
           <input id="seccion-codigo" name="codigo" type="text" maxlength="50" placeholder="SEC-BEBIDAS" required />
         </div>
         <div class="field">
@@ -67,10 +67,10 @@
           <input id="seccion-nombre" name="nombre" type="text" maxlength="150" placeholder="Bebidas" required />
         </div>
         <div class="field">
-          <label for="seccion-descripcion">Descripcion</label>
+          <label for="seccion-descripcion">Descripción</label>
           <textarea id="seccion-descripcion" name="descripcion" rows="4" placeholder="Zona de bebidas de la tienda"></textarea>
         </div>
-        <button class="btn primary" type="submit">Crear seccion</button>
+        <button class="btn primary" type="submit">Crear sección</button>
       </form>
       <div class="status" id="seccion-status" role="status">Carga las secciones existentes para evitar duplicados.</div>
 
@@ -92,24 +92,24 @@
       <div class="panel-head">
         <div>
           <p class="eyebrow">Slots configurados</p>
-          <h2>Crear estanteria</h2>
+          <h2>Crear estantería</h2>
         </div>
       </div>
 
       <p class="notice">
-        La inspeccion visual automatizada actual esta optimizada para estanterias de 4 huecos.
-        Puedes crear otras configuraciones para preparar escenarios futuros, pero el analisis
-        visual automatico completo se demostrara con estanterias compatibles de 4 huecos.
+        La inspección visual automatizada actual está optimizada para estanterías de 4 huecos.
+        Puedes crear otras configuraciones para preparar escenarios futuros, pero el análisis
+        visual automático completo se demostrará con estanterías compatibles de 4 huecos.
       </p>
 
       <form id="form-estanteria" class="form">
         <div class="field">
-          <label for="estanteria-seccion">Seccion</label>
+          <label for="estanteria-seccion">Sección</label>
           <select id="estanteria-seccion" name="seccionId" required></select>
         </div>
         <div class="field-grid">
           <div class="field">
-            <label for="estanteria-codigo">Codigo</label>
+            <label for="estanteria-codigo">Código</label>
             <input id="estanteria-codigo" name="codigo" type="text" maxlength="50" placeholder="EST-BEB-001" required />
           </div>
           <div class="field">
@@ -119,10 +119,10 @@
         </div>
         <div class="field">
           <label for="estanteria-nombre">Nombre</label>
-          <input id="estanteria-nombre" name="nombre" type="text" maxlength="150" placeholder="Estanteria bebidas 001" required />
+          <input id="estanteria-nombre" name="nombre" type="text" maxlength="150" placeholder="Estantería bebidas 001" required />
         </div>
         <div class="field">
-          <label for="estanteria-descripcion">Descripcion</label>
+          <label for="estanteria-descripcion">Descripción</label>
           <textarea id="estanteria-descripcion" name="descripcion" rows="3" placeholder="Lineal principal de bebidas"></textarea>
         </div>
 
@@ -132,15 +132,15 @@
         </div>
         <div id="slots-container" class="slots-grid"></div>
 
-        <button class="btn primary" id="btn-crear-estanteria" type="submit">Crear estanteria</button>
+        <button class="btn primary" id="btn-crear-estanteria" type="submit">Crear estantería</button>
       </form>
-      <div class="status" id="estanteria-status" role="status">Selecciona una seccion y configura sus huecos.</div>
+      <div class="status" id="estanteria-status" role="status">Selecciona una sección y configura sus huecos.</div>
 
       <div class="summary-block">
         <div class="summary-head">
           <div>
-            <h3>Estanterias de la seccion</h3>
-            <p class="micro" id="seccion-gestion-label">Selecciona una seccion.</p>
+            <h3>Estanterías de la sección</h3>
+            <p class="micro" id="seccion-gestion-label">Selecciona una sección.</p>
           </div>
           <label class="toggle-row">
             <input id="mostrar-estanterias-inactivas" type="checkbox" />
@@ -148,7 +148,7 @@
           </label>
         </div>
         <ul class="entity-list" id="lista-estanterias">
-          <li>Selecciona una seccion.</li>
+          <li>Selecciona una sección.</li>
         </ul>
       </div>
     </section>
@@ -156,7 +156,7 @@
 </main>
 
 <footer class="foot">
-  <small>Suite Tienda - Configuracion operativa minima</small>
+  <small>Suite Tienda · Configuración operativa mínima</small>
 </footer>
 
 <script type="module" src="/src/pages/configuracion_operativa.ts"></script>

@@ -406,7 +406,7 @@ function renderDetalle(inspeccion: InspeccionDetalleResponse) {
     addListItem(resumenEl, "ID", String(inspeccion.id));
     addListItem(resumenEl, "Sección", info ? `${info.seccion.codigo} · ${info.seccion.nombre}` : "Sin sección");
     addListItem(resumenEl, "Estantería", info ? `${info.codigo} · ${info.nombre}` : inspeccion.estanteriaCodigo);
-    addListItem(resumenEl, "Estado backend", inspeccion.estado);
+    addListItem(resumenEl, "Estado del registro", inspeccion.estado);
     addListItem(resumenEl, "Fecha de creación", formatFecha(inspeccion.createdAt));
     addListItem(resumenEl, "Notas", inspeccion.notas?.trim() ? inspeccion.notas : "Sin notas");
     addListItem(resumenEl, "Imagen", getImagenPath(inspeccion) ?? "Sin imagen");

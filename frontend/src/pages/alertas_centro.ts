@@ -182,7 +182,7 @@ function getProducto(alerta: AlertaResponse): string {
 }
 
 function getProveedor(alerta: AlertaResponse): string {
-  return textoSeguro(alerta.proveedorNombre ?? alerta.asignacion?.proveedor?.nombre, "Sin asignacion asociada");
+  return textoSeguro(alerta.proveedorNombre ?? alerta.asignacion?.proveedor?.nombre, "Sin asignación asociada");
 }
 
 function getStockMensaje(alerta: AlertaResponse): string {
@@ -217,8 +217,8 @@ function getProveedorAsignacion(asignacion: AlertaAsignacionResponse): string {
 }
 
 function getStockAsignacion(asignacion: AlertaAsignacionResponse): string {
-  if (asignacion.stockDisponible === true) return "Si";
-  if (asignacion.stockDisponible === false) return "No · requiere pedido o reposicion externa";
+  if (asignacion.stockDisponible === true) return "Sí";
+  if (asignacion.stockDisponible === false) return "No · requiere pedido o reposición externa";
   if (asignacion.stockMensaje) return asignacion.stockMensaje.replace(/^Stock disponible:\s*/i, "");
   return "Sin dato de stock";
 }
@@ -401,15 +401,15 @@ function renderDetail(alerta: AlertaResponse): void {
 
   addDetailSection("Contexto");
   addDetailItem("ID", String(alerta.id));
-  addDetailItem("Inspeccion", textoSeguro(alerta.inspeccionId, "Sin inspeccion asociada"));
+  addDetailItem("Inspección", textoSeguro(alerta.inspeccionId, "Sin inspección asociada"));
   addDetailItem("Imagen", getAlertaImagePath(alerta) ?? "Sin imagen asociada");
   addDetailItem("Tipo", etiquetaTipo(alerta.tipo));
   addDetailItem("Prioridad", alerta.prioridad);
   addDetailItem("Estado", etiquetaEstado(alerta.estado));
   addDetailItem("Fecha", formatFecha(alerta.createdAt));
   addDetailItem("Mensaje", alerta.mensaje || "Sin mensaje");
-  addDetailItem("Seccion", getSeccion(alerta));
-  addDetailItem("Estanteria", getEstanteria(alerta));
+  addDetailItem("Sección", getSeccion(alerta));
+  addDetailItem("Estantería", getEstanteria(alerta));
   addDetailItem("Slot", getSlot(alerta));
 
   addDetailSection("Producto esperado");
@@ -417,7 +417,7 @@ function renderDetail(alerta: AlertaResponse): void {
 
   addDetailSection("Asignacion activa");
   if (alerta.asignacion) {
-    addDetailItem("Asignacion activa", `#${alerta.asignacion.id} · ${textoSeguro(alerta.asignacion.estadoAsignacion, "Sin estado")}`);
+    addDetailItem("Asignación activa", `#${alerta.asignacion.id} · ${textoSeguro(alerta.asignacion.estadoAsignacion, "Sin estado")}`);
     addDetailItem("Producto asignado", getProductoAsignado(alerta.asignacion));
     addDetailItem("Proveedor", getProveedorAsignacion(alerta.asignacion));
     addDetailItem("Clave proveedor", textoSeguro(alerta.asignacion.claveProductoProveedor, "Sin clave de proveedor"));
@@ -426,7 +426,7 @@ function renderDetail(alerta: AlertaResponse): void {
     addDetailItem("Retirada programada", textoSeguro(alerta.asignacion.fechaRetiradaProgramada, "Sin retirada programada"));
   } else {
     addDetailItem("Asignacion activa", "No vinculada a esta alerta");
-    addDetailItem("Datos de asignacion", "No disponibles para esta alerta");
+    addDetailItem("Datos de asignación", "No disponibles para esta alerta");
   }
 
   const alertaAbierta = alerta.estado === "ABIERTA";
@@ -558,7 +558,7 @@ async function cargarAlertas(mensajeDetalle?: string): Promise<void> {
       const errorData = await parseErrorResponse(response);
       const mensaje = getBackendErrorMessage(errorData, response.status);
       setRowMessage(mensaje);
-      setDetalleMessage("No se pudo cargar el detalle porque el backend no respondio correctamente");
+      setDetalleMessage("No se pudo cargar el detalle porque el servidor no respondió correctamente");
       alertas = [];
       updateMetrics();
       return;
@@ -587,7 +587,7 @@ async function cargarAlertas(mensajeDetalle?: string): Promise<void> {
     alertas = [];
     updateMetrics();
     setRowMessage("No se pudo conectar con el servidor de alertas");
-    setDetalleMessage("Revisa que el backend este arrancado para consultar las alertas");
+    setDetalleMessage("Revisa que el servidor esté arrancado para consultar las alertas");
   }
 }
 

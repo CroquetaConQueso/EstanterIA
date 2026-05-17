@@ -1173,7 +1173,7 @@ async function cargarInicial(): Promise<void> {
 
     const message = err instanceof Error ? err.message : "No se pudo cargar el inventario operativo";
     setRowMessage(message);
-    setDetalleMessage("Revisa que el backend est\u00e9 arrancado y que existan datos demo operativos");
+    setDetalleMessage("Revisa que el servidor esté arrancado y que existan datos demo operativos");
   }
 }
 

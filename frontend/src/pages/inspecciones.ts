@@ -468,7 +468,7 @@ function renderDetalle(ins: InspeccionResponse) {
     addListItem(detalleResumen, "ID", String(ins.id));
     addListItem(detalleResumen, "Sección", info ? `${info.seccion.codigo} · ${info.seccion.nombre}` : "Sin sección");
     addListItem(detalleResumen, "Estantería", info ? `${info.codigo} · ${info.nombre}` : ins.estanteriaCodigo);
-    addListItem(detalleResumen, "Estado backend", ins.estado);
+    addListItem(detalleResumen, "Estado del registro", ins.estado);
     addListItem(detalleResumen, "Fecha de creación", formatFecha(ins.createdAt));
     addListItem(detalleResumen, "Notas", ins.notas?.trim() ? ins.notas : "Sin notas");
     addListItem(detalleResumen, "Imagen", getImagenPath(ins) ?? "Sin imagen");

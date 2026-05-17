@@ -185,7 +185,7 @@ function labelSlot(slot: SlotConfiguradoResponse): string {
 function renderSecciones(selectedId?: number | null): void {
   if (!seccionSelect) return;
   seccionSelect.innerHTML = "";
-  seccionSelect.appendChild(option("", "Sin seccion"));
+  seccionSelect.appendChild(option("", "Sin sección"));
   secciones.forEach((seccion) => {
     const node = option(String(seccion.id), `${seccion.nombre} - ${seccion.codigo}`);
     node.selected = seccion.id === selectedId;
@@ -196,7 +196,7 @@ function renderSecciones(selectedId?: number | null): void {
 function renderEstanterias(selectedId?: number | null): void {
   if (!estanteriaSelect) return;
   estanteriaSelect.innerHTML = "";
-  estanteriaSelect.appendChild(option("", "Sin estanteria"));
+  estanteriaSelect.appendChild(option("", "Sin estantería"));
   estanterias.forEach((estanteria) => {
     const node = option(String(estanteria.id), `${estanteria.codigo} - ${estanteria.nombre}`);
     node.selected = estanteria.id === selectedId;
@@ -274,7 +274,7 @@ function validatePayload(payload: TareaPayload): string | null {
   if (!payload.prioridad) return "Selecciona una prioridad.";
   if (!payload.titulo) return "El titulo es obligatorio.";
   if (payload.titulo.length > 200) return "El titulo no puede superar 200 caracteres.";
-  if (payload.slotConfiguracionId && !payload.estanteriaId) return "Selecciona una estanteria antes de elegir slot.";
+  if (payload.slotConfiguracionId && !payload.estanteriaId) return "Selecciona una estantería antes de elegir slot.";
   if (fechaLimiteInput?.value && !payload.fechaLimite) return "La fecha limite no es valida.";
   return null;
 }

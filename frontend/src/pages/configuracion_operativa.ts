@@ -157,7 +157,7 @@ function backendErrorMessage(data: ApiErrorResponse | null, status: number): str
   if (fieldMessage) return fieldMessage;
   if (data?.message) return data.message;
   if (status === 400) return "Revisa los datos del formulario.";
-  if (status === 401) return "La sesion no es valida o ha caducado.";
+  if (status === 401) return "La sesión no es válida o ha caducado.";
   if (status === 403) return structuralPermissionMessage();
   if (status === 404) return "No se encontro el recurso solicitado.";
   if (status === 409) return "Ya existe un recurso con esos datos.";
@@ -221,7 +221,7 @@ function renderSecciones(): void {
   estanteriaSeccionSelect.innerHTML = "";
 
   if (seccionesActivas.length === 0) {
-    estanteriaSeccionSelect.appendChild(option("", "Crea una seccion primero"));
+    estanteriaSeccionSelect.appendChild(option("", "Crea una sección primero"));
     return;
   }
 
@@ -241,18 +241,18 @@ function renderEstanterias(): void {
   if (seccionGestionLabel) {
     seccionGestionLabel.textContent = seccion
       ? `${seccion.codigo} - ${seccion.nombre} (${estadoTexto(seccion)})`
-      : "Selecciona una seccion.";
+      : "Selecciona una sección.";
   }
 
   if (!seccion) {
-    listaEstanterias.appendChild(li("Selecciona una seccion."));
+    listaEstanterias.appendChild(li("Selecciona una sección."));
     return;
   }
 
   if (estanteriasSeccion.length === 0) {
     listaEstanterias.appendChild(li(mostrarEstanteriasInactivasInput?.checked
-      ? "La seccion no tiene estanterias registradas."
-      : "La seccion no tiene estanterias activas."));
+      ? "La sección no tiene estanterías registradas."
+      : "La sección no tiene estanterías activas."));
     return;
   }
 
@@ -276,7 +276,7 @@ function renderSeccionItem(seccion: SeccionResponse): HTMLLIElement {
   const title = document.createElement("strong");
   title.textContent = `${seccion.codigo} - ${seccion.nombre}`;
   const description = document.createElement("span");
-  description.textContent = seccion.descripcion ?? "Sin descripcion";
+  description.textContent = seccion.descripcion ?? "Sin descripción";
   main.append(title, description);
 
   const actions = document.createElement("div");
@@ -286,7 +286,7 @@ function renderSeccionItem(seccion: SeccionResponse): HTMLLIElement {
   const viewButton = document.createElement("button");
   viewButton.className = "btn compact";
   viewButton.type = "button";
-  viewButton.textContent = "Ver estanterias";
+    viewButton.textContent = "Ver estanterías";
   viewButton.addEventListener("click", () => {
     seccionGestionId = seccion.id;
     renderSecciones();
@@ -298,7 +298,7 @@ function renderSeccionItem(seccion: SeccionResponse): HTMLLIElement {
     const stateButton = document.createElement("button");
     stateButton.className = entidadActiva(seccion) ? "btn compact danger" : "btn compact";
     stateButton.type = "button";
-    stateButton.textContent = entidadActiva(seccion) ? "Desactivar seccion" : "Reactivar seccion";
+    stateButton.textContent = entidadActiva(seccion) ? "Desactivar sección" : "Reactivar sección";
     stateButton.addEventListener("click", () => {
       void cambiarEstadoSeccion(seccion, !entidadActiva(seccion));
     });
@@ -317,7 +317,7 @@ function renderEstanteriaItem(estanteria: EstanteriaResumenResponse): HTMLLIElem
   const title = document.createElement("strong");
   title.textContent = `${estanteria.codigo} - ${estanteria.nombre}`;
   const description = document.createElement("span");
-  description.textContent = estanteria.descripcion ?? "Sin descripcion";
+  description.textContent = estanteria.descripcion ?? "Sin descripción";
   main.append(title, description);
 
   const actions = document.createElement("div");
@@ -328,7 +328,7 @@ function renderEstanteriaItem(estanteria: EstanteriaResumenResponse): HTMLLIElem
     const stateButton = document.createElement("button");
     stateButton.className = entidadActiva(estanteria) ? "btn compact danger" : "btn compact";
     stateButton.type = "button";
-    stateButton.textContent = entidadActiva(estanteria) ? "Desactivar estanteria" : "Reactivar estanteria";
+    stateButton.textContent = entidadActiva(estanteria) ? "Desactivar estantería" : "Reactivar estantería";
     stateButton.addEventListener("click", () => {
       void cambiarEstadoEstanteria(estanteria, !entidadActiva(estanteria));
     });
@@ -436,8 +436,8 @@ async function cargarEstanteriasDeSeccion(): Promise<void> {
 function buildSeccionPayload(): CrearSeccionPayload | string {
   const codigo = textValue(seccionCodigoInput);
   const nombre = textValue(seccionNombreInput);
-  if (!codigo) return "El codigo de seccion es obligatorio.";
-  if (!nombre) return "El nombre de seccion es obligatorio.";
+  if (!codigo) return "El código de sección es obligatorio.";
+  if (!nombre) return "El nombre de sección es obligatorio.";
 
   return {
     empresaCodigo: EMPRESA_CODIGO,
@@ -452,13 +452,13 @@ function buildEstanteriaPayload(): CrearEstanteriaPayload | string {
   const codigo = textValue(estanteriaCodigoInput);
   const nombre = textValue(estanteriaNombreInput);
 
-  if (!Number.isFinite(seccionId) || seccionId <= 0) return "Selecciona una seccion valida.";
-  if (!codigo) return "El codigo de estanteria es obligatorio.";
-  if (!nombre) return "El nombre de estanteria es obligatorio.";
+  if (!Number.isFinite(seccionId) || seccionId <= 0) return "Selecciona una sección válida.";
+  if (!codigo) return "El código de estantería es obligatorio.";
+  if (!nombre) return "El nombre de estantería es obligatorio.";
   if (productos.length === 0) return "No hay productos activos para asignar a los slots.";
 
   const rows = Array.from(slotsContainer?.querySelectorAll<HTMLElement>(".slot-row") ?? []);
-  if (rows.length === 0) return "La estanteria debe tener al menos un slot.";
+  if (rows.length === 0) return "La estantería debe tener al menos un slot.";
 
   const slots = rows.map((row) => {
     const slotId = row.querySelector<HTMLInputElement>("[data-field='slotId']")?.value.trim() ?? "";
@@ -497,17 +497,17 @@ async function crearSeccion(event: SubmitEvent): Promise<void> {
   }
 
   savingSeccion = true;
-  setStatus(seccionStatus, "Creando seccion...", "info");
+  setStatus(seccionStatus, "Creando sección...", "info");
   try {
     await fetchJson<SeccionResponse>("/api/secciones", {
       method: "POST",
       body: JSON.stringify(payload)
     });
     formSeccion?.reset();
-    setStatus(seccionStatus, "Seccion creada correctamente.", "ok");
+    setStatus(seccionStatus, "Sección creada correctamente.", "ok");
     await cargarSecciones();
   } catch (err) {
-    setStatus(seccionStatus, err instanceof Error ? err.message : "No se pudo crear la seccion.", "error");
+    setStatus(seccionStatus, err instanceof Error ? err.message : "No se pudo crear la sección.", "error");
   } finally {
     savingSeccion = false;
   }
@@ -529,7 +529,7 @@ async function crearEstanteria(event: SubmitEvent): Promise<void> {
 
   savingEstanteria = true;
   if (btnCrearEstanteria) btnCrearEstanteria.disabled = true;
-  setStatus(estanteriaStatus, "Creando estanteria...", "info");
+  setStatus(estanteriaStatus, "Creando estantería...", "info");
 
   try {
     await fetchJson("/api/estanterias", {
@@ -540,10 +540,10 @@ async function crearEstanteria(event: SubmitEvent): Promise<void> {
     if (slotCountInput) slotCountInput.value = "4";
     renderSlots();
     renderSecciones();
-    setStatus(estanteriaStatus, "Estanteria creada correctamente. Ya puede colocarse en el editor de planos.", "ok");
+    setStatus(estanteriaStatus, "Estantería creada correctamente. Ya puede colocarse en el editor de planos.", "ok");
     await cargarEstanteriasDeSeccion();
   } catch (err) {
-    setStatus(estanteriaStatus, err instanceof Error ? err.message : "No se pudo crear la estanteria.", "error");
+    setStatus(estanteriaStatus, err instanceof Error ? err.message : "No se pudo crear la estantería.", "error");
   } finally {
     savingEstanteria = false;
     if (btnCrearEstanteria) btnCrearEstanteria.disabled = false;
@@ -558,13 +558,13 @@ async function cambiarEstadoSeccion(seccion: SeccionResponse, activar: boolean):
 
   if (!activar) {
     const confirmed = window.confirm(
-      "La seccion dejara de estar disponible para nuevas configuraciones. Se conservara el historico operativo."
+      "La sección dejará de estar disponible para nuevas configuraciones. Se conservará el histórico operativo."
     );
     if (!confirmed) return;
   }
 
   const endpoint = activar ? "reactivar" : "desactivar";
-  setStatus(seccionStatus, activar ? "Reactivando seccion..." : "Desactivando seccion...", "info");
+  setStatus(seccionStatus, activar ? "Reactivando sección..." : "Desactivando sección...", "info");
 
   try {
     const updated = await fetchJson<SeccionResponse>(`/api/secciones/${encodeURIComponent(String(seccion.id))}/${endpoint}`, {
@@ -581,12 +581,12 @@ async function cambiarEstadoSeccion(seccion: SeccionResponse, activar: boolean):
       seccionStatus,
       activar
         ? "Seccion reactivada. Ya esta disponible para nuevas configuraciones."
-        : "Seccion desactivada. Se conserva el historico operativo.",
+        : "Sección desactivada. Se conserva el histórico operativo.",
       "ok"
     );
     await cargarSecciones();
   } catch (err) {
-    setStatus(seccionStatus, err instanceof Error ? err.message : "No se pudo cambiar el estado de la seccion.", "error");
+    setStatus(seccionStatus, err instanceof Error ? err.message : "No se pudo cambiar el estado de la sección.", "error");
   }
 }
 
@@ -598,13 +598,13 @@ async function cambiarEstadoEstanteria(estanteria: EstanteriaResumenResponse, ac
 
   if (!activar) {
     const confirmed = window.confirm(
-      "La estanteria dejara de estar disponible para nuevas inspecciones y configuraciones. Se conservara el historico operativo."
+      "La estantería dejará de estar disponible para nuevas inspecciones y configuraciones. Se conservará el histórico operativo."
     );
     if (!confirmed) return;
   }
 
   const endpoint = activar ? "reactivar" : "desactivar";
-  setStatus(estanteriaStatus, activar ? "Reactivando estanteria..." : "Desactivando estanteria...", "info");
+  setStatus(estanteriaStatus, activar ? "Reactivando estantería..." : "Desactivando estantería...", "info");
 
   try {
     await fetchJson(`/api/estanterias/${encodeURIComponent(estanteria.codigo)}/${endpoint}`, {
@@ -617,12 +617,12 @@ async function cambiarEstadoEstanteria(estanteria: EstanteriaResumenResponse, ac
       estanteriaStatus,
       activar
         ? "Estanteria reactivada. Ya esta disponible para nuevas operaciones."
-        : "Estanteria desactivada. Se conserva el historico operativo.",
+        : "Estantería desactivada. Se conserva el histórico operativo.",
       "ok"
     );
     await cargarEstanteriasDeSeccion();
   } catch (err) {
-    setStatus(estanteriaStatus, err instanceof Error ? err.message : "No se pudo cambiar el estado de la estanteria.", "error");
+    setStatus(estanteriaStatus, err instanceof Error ? err.message : "No se pudo cambiar el estado de la estantería.", "error");
   }
 }
 
@@ -658,7 +658,7 @@ async function init(): Promise<void> {
     await Promise.all([cargarSecciones(), cargarProductos()]);
     if (puedeConfigurarEstructura) {
       setStatus(seccionStatus, "Secciones cargadas.", "ok");
-      setStatus(estanteriaStatus, "Configuracion lista.", "ok");
+      setStatus(estanteriaStatus, "Configuración lista.", "ok");
     } else {
       applyStructuralPermissions();
     }

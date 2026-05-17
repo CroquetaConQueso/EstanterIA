@@ -307,6 +307,60 @@ a {
   text-transform: none;
 }
 
+.plan-summary div:nth-child(1) {
+  background: var(--gold-soft);
+}
+
+.plan-summary div:nth-child(2) {
+  background: var(--gold);
+}
+
+.plan-summary div:nth-child(3) {
+  background: var(--red);
+  color: var(--white);
+}
+
+.plan-summary div:nth-child(3) dt,
+.plan-summary div:nth-child(3) dd {
+  color: var(--white);
+  text-shadow: 1px 1px 0 var(--black);
+}
+
+.plan-summary div:nth-child(4) {
+  background: var(--black);
+  color: var(--gold);
+}
+
+.plan-summary div:nth-child(4) dt,
+.plan-summary div:nth-child(4) dd {
+  color: var(--gold);
+}
+
+.alert-banner .metric-strip div:nth-child(1) {
+  background: var(--gold-soft);
+  color: var(--black);
+}
+
+.alert-banner .metric-strip div:nth-child(2) {
+  background: var(--gold);
+  color: var(--black);
+}
+
+.alert-banner .metric-strip div:nth-child(3) {
+  background: var(--black);
+  color: var(--gold);
+}
+
+.alert-banner .metric-strip div:nth-child(3) dt,
+.alert-banner .metric-strip div:nth-child(3) dd {
+  color: var(--gold);
+}
+
+.alert-banner .metric-strip div:nth-child(4) {
+  background: var(--white);
+  color: var(--black);
+}
+
 .plan-preview-card {
   padding: 0;
   background: var(--gold-soft);

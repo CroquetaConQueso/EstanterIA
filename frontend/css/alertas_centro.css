@@ -275,6 +275,7 @@ button, input, select {
   border: var(--border-heavy);
   box-shadow: var(--shadow-block);
   margin-bottom: 40px;
+  flex-wrap: wrap;
 }
 
 .review-panel h2 {
@@ -294,6 +295,32 @@ button, input, select {
   gap: 14px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.review-feedback {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--paper);
+  border: var(--border-light);
+  color: var(--black);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-transform: none;
+}
+
+.review-feedback:empty {
+  display: none;
+}
+
+.review-feedback[data-type="success"] {
+  background: #e7f2df;
+  border-color: var(--ok);
+}
+
+.review-feedback[data-type="error"] {
+  background: #f7d9d1;
+  border-color: var(--red);
 }
 
 .table-wrap {

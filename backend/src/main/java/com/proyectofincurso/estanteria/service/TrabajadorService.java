@@ -127,9 +127,10 @@ public class TrabajadorService {
                 .orElseThrow(() -> ApiException.notFound(
                         "TRABAJADOR_NOT_FOUND",
                         "No existe el trabajador indicado"
-                ));
+        ));
         trabajador.setActivo(false);
         trabajador.setUpdatedAt(Instant.now());
+        alertaOperativaService.revisarTrabajadorNoDisponibleAsignado(trabajador.getId());
         return toResponse(trabajador);
     }
 

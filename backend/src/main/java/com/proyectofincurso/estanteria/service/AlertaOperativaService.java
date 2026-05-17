@@ -6,6 +6,7 @@ import com.proyectofincurso.estanteria.persistence.entity.AsignacionProductoSlot
 import com.proyectofincurso.estanteria.persistence.entity.EstadoAlerta;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoAsignacionProductoSlot;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoDisponibilidadTrabajador;
+import com.proyectofincurso.estanteria.persistence.entity.EstadoTareaOperativa;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoVisualSlot;
 import com.proyectofincurso.estanteria.persistence.entity.Estanteria;
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaSlotConfiguracion;
@@ -18,6 +19,7 @@ import com.proyectofincurso.estanteria.persistence.entity.Proveedor;
 import com.proyectofincurso.estanteria.persistence.entity.Seccion;
 import com.proyectofincurso.estanteria.persistence.entity.SeccionEncargado;
 import com.proyectofincurso.estanteria.persistence.entity.TipoAlerta;
+import com.proyectofincurso.estanteria.persistence.entity.TareaOperativa;
 import com.proyectofincurso.estanteria.persistence.entity.Trabajador;
 import com.proyectofincurso.estanteria.persistence.entity.TrabajadorEstanteria;
 import com.proyectofincurso.estanteria.persistence.repository.AlertaRepository;
@@ -27,6 +29,7 @@ import com.proyectofincurso.estanteria.persistence.repository.EstanteriaReposito
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConfiguracionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.InspeccionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
+import com.proyectofincurso.estanteria.persistence.repository.TareaOperativaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.TrabajadorEstanteriaRepository;
 import com.proyectofincurso.estanteria.web.dto.AlertaAsignacionResponse;
 import com.proyectofincurso.estanteria.web.dto.AlertaResponse;
@@ -51,9 +54,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -62,12 +67,18 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AlertaOperativaService {
 
+    private static final List<EstadoTareaOperativa> ESTADOS_TAREAS_ACTIVAS = List.of(
+            EstadoTareaOperativa.PENDIENTE,
+            EstadoTareaOperativa.EN_PROGRESO
+    );
+
     private final InspeccionRepository inspeccionRepository;
     private final EstanteriaRepository estanteriaRepository;
     private final EstanteriaSlotConfiguracionRepository slotConfiguracionRepository;
     private final AsignacionProductoSlotRepository asignacionProductoSlotRepository;
     private final SeccionEncargadoRepository seccionEncargadoRepository;
     private final TrabajadorEstanteriaRepository trabajadorEstanteriaRepository;
+    private final TareaOperativaRepository tareaOperativaRepository;
     private final AlertaRepository alertaRepository;
     private final AlertaTrabajadorRepository alertaTrabajadorRepository;
     private final TareaOperativaService tareaOperativaService;
@@ -302,9 +313,40 @@ public class AlertaOperativaService {
             );
         }
 
+        Set<Long> estanteriasProcesadas = new HashSet<>(asignacionesPorEstanteria.keySet());
+        List<TareaOperativa> tareasActivas = tareaOperativaRepository
+                .findConContextoByEstadoIn(ESTADOS_TAREAS_ACTIVAS)
+                .stream()
+                .filter(tarea -> tarea.getTrabajadorAsignado() != null)
+                .filter(tarea -> trabajadorId == null
+                        || tarea.getTrabajadorAsignado().getId().equals(trabajadorId))
+                .filter(tarea -> trabajadorNoDisponible(tarea.getTrabajadorAsignado()))
+                .filter(tarea -> tarea.getEstanteria() != null
+                        && Boolean.TRUE.equals(tarea.getEstanteria().getActiva()))
+                .filter(tarea -> !estanteriasProcesadas.contains(tarea.getEstanteria().getId()))
+                .toList();
+
+        Map<Long, List<TareaOperativa>> tareasPorEstanteria = new LinkedHashMap<>();
+        for (TareaOperativa tarea : tareasActivas) {
+            tareasPorEstanteria
+                    .computeIfAbsent(tarea.getEstanteria().getId(), id -> new java.util.ArrayList<>())
+                    .add(tarea);
+        }
+
+        for (List<TareaOperativa> tareasEstanteria : tareasPorEstanteria.values()) {
+            Estanteria estanteria = tareasEstanteria.get(0).getEstanteria();
+            crearOReutilizarAlertaPorEstanteria(
+                    TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO,
+                    prioridadTareasTrabajadorNoDisponible(tareasEstanteria),
+                    mensajeTareasTrabajadorNoDisponible(estanteria, tareasEstanteria),
+                    estanteria,
+                    contador
+            );
+        }
+
         return new ResultadoRevisionTrabajadores(
                 asignaciones.size(),
-                asignacionesPorEstanteria.size(),
+                asignacionesPorEstanteria.size() + tareasPorEstanteria.size(),
                 contador.alertasCreadas,
                 contador.alertasExistentes,
                 contador.notificacionesCreadas
@@ -521,9 +563,17 @@ public class AlertaOperativaService {
     }
 
     private PrioridadAlerta prioridadTrabajadoresNoDisponibles(List<TrabajadorEstanteria> asignaciones) {
-        boolean hayEnfermo = asignaciones.stream()
-                .anyMatch(asignacion -> asignacion.getTrabajador().getEstadoDisponibilidad() == EstadoDisponibilidadTrabajador.ENFERMO);
-        return hayEnfermo ? PrioridadAlerta.ALTA : PrioridadAlerta.MEDIA;
+        boolean hayAltaPrioridad = asignaciones.stream()
+                .map(TrabajadorEstanteria::getTrabajador)
+                .anyMatch(trabajador -> !Boolean.TRUE.equals(trabajador.getActivo())
+                        || trabajador.getEstadoDisponibilidad() == EstadoDisponibilidadTrabajador.ENFERMO);
+        return hayAltaPrioridad ? PrioridadAlerta.ALTA : PrioridadAlerta.MEDIA;
+    }
+
+    private PrioridadAlerta prioridadTareasTrabajadorNoDisponible(List<TareaOperativa> tareas) {
+        boolean hayEnProgreso = tareas.stream()
+                .anyMatch(tarea -> tarea.getEstadoTarea() == EstadoTareaOperativa.EN_PROGRESO);
+        return hayEnProgreso ? PrioridadAlerta.ALTA : PrioridadAlerta.MEDIA;
     }
 
     private String mensajeTrabajadoresNoDisponibles(Estanteria estanteria, List<TrabajadorEstanteria> asignaciones) {
@@ -534,11 +584,29 @@ public class AlertaOperativaService {
                 + " tiene trabajadores asignados no disponibles: " + trabajadores + ".";
     }
 
+    private String mensajeTareasTrabajadorNoDisponible(Estanteria estanteria, List<TareaOperativa> tareas) {
+        String trabajadores = tareas.stream()
+                .map(TareaOperativa::getTrabajadorAsignado)
+                .distinct()
+                .map(this::nombreTrabajadorConDisponibilidad)
+                .collect(Collectors.joining(", "));
+        return "La estanteria " + estanteria.getCodigo()
+                + " tiene tareas activas asignadas a trabajadores no disponibles: " + trabajadores + ".";
+    }
+
+    private boolean trabajadorNoDisponible(Trabajador trabajador) {
+        return !Boolean.TRUE.equals(trabajador.getActivo())
+                || trabajador.getEstadoDisponibilidad() == EstadoDisponibilidadTrabajador.AUSENTE
+                || trabajador.getEstadoDisponibilidad() == EstadoDisponibilidadTrabajador.ENFERMO;
+    }
+
     private String nombreTrabajadorConDisponibilidad(Trabajador trabajador) {
         String nombre = java.util.stream.Stream.of(trabajador.getNombre(), trabajador.getApellidos())
                 .filter(valor -> valor != null && !valor.isBlank())
                 .collect(Collectors.joining(" "));
-        String disponibilidad = trabajador.getEstadoDisponibilidad() != null
+        String disponibilidad = !Boolean.TRUE.equals(trabajador.getActivo())
+                ? "INACTIVO"
+                : trabajador.getEstadoDisponibilidad() != null
                 ? trabajador.getEstadoDisponibilidad().name()
                 : "NO DISPONIBLE";
         return (nombre.isBlank() ? "Trabajador " + trabajador.getId() : nombre) + " (" + disponibilidad + ")";

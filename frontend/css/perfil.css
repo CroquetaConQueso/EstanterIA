@@ -296,6 +296,25 @@ body {
   margin-top: 14px;
 }
 
+.team-card .btn {
+  width: 100%;
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn.team-link {
+  background: var(--profile-gold);
+  color: var(--profile-black);
+}
+
+.btn.team-link:hover,
+.btn.team-link:focus-visible {
+  background: var(--profile-black);
+  color: var(--profile-gold);
+}
+
 .foot {
   border-top: var(--profile-border-heavy);
   padding: 24px;

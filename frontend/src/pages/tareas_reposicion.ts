@@ -152,6 +152,13 @@ const estadoLabels: Record<string, string> = {
   CANCELADA: "Cancelada"
 };
 
+const prioridadLabels: Record<string, string> = {
+  CRITICA: "Crítica",
+  ALTA: "Alta",
+  MEDIA: "Media",
+  BAJA: "Baja"
+};
+
 function textoSeguro(value: string | number | null | undefined, fallback = "No disponible"): string {
   if (value === null || value === undefined || value === "") return fallback;
   return String(value);
@@ -163,6 +170,10 @@ function etiquetaTipo(tipo: TipoTareaOperativa): string {
 
 function etiquetaEstado(estado: EstadoTareaOperativa): string {
   return estadoLabels[estado] ?? estado.replaceAll("_", " ").toLowerCase();
+}
+
+function etiquetaPrioridad(prioridad: Prioridad): string {
+  return prioridadLabels[prioridad] ?? prioridad.replaceAll("_", " ").toLowerCase();
 }
 
 function claseEstado(estado: EstadoTareaOperativa): string {
@@ -572,7 +583,7 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
 
   const priorityChip = document.createElement("span");
   priorityChip.className = `priority-chip ${clasePrioridad(tarea.prioridad)}`;
-  priorityChip.textContent = tarea.prioridad;
+  priorityChip.textContent = etiquetaPrioridad(tarea.prioridad);
 
   const badges = document.createElement("div");
   badges.className = "task-badges";
@@ -605,19 +616,19 @@ function renderTarea(tarea: TareaOperativaResponse): HTMLElement {
   actions.className = "task-actions";
 
   if (puedeGestionarTareas && tarea.estadoTarea !== "RESUELTA" && tarea.estadoTarea !== "CANCELADA") {
-    actions.appendChild(crearLink("Editar", `tarea_formulario.html?id=${encodeURIComponent(String(tarea.id))}`, "btn primary"));
+    actions.appendChild(crearLink("Editar", `tarea_formulario.html?id=${encodeURIComponent(String(tarea.id))}`, "btn action-edit"));
   }
 
   if (tarea.estadoTarea === "PENDIENTE") {
-    actions.appendChild(crearBoton("Asignar", "asignar", tarea.id, "btn ghost"));
-    actions.appendChild(crearBoton("Iniciar", "EN_PROGRESO", tarea.id, "btn warn"));
-    actions.appendChild(crearBoton("Cancelar", "CANCELADA", tarea.id, "btn ghost"));
+    actions.appendChild(crearBoton("Asignar", "asignar", tarea.id, "btn action-assign"));
+    actions.appendChild(crearBoton("Iniciar", "EN_PROGRESO", tarea.id, "btn action-start"));
+    actions.appendChild(crearBoton("Cancelar", "CANCELADA", tarea.id, "btn action-cancel"));
   } else if (tarea.estadoTarea === "EN_PROGRESO") {
-    actions.appendChild(crearBoton("Asignar", "asignar", tarea.id, "btn ghost"));
+    actions.appendChild(crearBoton("Asignar", "asignar", tarea.id, "btn action-assign"));
     actions.appendChild(crearBoton("Resolver", "RESUELTA", tarea.id, "btn primary"));
-    actions.appendChild(crearBoton("Cancelar", "CANCELADA", tarea.id, "btn ghost"));
+    actions.appendChild(crearBoton("Cancelar", "CANCELADA", tarea.id, "btn action-cancel"));
   } else if (puedeGestionarTareas && (tarea.estadoTarea === "RESUELTA" || tarea.estadoTarea === "CANCELADA")) {
-    actions.appendChild(crearBoton("Reabrir tarea", "reabrir", tarea.id, "btn warn"));
+    actions.appendChild(crearBoton("Reabrir tarea", "reabrir", tarea.id, "btn action-reopen"));
   }
 
   article.append(head, body, actions);
@@ -749,7 +760,7 @@ async function cambiarEstado(id: number, estado: EstadoTareaOperativa): Promise<
 
 async function reabrirTarea(id: number): Promise<void> {
   setTaskFeedback(null);
-  const confirmed = window.confirm("La tarea volverá a estado PENDIENTE. No se modificará ninguna alerta asociada.");
+  const confirmed = window.confirm("La tarea volverá a estado Pendiente. No se modificará ninguna alerta asociada.");
   if (!confirmed) return;
 
   await fetchJson<TareaOperativaResponse>(`${API_TAREAS}/${encodeURIComponent(String(id))}/reabrir`, {

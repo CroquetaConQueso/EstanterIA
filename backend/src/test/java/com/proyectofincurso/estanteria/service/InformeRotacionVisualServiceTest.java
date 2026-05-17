@@ -24,11 +24,13 @@ import org.springframework.http.HttpStatus;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -55,7 +57,7 @@ class InformeRotacionVisualServiceTest {
 
     @Test
     void informeVacioCuandoNoHayInspeccionesEnPeriodo() {
-        when(inspeccionRepository.findParaInformeRotacionVisual(any(Instant.class), any(Instant.class), isNull(), isNull()))
+        when(inspeccionRepository.findParaInformeRotacionVisual(any(Instant.class), any(Instant.class), isNull()))
                 .thenReturn(List.of());
 
         var response = service.generarInforme(null, null, null, LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 17));
@@ -72,7 +74,7 @@ class InformeRotacionVisualServiceTest {
     void productoConVariosVaciosApareceEnProductosMasVaciados() {
         Inspeccion inspeccion = inspeccionConResultado(EstadoVisualSlot.VACIO, Instant.parse("2026-05-13T10:00:00Z"));
         EstanteriaSlotConfiguracion slot = slotConfigurado(inspeccion.getEstanteria(), productoArroz());
-        when(inspeccionRepository.findParaInformeRotacionVisual(any(Instant.class), any(Instant.class), isNull(), isNull()))
+        when(inspeccionRepository.findParaInformeRotacionVisual(any(Instant.class), any(Instant.class), isNull()))
                 .thenReturn(List.of(inspeccion));
         when(slotConfiguracionRepository.findActivosByEstanteriaIdsOrdenados(anyCollection()))
                 .thenReturn(List.of(slot));
@@ -94,7 +96,7 @@ class InformeRotacionVisualServiceTest {
     void productoInspeccionadoSinVaciosApareceEnProductosSinVacios() {
         Inspeccion inspeccion = inspeccionConResultado(EstadoVisualSlot.OCUPADO, Instant.parse("2026-05-14T10:00:00Z"));
         EstanteriaSlotConfiguracion slot = slotConfigurado(inspeccion.getEstanteria(), productoArroz());
-        when(inspeccionRepository.findParaInformeRotacionVisual(any(Instant.class), any(Instant.class), isNull(), isNull()))
+        when(inspeccionRepository.findParaInformeRotacionVisual(any(Instant.class), any(Instant.class), isNull()))
                 .thenReturn(List.of(inspeccion));
         when(slotConfiguracionRepository.findActivosByEstanteriaIdsOrdenados(anyCollection()))
                 .thenReturn(List.of(slot));
@@ -108,6 +110,30 @@ class InformeRotacionVisualServiceTest {
     }
 
     @Test
+    void informeConEstanteriaUsaConsultaFiltradaConCodigoNormalizado() {
+        Inspeccion inspeccion = inspeccionConResultado(EstadoVisualSlot.VACIO, Instant.parse("2026-05-13T10:00:00Z"));
+        Estanteria estanteria = inspeccion.getEstanteria();
+        EstanteriaSlotConfiguracion slot = slotConfigurado(estanteria, productoArroz());
+        when(estanteriaRepository.findWithSeccionByCodigoIgnoreCase("est-001"))
+                .thenReturn(Optional.of(estanteria));
+        when(inspeccionRepository.findParaInformeRotacionVisualPorEstanteria(
+                any(Instant.class),
+                any(Instant.class),
+                isNull(),
+                eq("est-001")
+        )).thenReturn(List.of(inspeccion));
+        when(slotConfiguracionRepository.findActivosByEstanteriaIdsOrdenados(anyCollection()))
+                .thenReturn(List.of(slot));
+
+        var response = service.generarInforme(null, null, " est-001 ", LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 17));
+
+        assertThat(response.filtros().estanteriaCodigo()).isEqualTo("EST-001");
+        assertThat(response.resumen().totalInspecciones()).isEqualTo(1);
+        verify(inspeccionRepository, never()).findParaInformeRotacionVisual(any(), any(), any());
+        verify(inspeccionRepository).findParaInformeRotacionVisualPorEstanteria(any(), any(), isNull(), eq("est-001"));
+    }
+
+    @Test
     void fechaDesdePosteriorAFechaHastaDevuelveBadRequest() {
         assertThatThrownBy(() -> service.generarInforme(null, null, null, LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 17)))
                 .isInstanceOf(ApiException.class)
@@ -116,7 +142,8 @@ class InformeRotacionVisualServiceTest {
                     assertThat(apiException.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(apiException.getCode()).isEqualTo("INFORME_FECHAS_INVALIDAS");
                 });
-        verify(inspeccionRepository, never()).findParaInformeRotacionVisual(any(), any(), any(), any());
+        verify(inspeccionRepository, never()).findParaInformeRotacionVisual(any(), any(), any());
+        verify(inspeccionRepository, never()).findParaInformeRotacionVisualPorEstanteria(any(), any(), any(), any());
     }
 
     private Inspeccion inspeccionConResultado(EstadoVisualSlot estadoVisual, Instant fecha) {

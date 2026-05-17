@@ -45,11 +45,26 @@ public interface InspeccionRepository extends JpaRepository<Inspeccion,Long>{
             where coalesce(inspeccion.capturadaEn, inspeccion.createdAt) >= :desde
               and coalesce(inspeccion.capturadaEn, inspeccion.createdAt) < :hastaExclusiva
               and (:seccionId is null or seccion.id = :seccionId)
-              and (:estanteriaCodigo is null or lower(estanteria.codigo) = lower(:estanteriaCodigo))
             order by coalesce(inspeccion.capturadaEn, inspeccion.createdAt) asc
             """)
     List<Inspeccion> findParaInformeRotacionVisual(@Param("desde") Instant desde,
-                                                   @Param("hastaExclusiva") Instant hastaExclusiva,
-                                                   @Param("seccionId") Long seccionId,
-                                                   @Param("estanteriaCodigo") String estanteriaCodigo);
+                                                    @Param("hastaExclusiva") Instant hastaExclusiva,
+                                                   @Param("seccionId") Long seccionId);
+
+    @Query("""
+            select distinct inspeccion
+            from Inspeccion inspeccion
+            left join fetch inspeccion.slots
+            left join fetch inspeccion.estanteria estanteria
+            left join fetch estanteria.seccion seccion
+            where coalesce(inspeccion.capturadaEn, inspeccion.createdAt) >= :desde
+              and coalesce(inspeccion.capturadaEn, inspeccion.createdAt) < :hastaExclusiva
+              and (:seccionId is null or seccion.id = :seccionId)
+              and lower(estanteria.codigo) = :estanteriaCodigoLower
+            order by coalesce(inspeccion.capturadaEn, inspeccion.createdAt) asc
+            """)
+    List<Inspeccion> findParaInformeRotacionVisualPorEstanteria(@Param("desde") Instant desde,
+                                                                @Param("hastaExclusiva") Instant hastaExclusiva,
+                                                                @Param("seccionId") Long seccionId,
+                                                                @Param("estanteriaCodigoLower") String estanteriaCodigoLower);
 }

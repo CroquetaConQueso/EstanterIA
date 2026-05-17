@@ -82,11 +82,11 @@ public class InformeRotacionVisualService {
         Instant desdeInstant = desde.atStartOfDay(zona).toInstant();
         Instant hastaExclusiva = hasta.plusDays(1).atStartOfDay(zona).toInstant();
 
-        List<Inspeccion> inspecciones = inspeccionRepository.findParaInformeRotacionVisual(
+        List<Inspeccion> inspecciones = cargarInspeccionesParaInforme(
                 desdeInstant,
                 hastaExclusiva,
                 seccionId,
-                estanteria == null ? null : estanteria.getCodigo()
+                estanteria
         ).stream()
                 .filter(inspeccion -> inspeccion.getEstanteria() != null)
                 .filter(inspeccion -> estanteriasDelPlano == null || estanteriasDelPlano.contains(inspeccion.getEstanteria().getId()))
@@ -114,6 +114,25 @@ public class InformeRotacionVisualService {
                 slotsMasVaciados(aggregation.slots),
                 productosSinVacios(aggregation.productos),
                 resumenPorDiaSemana(aggregation.vaciosPorDia)
+        );
+    }
+
+    private List<Inspeccion> cargarInspeccionesParaInforme(Instant desde,
+                                                           Instant hastaExclusiva,
+                                                           Long seccionId,
+                                                           Estanteria estanteria) {
+        if (estanteria == null) {
+            return inspeccionRepository.findParaInformeRotacionVisual(
+                    desde,
+                    hastaExclusiva,
+                    seccionId
+            );
+        }
+        return inspeccionRepository.findParaInformeRotacionVisualPorEstanteria(
+                desde,
+                hastaExclusiva,
+                seccionId,
+                estanteria.getCodigo().toLowerCase(Locale.ROOT)
         );
     }
 

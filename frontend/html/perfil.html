@@ -103,10 +103,13 @@
           <span class="badge badge-muted">Solo consulta</span>
         </div>
         <p class="help worker-help">
-          La gestión de trabajadores, disponibilidad y asignaciones se realiza desde Equipo.
+          Solo se muestra si esta cuenta representa directamente a una persona del equipo. La gestión de trabajadores, disponibilidad y asignaciones se realiza desde Equipo.
         </p>
-        <p class="empty-state" id="perfil-trabajador-empty" hidden>No hay trabajador operativo vinculado a esta cuenta.</p>
-        <dl class="data-list" id="perfil-trabajador-datos">
+        <div class="empty-state" id="perfil-trabajador-empty" hidden>
+          <strong>Esta cuenta no está vinculada a un trabajador operativo.</strong>
+          <span>Esto es normal para cuentas de administración o gerencia.</span>
+        </div>
+        <dl class="data-list" id="perfil-trabajador-datos" hidden>
           <div>
             <dt>Nombre completo</dt>
             <dd id="perfil-trabajador-nombre">Cargando...</dd>

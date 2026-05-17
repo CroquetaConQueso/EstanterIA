@@ -128,6 +128,15 @@ function nombreCompletoTrabajador(trabajador: PerfilTrabajador): string {
   return [trabajador.nombre, trabajador.apellidos].filter(Boolean).join(" ").trim() || "No disponible";
 }
 
+function limpiarDatosTrabajador(): void {
+  setText(trabajadorNombreEl, null);
+  setText(trabajadorTipoEl, null);
+  setText(trabajadorDisponibilidadEl, null);
+  setText(trabajadorEmailEl, null);
+  setText(trabajadorTelefonoEl, null);
+  setText(trabajadorEstadoEl, null);
+}
+
 function setLoading(loading: boolean): void {
   if (guardarBtn) guardarBtn.disabled = loading;
   if (logoutBtn) logoutBtn.disabled = loading;
@@ -169,6 +178,7 @@ function pintarPerfil(perfil: PerfilResponse): void {
     setText(trabajadorTelefonoEl, perfil.trabajador.telefonoContacto);
     setText(trabajadorEstadoEl, perfil.trabajador.activo ? "Activo" : "Inactivo");
   } else {
+    limpiarDatosTrabajador();
     trabajadorDatosEl?.setAttribute("hidden", "true");
     trabajadorEmptyEl?.removeAttribute("hidden");
   }

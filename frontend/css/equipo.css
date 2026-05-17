@@ -123,13 +123,18 @@ select {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
   gap: 26px;
 }
 
 .list-shell,
 .detail-shell {
+  min-width: 0;
   padding: 22px;
+}
+
+.detail-shell {
+  overflow: hidden;
 }
 
 .section-head {
@@ -158,6 +163,7 @@ select {
 }
 
 .table td {
+  max-width: 260px;
   padding: 12px;
   border: var(--border-light);
   background: var(--white);
@@ -165,6 +171,8 @@ select {
   font-weight: 700;
   text-transform: none;
   vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .table tbody tr {
@@ -248,6 +256,7 @@ select {
 .badge {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   width: fit-content;
   border: var(--border-light);
   padding: 4px 8px;
@@ -256,6 +265,8 @@ select {
   font-size: 0.68rem;
   letter-spacing: 1px;
   line-height: 1;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .badge.available,
@@ -285,6 +296,22 @@ select {
   margin-bottom: 16px;
 }
 
+.detail-title > div,
+.detail-title h3 {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.detail-placeholder {
+  border: var(--border-light);
+  background: var(--paper);
+  color: var(--black);
+  padding: 16px;
+  font-weight: 800;
+}
+
 .data-list {
   display: grid;
   grid-template-columns: 1fr;
@@ -293,8 +320,9 @@ select {
 }
 
 .data-list div {
+  min-width: 0;
   display: grid;
-  grid-template-columns: 150px 1fr;
+  grid-template-columns: minmax(120px, 150px) minmax(0, 1fr);
   gap: 12px;
   border-bottom: 1px solid rgba(17, 17, 17, 0.2);
   padding-bottom: 8px;
@@ -306,9 +334,12 @@ select {
 }
 
 .data-list dd {
+  min-width: 0;
   margin: 0;
   font-family: "Courier New", Courier, monospace;
   font-weight: 700;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .detail-actions,
@@ -334,23 +365,34 @@ select {
 }
 
 .stack-list li {
+  min-width: 0;
+  max-width: 100%;
   border: var(--border-light);
   background: var(--paper);
   padding: 10px;
   text-transform: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .stack-title {
   display: block;
+  max-width: 100%;
   font-family: "Arial Black", Impact, "Franklin Gothic Heavy", sans-serif;
   text-transform: uppercase;
   margin-bottom: 4px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .stack-meta {
+  display: block;
+  max-width: 100%;
   color: var(--muted);
   font-family: "Courier New", Courier, monospace;
   font-weight: 700;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .worker-dialog {

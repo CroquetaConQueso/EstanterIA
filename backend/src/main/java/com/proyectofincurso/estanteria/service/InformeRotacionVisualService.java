@@ -90,6 +90,10 @@ public class InformeRotacionVisualService {
         ).stream()
                 .filter(inspeccion -> inspeccion.getEstanteria() != null)
                 .filter(inspeccion -> estanteriasDelPlano == null || estanteriasDelPlano.contains(inspeccion.getEstanteria().getId()))
+                .sorted(Comparator.comparing(
+                        this::fechaInspeccion,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
                 .toList();
 
         Map<SlotConfigKey, EstanteriaSlotConfiguracion> slotsConfigurados = cargarSlotsConfigurados(inspecciones);
@@ -218,7 +222,13 @@ public class InformeRotacionVisualService {
             if (estanteria == null) {
                 continue;
             }
-            for (InspeccionSlotResultado resultado : inspeccion.getSlots()) {
+            List<InspeccionSlotResultado> resultadosOrdenados = inspeccion.getSlots().stream()
+                    .sorted(Comparator.comparing(
+                            InspeccionSlotResultado::getOrden,
+                            Comparator.nullsLast(Comparator.naturalOrder())
+                    ))
+                    .toList();
+            for (InspeccionSlotResultado resultado : resultadosOrdenados) {
                 EstanteriaSlotConfiguracion slotConfigurado = slotsConfigurados.get(
                         new SlotConfigKey(estanteria.getId(), normalizarSlot(resultado.getSlotId()))
                 );

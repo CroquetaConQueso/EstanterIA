@@ -45,7 +45,6 @@ public interface InspeccionRepository extends JpaRepository<Inspeccion,Long>{
             where coalesce(inspeccion.capturadaEn, inspeccion.createdAt) >= :desde
               and coalesce(inspeccion.capturadaEn, inspeccion.createdAt) < :hastaExclusiva
               and (:seccionId is null or seccion.id = :seccionId)
-            order by coalesce(inspeccion.capturadaEn, inspeccion.createdAt) asc
             """)
     List<Inspeccion> findParaInformeRotacionVisual(@Param("desde") Instant desde,
                                                     @Param("hastaExclusiva") Instant hastaExclusiva,
@@ -61,7 +60,6 @@ public interface InspeccionRepository extends JpaRepository<Inspeccion,Long>{
               and coalesce(inspeccion.capturadaEn, inspeccion.createdAt) < :hastaExclusiva
               and (:seccionId is null or seccion.id = :seccionId)
               and lower(estanteria.codigo) = :estanteriaCodigoLower
-            order by coalesce(inspeccion.capturadaEn, inspeccion.createdAt) asc
             """)
     List<Inspeccion> findParaInformeRotacionVisualPorEstanteria(@Param("desde") Instant desde,
                                                                 @Param("hastaExclusiva") Instant hastaExclusiva,

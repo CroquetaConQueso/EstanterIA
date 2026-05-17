@@ -72,10 +72,11 @@ class AlertaOperativaServiceTest {
         asignacion.setFechaCaducidad(LocalDate.now().plusDays(3));
         when(asignacionProductoSlotRepository.findActivaConContextoById(1L, EstadoAsignacionProductoSlot.ACTIVA))
                 .thenReturn(Optional.of(asignacion));
-        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+        when(alertaRepository.findAlertasAbiertasPorAsignacionYSlot(
                 TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
                 EstadoAlerta.ABIERTA,
-                1L
+                1L,
+                60L
         )).thenReturn(List.of());
         when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
 
@@ -97,10 +98,11 @@ class AlertaOperativaServiceTest {
         asignacion.setFechaCaducidad(LocalDate.now());
         when(asignacionProductoSlotRepository.findActivaConContextoById(1L, EstadoAsignacionProductoSlot.ACTIVA))
                 .thenReturn(Optional.of(asignacion));
-        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+        when(alertaRepository.findAlertasAbiertasPorAsignacionYSlot(
                 TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
                 EstadoAlerta.ABIERTA,
-                1L
+                1L,
+                60L
         )).thenReturn(List.of());
         when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
 
@@ -117,10 +119,11 @@ class AlertaOperativaServiceTest {
         asignacion.setFechaCaducidad(LocalDate.now().minusDays(1));
         when(asignacionProductoSlotRepository.findActivaConContextoById(1L, EstadoAsignacionProductoSlot.ACTIVA))
                 .thenReturn(Optional.of(asignacion));
-        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+        when(alertaRepository.findAlertasAbiertasPorAsignacionYSlot(
                 TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE,
                 EstadoAlerta.ABIERTA,
-                1L
+                1L,
+                60L
         )).thenReturn(List.of());
         when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
 
@@ -141,10 +144,11 @@ class AlertaOperativaServiceTest {
         existente.setTipoAlerta(TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR);
         when(asignacionProductoSlotRepository.findActivaConContextoById(1L, EstadoAsignacionProductoSlot.ACTIVA))
                 .thenReturn(Optional.of(asignacion));
-        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+        when(alertaRepository.findAlertasAbiertasPorAsignacionYSlot(
                 TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
                 EstadoAlerta.ABIERTA,
-                1L
+                1L,
+                60L
         )).thenReturn(List.of(existente));
 
         var response = service.evaluarAsignacionActiva(1L);
@@ -159,10 +163,11 @@ class AlertaOperativaServiceTest {
         asignacion.setFechaRetiradaProgramada(LocalDate.now().minusDays(1));
         when(asignacionProductoSlotRepository.findActivaConContextoById(1L, EstadoAsignacionProductoSlot.ACTIVA))
                 .thenReturn(Optional.of(asignacion));
-        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+        when(alertaRepository.findAlertasAbiertasPorAsignacionYSlot(
                 TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE,
                 EstadoAlerta.ABIERTA,
-                1L
+                1L,
+                60L
         )).thenReturn(List.of());
         when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
 
@@ -179,18 +184,13 @@ class AlertaOperativaServiceTest {
         AsignacionProductoSlot asignacion = asignacionBase();
         asignacion.setFechaCaducidad(LocalDate.now().minusDays(1));
         asignacion.setFechaRetiradaProgramada(LocalDate.now().minusDays(1));
-        when(asignacionProductoSlotRepository.findActivasConCaducidadHasta(
-                any(EstadoAsignacionProductoSlot.class),
-                any(LocalDate.class)
-        )).thenReturn(List.of(asignacion));
-        when(asignacionProductoSlotRepository.findActivasConRetiradaProgramadaAntesDe(
-                any(EstadoAsignacionProductoSlot.class),
-                any(LocalDate.class)
-        )).thenReturn(List.of(asignacion));
-        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+        when(asignacionProductoSlotRepository.findActivasConContexto(EstadoAsignacionProductoSlot.ACTIVA))
+                .thenReturn(List.of(asignacion));
+        when(alertaRepository.findAlertasAbiertasPorAsignacionYSlot(
                 TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE,
                 EstadoAlerta.ABIERTA,
-                1L
+                1L,
+                60L
         )).thenReturn(List.of());
         when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
 
@@ -211,18 +211,13 @@ class AlertaOperativaServiceTest {
         Alerta existente = new Alerta();
         existente.setId(88L);
         existente.setTipoAlerta(TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR);
-        when(asignacionProductoSlotRepository.findActivasConCaducidadHasta(
-                any(EstadoAsignacionProductoSlot.class),
-                any(LocalDate.class)
-        )).thenReturn(List.of(asignacion));
-        when(asignacionProductoSlotRepository.findActivasConRetiradaProgramadaAntesDe(
-                any(EstadoAsignacionProductoSlot.class),
-                any(LocalDate.class)
-        )).thenReturn(List.of());
-        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+        when(asignacionProductoSlotRepository.findActivasConContexto(EstadoAsignacionProductoSlot.ACTIVA))
+                .thenReturn(List.of(asignacion));
+        when(alertaRepository.findAlertasAbiertasPorAsignacionYSlot(
                 TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
                 EstadoAlerta.ABIERTA,
-                1L
+                1L,
+                60L
         )).thenReturn(List.of(existente));
 
         var response = service.revisarCaducidades();
@@ -231,6 +226,20 @@ class AlertaOperativaServiceTest {
         assertThat(response.asignacionesRevisadas()).isEqualTo(1);
         assertThat(response.alertasCreadas()).isZero();
         assertThat(response.alertasExistentes()).isEqualTo(1);
+    }
+
+    @Test
+    void revisionManualRevisaTodasLasAsignacionesActivasSinGenerarSiNoHayFechas() {
+        AsignacionProductoSlot asignacionSinFechas = asignacionBase();
+        when(asignacionProductoSlotRepository.findActivasConContexto(EstadoAsignacionProductoSlot.ACTIVA))
+                .thenReturn(List.of(asignacionSinFechas));
+
+        var response = service.revisarCaducidades();
+
+        verify(alertaRepository, never()).save(any(Alerta.class));
+        assertThat(response.asignacionesRevisadas()).isEqualTo(1);
+        assertThat(response.alertasCreadas()).isZero();
+        assertThat(response.alertasExistentes()).isZero();
     }
 
     @Test

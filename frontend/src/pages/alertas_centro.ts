@@ -135,6 +135,13 @@ const estadoLabels: Record<string, string> = {
   DESCARTADA: "Descartada"
 };
 
+const prioridadLabels: Record<string, string> = {
+  CRITICA: "Crítica",
+  ALTA: "Alta",
+  MEDIA: "Media",
+  BAJA: "Baja"
+};
+
 function textoSeguro(value: string | number | null | undefined, fallback = "No disponible"): string {
   if (value === null || value === undefined || value === "") return fallback;
   return String(value);
@@ -146,6 +153,10 @@ function etiquetaTipo(tipo: TipoAlerta): string {
 
 function etiquetaEstado(estado: EstadoAlerta): string {
   return estadoLabels[estado] ?? estado.replaceAll("_", " ").toLowerCase();
+}
+
+function etiquetaPrioridad(prioridad: PrioridadAlerta): string {
+  return prioridadLabels[prioridad] ?? prioridad.replaceAll("_", " ").toLowerCase();
 }
 
 function clasePrioridad(prioridad: PrioridadAlerta): string {
@@ -404,7 +415,7 @@ function renderDetail(alerta: AlertaResponse): void {
   addDetailItem("Inspección", textoSeguro(alerta.inspeccionId, "Sin inspección asociada"));
   addDetailItem("Imagen", getAlertaImagePath(alerta) ?? "Sin imagen asociada");
   addDetailItem("Tipo", etiquetaTipo(alerta.tipo));
-  addDetailItem("Prioridad", alerta.prioridad);
+  addDetailItem("Prioridad", etiquetaPrioridad(alerta.prioridad));
   addDetailItem("Estado", etiquetaEstado(alerta.estado));
   addDetailItem("Fecha", formatFecha(alerta.createdAt));
   addDetailItem("Mensaje", alerta.mensaje || "Sin mensaje");
@@ -415,7 +426,7 @@ function renderDetail(alerta: AlertaResponse): void {
   addDetailSection("Producto esperado");
   addDetailItem("Producto esperado", getProductoEsperado(alerta));
 
-  addDetailSection("Asignacion activa");
+  addDetailSection("Asignación activa");
   if (alerta.asignacion) {
     addDetailItem("Asignación activa", `#${alerta.asignacion.id} · ${textoSeguro(alerta.asignacion.estadoAsignacion, "Sin estado")}`);
     addDetailItem("Producto asignado", getProductoAsignado(alerta.asignacion));
@@ -425,7 +436,7 @@ function renderDetail(alerta: AlertaResponse): void {
     addDetailItem("Caducidad", textoSeguro(alerta.asignacion.fechaCaducidad, "Sin fecha de caducidad"));
     addDetailItem("Retirada programada", textoSeguro(alerta.asignacion.fechaRetiradaProgramada, "Sin retirada programada"));
   } else {
-    addDetailItem("Asignacion activa", "No vinculada a esta alerta");
+    addDetailItem("Asignación activa", "No vinculada a esta alerta");
     addDetailItem("Datos de asignación", "No disponibles para esta alerta");
   }
 
@@ -442,7 +453,7 @@ function renderDetail(alerta: AlertaResponse): void {
   if (!puedeCerrarAlertas) {
     setActionStatus("Solo un administrador puede cerrar alertas.", "info");
   } else if (!alertaAbierta) {
-    setActionStatus("Esta alerta ya no esta abierta.", "info");
+    setActionStatus("Esta alerta ya no está abierta.", "info");
   }
 
 }
@@ -498,7 +509,7 @@ function renderTable(): void {
     const tdPrioridad = document.createElement("td");
     const prioridadChip = document.createElement("span");
     prioridadChip.className = `status-chip ${clasePrioridad(alerta.prioridad)}`;
-    prioridadChip.textContent = alerta.prioridad;
+    prioridadChip.textContent = etiquetaPrioridad(alerta.prioridad);
     tdPrioridad.appendChild(prioridadChip);
 
     const tdEstanteria = document.createElement("td");

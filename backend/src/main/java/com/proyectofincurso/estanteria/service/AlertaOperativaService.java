@@ -45,7 +45,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -217,7 +216,7 @@ public class AlertaOperativaService {
                 resultado.asignacionesRevisadas(),
                 resultado.alertasCreadas(),
                 resultado.alertasExistentes(),
-                "Revision de caducidades completada."
+                "Revisión de caducidades completada."
         );
     }
 
@@ -225,22 +224,16 @@ public class AlertaOperativaService {
         LocalDate hoy = LocalDate.now();
         LocalDate limite = hoy.plusDays(diasUmbralCaducidad);
         List<AsignacionProductoSlot> asignaciones = asignacionProductoSlotRepository
-                .findActivasConCaducidadHasta(EstadoAsignacionProductoSlot.ACTIVA, limite);
-        List<AsignacionProductoSlot> retiradasPendientes = asignacionProductoSlotRepository
-                .findActivasConRetiradaProgramadaAntesDe(EstadoAsignacionProductoSlot.ACTIVA, hoy);
-
-        Map<Long, AsignacionProductoSlot> asignacionesPorId = new LinkedHashMap<>();
-        asignaciones.forEach(asignacion -> asignacionesPorId.put(asignacion.getId(), asignacion));
-        retiradasPendientes.forEach(asignacion -> asignacionesPorId.putIfAbsent(asignacion.getId(), asignacion));
+                .findActivasConContexto(EstadoAsignacionProductoSlot.ACTIVA);
 
         ContadorEvaluacion contador = new ContadorEvaluacion();
-        for (AsignacionProductoSlot asignacion : asignacionesPorId.values()) {
+        for (AsignacionProductoSlot asignacion : asignaciones) {
             evaluarCaducidadAsignacion(asignacion, hoy, limite, contador);
             evaluarRetiradaProgramada(asignacion, hoy, contador);
         }
 
         return new ResultadoRevisionCaducidad(
-                asignacionesPorId.size(),
+                asignaciones.size(),
                 contador.alertasCreadas,
                 contador.alertasExistentes,
                 contador.notificacionesCreadas
@@ -494,10 +487,11 @@ public class AlertaOperativaService {
                                                      EstanteriaSlotConfiguracion slotConfigurado,
                                                      AsignacionProductoSlot asignacionActiva,
                                                      ContadorEvaluacion contador) {
-        List<Alerta> existentes = alertaRepository.findAlertasAbiertasPorAsignacion(
+        List<Alerta> existentes = alertaRepository.findAlertasAbiertasPorAsignacionYSlot(
                 tipo,
                 EstadoAlerta.ABIERTA,
-                asignacionActiva.getId()
+                asignacionActiva.getId(),
+                slotConfigurado.getId()
         );
         if (!existentes.isEmpty()) {
             Alerta alertaExistente = existentes.get(0);

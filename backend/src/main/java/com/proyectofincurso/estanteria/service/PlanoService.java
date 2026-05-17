@@ -158,6 +158,8 @@ public class PlanoService {
     @Transactional
     public PlanoResponse desactivarPlano(String codigo) {
         Plano plano = obtenerPlanoPorCodigo(codigo);
+        // Baja logica: el plano sale de los flujos por defecto, pero conserva zonas,
+        // layouts e historico para consulta y reactivacion.
         if (!Boolean.FALSE.equals(plano.getActivo())) {
             plano.setActivo(false);
             plano.setUpdatedAt(Instant.now());

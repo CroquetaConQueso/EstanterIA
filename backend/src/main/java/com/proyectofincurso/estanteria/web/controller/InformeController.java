@@ -5,6 +5,9 @@ import com.proyectofincurso.estanteria.service.InformeRotacionVisualPdfService;
 import com.proyectofincurso.estanteria.service.InformeRotacionVisualService;
 import com.proyectofincurso.estanteria.web.dto.InformeRotacionVisualResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +40,23 @@ public class InformeController {
             summary = "Informe de rotacion visual",
             description = "Requiere ADMIN/SUPERADMIN. Analiza vacios detectados en inspecciones visuales; no calcula ventas reales."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Informe generado en JSON"),
+            @ApiResponse(responseCode = "400", description = "Filtros o rango de fechas invalidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Plano, seccion o estanteria inexistente")
+    })
     public InformeRotacionVisualResponse obtenerInformeRotacionVisual(
+            @Parameter(description = "Codigo de plano a usar como filtro opcional")
             @RequestParam(required = false) String planoCodigo,
+            @Parameter(description = "Identificador de seccion a usar como filtro opcional")
             @RequestParam(required = false) Long seccionId,
+            @Parameter(description = "Codigo de estanteria a usar como filtro opcional")
             @RequestParam(required = false) String estanteriaCodigo,
+            @Parameter(description = "Fecha inicial del periodo analizado")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @Parameter(description = "Fecha final del periodo analizado")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta
     ) {
         return informeRotacionVisualService.generarInforme(
@@ -59,13 +74,26 @@ public class InformeController {
             summary = "Exportar informe de rotacion visual en PDF",
             description = "Requiere ADMIN/SUPERADMIN. Genera un PDF del informe de vacios detectados; no calcula ventas reales."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "PDF generado"),
+            @ApiResponse(responseCode = "400", description = "Filtros o rango de fechas invalidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos"),
+            @ApiResponse(responseCode = "404", description = "Plano, seccion o estanteria inexistente")
+    })
     public ResponseEntity<byte[]> descargarInformeRotacionVisualPdf(
+            @Parameter(description = "Codigo de plano a usar como filtro opcional")
             @RequestParam(required = false) String planoCodigo,
+            @Parameter(description = "Identificador de seccion a usar como filtro opcional")
             @RequestParam(required = false) Long seccionId,
+            @Parameter(description = "Codigo de estanteria a usar como filtro opcional")
             @RequestParam(required = false) String estanteriaCodigo,
+            @Parameter(description = "Fecha inicial del periodo analizado")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @Parameter(description = "Fecha final del periodo analizado")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta
     ) {
+        // El PDF se genera desde el mismo DTO que el JSON para evitar metricas divergentes entre formatos.
         InformeRotacionVisualResponse informe = informeRotacionVisualService.generarInforme(
                 planoCodigo,
                 seccionId,

@@ -267,6 +267,8 @@ public class InspeccionService {
             return null;
         }
 
+        // Al cambiar la evidencia de una inspeccion existente solo se aceptan capturas servidas
+        // por la aplicacion; no se recalculan resultados ni se abren alertas nuevas.
         String capturaPublica = verificarCapturaPublica(imagenPath);
         if (capturaPublica == null) {
             throw ApiException.badRequest(

@@ -12,6 +12,8 @@ import com.proyectofincurso.estanteria.web.dto.RegistroResponse;
 import com.proyectofincurso.estanteria.web.dto.RegistroRequest;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -36,6 +38,12 @@ public class LoginController {
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Login", description = "Endpoint publico. Autentica credenciales y devuelve un token JWT Bearer.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Login correcto para ADMIN o SUPERADMIN"),
+            @ApiResponse(responseCode = "400", description = "Payload de login invalido"),
+            @ApiResponse(responseCode = "401", description = "Credenciales invalidas"),
+            @ApiResponse(responseCode = "403", description = "Cuenta WORKER no autorizada para el panel web")
+    })
     public LoginResponse login(@Valid @RequestBody LoginRequest req) {
         AuthUser user = authService.authenticate(req.getEmail(), req.getPassword());
         if ("WORKER".equalsIgnoreCase(user.role())) {
@@ -51,6 +59,10 @@ public class LoginController {
 
     @PostMapping(value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Logout", description = "Requiere autenticacion. Revoca la sesion JWT actual.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sesion revocada"),
+            @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
     public LogoutResponse logout(@AuthenticationPrincipal Jwt jwt) {
         authSessionService.revocarSesion(jwt.getClaimAsString("sid"));
         return new LogoutResponse("LOGOUT_OK");
@@ -58,6 +70,11 @@ public class LoginController {
 
     @PostMapping(value = "/registro", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Registro", description = "Endpoint publico para crear usuarios segun las reglas de autenticacion existentes.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuario registrado"),
+            @ApiResponse(responseCode = "400", description = "Datos de registro invalidos"),
+            @ApiResponse(responseCode = "409", description = "Username o email duplicado")
+    })
     public RegistroResponse registro(@Valid @RequestBody RegistroRequest req) {
         authService.verificar(req.getUsername(), req.getEmail(), req.getPassword(), req.getRole());
         return new RegistroResponse("REGISTRO_OK");

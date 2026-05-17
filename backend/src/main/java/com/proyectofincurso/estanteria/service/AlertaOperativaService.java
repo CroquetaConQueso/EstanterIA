@@ -269,6 +269,8 @@ public class AlertaOperativaService {
         List<AsignacionProductoSlot> asignaciones = asignacionProductoSlotRepository
                 .findActivasConContexto(EstadoAsignacionProductoSlot.ACTIVA);
 
+        // Scheduler y revision manual pasan por la misma regla para no divergir prioridades
+        // ni duplicar alertas abiertas de caducidad/retirada.
         ContadorEvaluacion contador = new ContadorEvaluacion();
         for (AsignacionProductoSlot asignacion : asignaciones) {
             evaluarCaducidadAsignacion(asignacion, hoy, limite, contador);
@@ -294,6 +296,8 @@ public class AlertaOperativaService {
                         || asignacion.getTrabajador().getId().equals(trabajadorId))
                 .toList();
 
+        // La alerta conserva trazabilidad: avisa de cobertura operativa rota, pero no reasigna
+        // tareas ni desasigna trabajadores automaticamente.
         Map<Long, List<TrabajadorEstanteria>> asignacionesPorEstanteria = new LinkedHashMap<>();
         for (TrabajadorEstanteria asignacion : asignaciones) {
             asignacionesPorEstanteria

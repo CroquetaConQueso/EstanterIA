@@ -452,6 +452,8 @@ button {
   min-height: 52px;
   padding-inline: 16px;
   font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .plan-selector {
@@ -480,6 +482,15 @@ button {
   box-shadow: 4px 4px 0 var(--black);
   padding: 0 14px;
   font: inherit;
+  font-size: 0.94rem;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.plan-selector select option {
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .plan-filter select {
@@ -681,7 +692,9 @@ button {
 
 .slot-node small {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.62rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
   text-transform: none;
 }
 
@@ -961,6 +974,10 @@ button {
   display: grid;
   gap: 8px;
   margin-top: 18px;
+}
+
+.plan-modal-confirm[hidden] {
+  display: none;
 }
 
 .plan-modal-confirm input {

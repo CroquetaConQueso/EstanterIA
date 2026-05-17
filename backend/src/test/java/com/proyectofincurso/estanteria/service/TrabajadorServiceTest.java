@@ -39,6 +39,8 @@ class TrabajadorServiceTest {
     private TrabajadorEstanteriaRepository trabajadorEstanteriaRepository;
     @Mock
     private TareaOperativaRepository tareaOperativaRepository;
+    @Mock
+    private AlertaOperativaService alertaOperativaService;
 
     @InjectMocks
     private TrabajadorService service;

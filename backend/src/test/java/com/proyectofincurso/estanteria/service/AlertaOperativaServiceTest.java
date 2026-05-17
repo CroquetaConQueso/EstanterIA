@@ -4,6 +4,7 @@ import com.proyectofincurso.estanteria.persistence.entity.Alerta;
 import com.proyectofincurso.estanteria.persistence.entity.AsignacionProductoSlot;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoAlerta;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoAsignacionProductoSlot;
+import com.proyectofincurso.estanteria.persistence.entity.EstadoDisponibilidadTrabajador;
 import com.proyectofincurso.estanteria.persistence.entity.Estanteria;
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaSlotConfiguracion;
 import com.proyectofincurso.estanteria.persistence.entity.PrioridadAlerta;
@@ -12,6 +13,9 @@ import com.proyectofincurso.estanteria.persistence.entity.ProductoProveedor;
 import com.proyectofincurso.estanteria.persistence.entity.Proveedor;
 import com.proyectofincurso.estanteria.persistence.entity.Seccion;
 import com.proyectofincurso.estanteria.persistence.entity.TipoAlerta;
+import com.proyectofincurso.estanteria.persistence.entity.TipoTrabajador;
+import com.proyectofincurso.estanteria.persistence.entity.Trabajador;
+import com.proyectofincurso.estanteria.persistence.entity.TrabajadorEstanteria;
 import com.proyectofincurso.estanteria.persistence.repository.AlertaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.AlertaTrabajadorRepository;
 import com.proyectofincurso.estanteria.persistence.repository.AsignacionProductoSlotRepository;
@@ -19,6 +23,7 @@ import com.proyectofincurso.estanteria.persistence.repository.EstanteriaReposito
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConfiguracionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.InspeccionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
+import com.proyectofincurso.estanteria.persistence.repository.TrabajadorEstanteriaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +56,8 @@ class AlertaOperativaServiceTest {
     private AsignacionProductoSlotRepository asignacionProductoSlotRepository;
     @Mock
     private SeccionEncargadoRepository seccionEncargadoRepository;
+    @Mock
+    private TrabajadorEstanteriaRepository trabajadorEstanteriaRepository;
     @Mock
     private AlertaRepository alertaRepository;
     @Mock
@@ -290,6 +297,68 @@ class AlertaOperativaServiceTest {
         assertThat(response.asignacionesEvaluadas()).isZero();
     }
 
+    @Test
+    void trabajadorEnfermoAsignadoGeneraAlertaDeEstanteria() {
+        TrabajadorEstanteria asignacion = asignacionTrabajadorEstanteria(EstadoDisponibilidadTrabajador.ENFERMO);
+        when(trabajadorEstanteriaRepository.findActivasConTrabajadorNoDisponible(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of(asignacion));
+        when(alertaRepository.findAlertasAbiertasPorEstanteria(
+                TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO,
+                EstadoAlerta.ABIERTA,
+                20L
+        )).thenReturn(List.of());
+        when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
+
+        var response = service.revisarTrabajadoresNoDisponiblesAsignados();
+
+        ArgumentCaptor<Alerta> captor = ArgumentCaptor.forClass(Alerta.class);
+        verify(alertaRepository).save(captor.capture());
+        Alerta alerta = captor.getValue();
+        assertThat(alerta.getTipoAlerta()).isEqualTo(TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO);
+        assertThat(alerta.getPrioridad()).isEqualTo(PrioridadAlerta.ALTA);
+        assertThat(alerta.getEstanteria()).isEqualTo(asignacion.getEstanteria());
+        assertThat(alerta.getSlotConfiguracion()).isNull();
+        assertThat(alerta.getMensaje()).contains("EST-001", "Mario", "ENFERMO");
+        assertThat(response.asignacionesRevisadas()).isEqualTo(1);
+        assertThat(response.estanteriasAfectadas()).isEqualTo(1);
+        assertThat(response.alertasCreadas()).isEqualTo(1);
+    }
+
+    @Test
+    void noDuplicaAlertaAbiertaDeTrabajadorNoDisponible() {
+        TrabajadorEstanteria asignacion = asignacionTrabajadorEstanteria(EstadoDisponibilidadTrabajador.AUSENTE);
+        Alerta existente = new Alerta();
+        existente.setId(12L);
+        existente.setTipoAlerta(TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO);
+        when(trabajadorEstanteriaRepository.findActivasConTrabajadorNoDisponible(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of(asignacion));
+        when(alertaRepository.findAlertasAbiertasPorEstanteria(
+                TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO,
+                EstadoAlerta.ABIERTA,
+                20L
+        )).thenReturn(List.of(existente));
+
+        var response = service.revisarTrabajadoresNoDisponiblesAsignados();
+
+        verify(alertaRepository, never()).save(any(Alerta.class));
+        assertThat(response.alertasCreadas()).isZero();
+        assertThat(response.alertasExistentes()).isEqualTo(1);
+    }
+
+    @Test
+    void sinTrabajadoresNoDisponiblesAsignadosNoGeneraAlertas() {
+        when(trabajadorEstanteriaRepository.findActivasConTrabajadorNoDisponible(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of());
+
+        var response = service.revisarTrabajadoresNoDisponiblesAsignados();
+
+        verify(alertaRepository, never()).save(any(Alerta.class));
+        assertThat(response.asignacionesRevisadas()).isZero();
+        assertThat(response.estanteriasAfectadas()).isZero();
+        assertThat(response.alertasCreadas()).isZero();
+        assertThat(response.alertasExistentes()).isZero();
+    }
+
     private AsignacionProductoSlot asignacionBase() {
         Seccion seccion = new Seccion();
         seccion.setId(10L);
@@ -326,6 +395,35 @@ class AlertaOperativaServiceTest {
         asignacion.setSlotConfiguracion(slot);
         asignacion.setProductoProveedor(productoProveedor);
         asignacion.setEstadoAsignacion(EstadoAsignacionProductoSlot.ACTIVA);
+        return asignacion;
+    }
+
+    private TrabajadorEstanteria asignacionTrabajadorEstanteria(EstadoDisponibilidadTrabajador disponibilidad) {
+        Seccion seccion = new Seccion();
+        seccion.setId(10L);
+        seccion.setCodigo("SEC-DEMO");
+        seccion.setNombre("Seccion demo");
+
+        Estanteria estanteria = new Estanteria();
+        estanteria.setId(20L);
+        estanteria.setCodigo("EST-001");
+        estanteria.setNombre("Estanteria demo");
+        estanteria.setSeccion(seccion);
+        estanteria.setActiva(true);
+
+        Trabajador trabajador = new Trabajador();
+        trabajador.setId(30L);
+        trabajador.setNombre("Mario");
+        trabajador.setApellidos("Lopez");
+        trabajador.setTipoTrabajador(TipoTrabajador.TRABAJADOR);
+        trabajador.setEstadoDisponibilidad(disponibilidad);
+        trabajador.setActivo(true);
+
+        TrabajadorEstanteria asignacion = new TrabajadorEstanteria();
+        asignacion.setId(40L);
+        asignacion.setTrabajador(trabajador);
+        asignacion.setEstanteria(estanteria);
+        asignacion.setActiva(true);
         return asignacion;
     }
 }

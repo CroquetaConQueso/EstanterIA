@@ -255,6 +255,7 @@ const tipoLabels: Record<string, string> = {
   PRODUCTO_PROXIMO_A_CADUCAR: "Producto próximo a caducar",
   RETIRADA_PROGRAMADA_PENDIENTE: "Retirada programada pendiente",
   PRESENCIA_TRAS_RETIRADA_PROGRAMADA: "Presencia tras retirada programada",
+  TRABAJADOR_NO_DISPONIBLE_ASIGNADO: "Trabajador no disponible",
   REPOSICION: "Reposición",
   REVISION_VISUAL: "Revisión visual",
   VERIFICACION_MANUAL: "Verificación manual",

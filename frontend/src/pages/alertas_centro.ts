@@ -11,6 +11,7 @@ type TipoAlerta =
   | "PRODUCTO_PROXIMO_A_CADUCAR"
   | "RETIRADA_PROGRAMADA_PENDIENTE"
   | "PRESENCIA_TRAS_RETIRADA_PROGRAMADA"
+  | "TRABAJADOR_NO_DISPONIBLE_ASIGNADO"
   | string;
 
 type PrioridadAlerta = "BAJA" | "MEDIA" | "ALTA" | "CRITICA" | string;
@@ -126,7 +127,8 @@ const tipoLabels: Record<string, string> = {
   REVISION_MANUAL: "Revisión manual",
   PRODUCTO_PROXIMO_A_CADUCAR: "Producto próximo a caducar",
   RETIRADA_PROGRAMADA_PENDIENTE: "Retirada programada pendiente",
-  PRESENCIA_TRAS_RETIRADA_PROGRAMADA: "Presencia tras retirada programada"
+  PRESENCIA_TRAS_RETIRADA_PROGRAMADA: "Presencia tras retirada programada",
+  TRABAJADOR_NO_DISPONIBLE_ASIGNADO: "Trabajador no disponible"
 };
 
 const estadoLabels: Record<string, string> = {

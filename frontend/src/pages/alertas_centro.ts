@@ -106,7 +106,15 @@ type RevisionTrabajadoresNoDisponiblesResponse = {
   mensaje: string;
 };
 
+type RevisionCaducidadesResponse = {
+  asignacionesRevisadas: number;
+  alertasCreadas: number;
+  alertasExistentes: number;
+  mensaje: string;
+};
+
 const API_ALERTAS_ABIERTAS = "/api/alertas/abiertas";
+const API_REVISAR_CADUCIDADES = "/api/alertas/revisar-caducidades";
 const API_REVISAR_TRABAJADORES = "/api/alertas/revisar-trabajadores-no-disponibles";
 
 const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-alertas");
@@ -114,6 +122,7 @@ const filtroGravedad = document.querySelector<HTMLSelectElement>("#filtro-graved
 const filtroEstado = document.querySelector<HTMLSelectElement>("#filtro-estado");
 const filtroTexto = document.querySelector<HTMLInputElement>("#filtro-texto");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar");
+const btnRevisarCaducidades = document.querySelector<HTMLButtonElement>("#btn-revisar-caducidades");
 const btnRevisarTrabajadores = document.querySelector<HTMLButtonElement>("#btn-revisar-trabajadores");
 
 const detalle = document.querySelector<HTMLUListElement>("#detalle-alerta");
@@ -574,6 +583,15 @@ function mensajeRevisionTrabajadores(data: RevisionTrabajadoresNoDisponiblesResp
   ].join(" ");
 }
 
+function mensajeRevisionCaducidades(data: RevisionCaducidadesResponse): string {
+  return [
+    data.mensaje,
+    `${data.asignacionesRevisadas} asignaciones revisadas.`,
+    `${data.alertasCreadas} alertas nuevas.`,
+    `${data.alertasExistentes} ya existentes.`
+  ].join(" ");
+}
+
 async function cargarAlertas(mensajeDetalle?: string): Promise<void> {
   setRowMessage("Cargando alertas abiertas...");
   setDetalleMessage("Cargando detalle de alertas...");
@@ -655,6 +673,38 @@ async function revisarTrabajadoresNoDisponibles(): Promise<void> {
   }
 }
 
+async function revisarCaducidades(): Promise<void> {
+  if (!puedeCerrarAlertas) {
+    setActionStatus("Solo un administrador puede revisar caducidades.", "error");
+    return;
+  }
+
+  if (btnRevisarCaducidades) btnRevisarCaducidades.disabled = true;
+  setActionStatus("Revisando caducidades y retiradas programadas...", "info");
+
+  try {
+    const response = await authFetch(API_REVISAR_CADUCIDADES, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await parseErrorResponse(response);
+      setActionStatus(getBackendErrorMessage(errorData, response.status), "error");
+      return;
+    }
+
+    const data = await response.json() as RevisionCaducidadesResponse;
+    await cargarAlertas(mensajeRevisionCaducidades(data));
+  } catch {
+    setActionStatus("No se pudo conectar con el servidor para revisar caducidades.", "error");
+  } finally {
+    if (btnRevisarCaducidades) btnRevisarCaducidades.disabled = false;
+  }
+}
+
 async function cerrarAlerta(accion: "resolver" | "descartar"): Promise<void> {
   const alerta = alertas.find((item) => item.id === selectedId);
   if (!alerta) {
@@ -728,6 +778,10 @@ btnResolver?.addEventListener("click", () => {
 
 btnDescartar?.addEventListener("click", () => {
   void cerrarAlerta("descartar");
+});
+
+btnRevisarCaducidades?.addEventListener("click", () => {
+  void revisarCaducidades();
 });
 
 btnRevisarTrabajadores?.addEventListener("click", () => {

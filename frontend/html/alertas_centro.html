@@ -88,9 +88,17 @@
       <input type="text" id="filtro-texto" placeholder="Producto, estantería, zona, responsable..." />
     </label>
 
-    <div class="toolbar-actions">
+    <button class="btn ghost" id="btn-limpiar" type="button">Limpiar filtros</button>
+  </section>
+
+  <section class="review-panel" aria-labelledby="review-panel-title">
+    <div>
+      <h2 id="review-panel-title">Revisiones operativas</h2>
+      <p>Genera alertas pendientes a partir del estado actual del inventario y del equipo asignado.</p>
+    </div>
+    <div class="review-actions">
+      <button class="btn primary" id="btn-revisar-caducidades" type="button">Revisar caducidades</button>
       <button class="btn primary" id="btn-revisar-trabajadores" type="button">Revisar trabajadores</button>
-      <button class="btn ghost" id="btn-limpiar" type="button">Limpiar filtros</button>
     </div>
   </section>
 

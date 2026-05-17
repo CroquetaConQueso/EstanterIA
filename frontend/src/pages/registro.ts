@@ -1,4 +1,5 @@
-type RegistroRequest = { username: string; email: string; password: string };
+type RegistroRole = "ADMIN" | "SUPERADMIN";
+type RegistroRequest = { username: string; email: string; password: string; role: RegistroRole };
 type ApiErrorResponse = {
   message?: string;
   error?: string;
@@ -9,6 +10,7 @@ type ApiErrorResponse = {
 const form = document.querySelector<HTMLFormElement>("#form-registro");
 const usernameInput = document.querySelector<HTMLInputElement>("#reg-nombre");
 const emailInput = document.querySelector<HTMLInputElement>("#reg-email");
+const roleSelect = document.querySelector<HTMLSelectElement>("#reg-role");
 const passwordInput = document.querySelector<HTMLInputElement>("#reg-pass");
 const password2Input = document.querySelector<HTMLInputElement>("#reg-pass2");
 const errorReg = document.querySelector<HTMLElement>("#reg-error");
@@ -29,7 +31,7 @@ function emailValido(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function validateClient(username: string, email: string, password: string, password2: string): Record<string, string> {
+function validateClient(username: string, email: string, role: string, password: string, password2: string): Record<string, string> {
   const errors: Record<string, string> = {};
 
   if (!username) errors.username = "El usuario es obligatorio";
@@ -39,6 +41,10 @@ function validateClient(username: string, email: string, password: string, passw
   if (!email) errors.email = "El email es obligatorio";
   else if (!emailValido(email)) errors.email = "El email no tiene un formato válido";
   else if (email.length > 120) errors.email = "El email no puede superar 120 caracteres";
+
+  if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    errors.role = "Selecciona administrador o gerente";
+  }
 
   if (!password) errors.password = "La contraseña es obligatoria";
   else if (password.length < 8) errors.password = "La contraseña debe tener al menos 8 caracteres";
@@ -73,9 +79,10 @@ function getRegistroErrorMessage(data: ApiErrorResponse | null, status: number):
   return data?.message ?? `Error HTTP ${status}`;
 }
 
-if (form && usernameInput && emailInput && passwordInput && password2Input) {
+if (form && usernameInput && emailInput && roleSelect && passwordInput && password2Input) {
   usernameInput.addEventListener("input", () => setError(null));
   emailInput.addEventListener("input", () => setError(null));
+  roleSelect.addEventListener("change", () => setError(null));
   passwordInput.addEventListener("input", () => setError(null));
   password2Input.addEventListener("input", () => setError(null));
 
@@ -85,16 +92,17 @@ if (form && usernameInput && emailInput && passwordInput && password2Input) {
 
     const username = usernameInput.value.trim();
     const email = emailInput.value.trim();
+    const role = roleSelect.value as RegistroRole;
     const password = passwordInput.value;
     const password2 = password2Input.value;
 
-    const clienteErrores = validateClient(username, email, password, password2);
+    const clienteErrores = validateClient(username, email, role, password, password2);
     if (Object.keys(clienteErrores).length > 0) {
       setError(Object.values(clienteErrores).join(" "));
       return;
     }
 
-    const payload: RegistroRequest = { username, email, password };
+    const payload: RegistroRequest = { username, email, password, role };
 
     const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
     if (submitBtn) submitBtn.disabled = true;

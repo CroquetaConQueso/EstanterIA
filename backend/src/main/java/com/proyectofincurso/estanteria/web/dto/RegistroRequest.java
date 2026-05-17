@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import com.proyectofincurso.estanteria.persistence.entity.UserRole;
 
 @Data
 @Schema(description = "Datos de registro de usuario")
@@ -22,4 +23,7 @@ public class RegistroRequest {
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 8, max = 120, message = "La contraseña debe tener entre 8 y 120 caracteres")
     private String password;
+
+    @Schema(description = "Rol administrativo de la cuenta web", allowableValues = {"ADMIN", "SUPERADMIN"})
+    private UserRole role;
 }

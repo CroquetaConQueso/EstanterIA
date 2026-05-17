@@ -286,6 +286,8 @@ body {
 }
 
 .empty-state {
+  display: grid;
+  gap: 6px;
   margin: 0 0 16px;
   border: var(--profile-border-main);
   background: var(--profile-paper);
@@ -295,6 +297,19 @@ body {
   font-weight: 800;
   line-height: 1.45;
   text-transform: none;
+}
+
+.empty-state[hidden] {
+  display: none;
+}
+
+.empty-state strong {
+  color: var(--profile-black);
+}
+
+.empty-state span {
+  color: var(--profile-muted);
+  font-weight: 700;
 }
 
 .data-list {

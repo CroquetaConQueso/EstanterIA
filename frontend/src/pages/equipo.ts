@@ -29,6 +29,7 @@ type TareaAsignada = {
 
 type TrabajadorResponse = {
   id: number;
+  trabajadorId?: number;
   nombre: string | null;
   apellidos: string | null;
   emailContacto: string | null;
@@ -169,7 +170,7 @@ async function fetchJson<T>(url: string, init: RequestInit = {}): Promise<T> {
 
 function trabajadoresFiltrados(): TrabajadorResponse[] {
   const text = (filterText?.value ?? "").trim().toLowerCase();
-  const active = filterActive?.value ?? "ALL";
+  const active = filterActive?.value ?? "ACTIVE";
   const availability = filterAvailability?.value ?? "";
   const type = filterType?.value ?? "";
 
@@ -190,6 +191,17 @@ function trabajadoresFiltrados(): TrabajadorResponse[] {
     const okType = !type || trabajador.tipoTrabajador === type;
     return okText && okActive && okAvailability && okType;
   });
+}
+
+function normalizarTrabajador(trabajador: TrabajadorResponse): TrabajadorResponse {
+  return {
+    ...trabajador,
+    id: trabajador.id ?? trabajador.trabajadorId ?? 0,
+    estanteriasAsignadas: trabajador.estanteriasAsignadas ?? [],
+    tareasAsignadas: trabajador.tareasAsignadas ?? [],
+    tareasPendientes: trabajador.tareasPendientes ?? 0,
+    tareasEnProgreso: trabajador.tareasEnProgreso ?? 0
+  };
 }
 
 function renderWorkers(): void {
@@ -441,7 +453,9 @@ async function cambiarActivo(reactivar: boolean): Promise<void> {
 
 async function cargarTrabajadores(preserveSelection = false): Promise<void> {
   try {
-    trabajadores = await fetchJson<TrabajadorResponse[]>("/api/trabajadores?incluirInactivos=true");
+    trabajadores = (await fetchJson<TrabajadorResponse[]>("/api/trabajadores?incluirInactivos=true"))
+      .map(normalizarTrabajador)
+      .filter((trabajador) => trabajador.id > 0);
     if (!preserveSelection || !trabajadores.some((trabajador) => trabajador.id === selectedWorkerId)) {
       selectedWorkerId = trabajadores[0]?.id ?? null;
     }
@@ -459,7 +473,7 @@ filterAvailability?.addEventListener("change", renderWorkers);
 filterType?.addEventListener("change", renderWorkers);
 btnClearFilters?.addEventListener("click", () => {
   if (filterText) filterText.value = "";
-  if (filterActive) filterActive.value = "ALL";
+  if (filterActive) filterActive.value = "ACTIVE";
   if (filterAvailability) filterAvailability.value = "";
   if (filterType) filterType.value = "";
   renderWorkers();

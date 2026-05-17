@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
+    List<Trabajador> findAllByOrderByApellidosAscNombreAsc();
+
     List<Trabajador> findByEmpresaCodigoIgnoreCaseOrderByApellidosAscNombreAsc(String codigoEmpresa);
 
     List<Trabajador> findByEmpresaCodigoAndActivoTrueOrderByApellidosAscNombreAsc(String codigoEmpresa);

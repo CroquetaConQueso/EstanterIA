@@ -120,6 +120,7 @@ public class PerfilService {
                 trabajador.getEmailContacto(),
                 trabajador.getTelefonoContacto(),
                 trabajador.getTipoTrabajador(),
+                trabajador.getEstadoDisponibilidad(),
                 trabajador.getActivo()
         );
     }

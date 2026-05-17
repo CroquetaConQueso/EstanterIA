@@ -52,7 +52,7 @@
       <div class="card-head">
         <div>
           <p class="eyebrow">Cuenta</p>
-          <h2>Datos de acceso</h2>
+          <h2>Cuenta operativa</h2>
         </div>
         <span class="badge" id="perfil-estado">Sesión activa</span>
       </div>
@@ -64,12 +64,12 @@
         </label>
 
         <label>
-          <span>Email</span>
+          <span>Correo de acceso</span>
           <input id="perfil-email" name="email" type="email" autocomplete="email" required maxlength="120" />
         </label>
 
         <label>
-          <span>Rol</span>
+          <span>Rol de cuenta</span>
           <input id="perfil-role" type="text" readonly />
         </label>
 
@@ -106,22 +106,26 @@
       <section class="card">
         <div class="card-head">
           <div>
-            <p class="eyebrow">Trabajador</p>
-            <h2>Trabajador vinculado</h2>
+            <p class="eyebrow">Equipo</p>
+            <h2>Trabajador operativo</h2>
           </div>
         </div>
-        <dl class="data-list">
+        <p class="help worker-help">
+          La gestión de trabajadores, disponibilidad y asignaciones se realiza desde el módulo Equipo.
+        </p>
+        <p class="empty-state" id="perfil-trabajador-empty" hidden>No hay trabajador operativo vinculado a esta cuenta.</p>
+        <dl class="data-list" id="perfil-trabajador-datos">
           <div>
-            <dt>Nombre</dt>
+            <dt>Nombre completo</dt>
             <dd id="perfil-trabajador-nombre">Cargando...</dd>
-          </div>
-          <div>
-            <dt>Apellidos</dt>
-            <dd id="perfil-trabajador-apellidos">Cargando...</dd>
           </div>
           <div>
             <dt>Tipo</dt>
             <dd id="perfil-trabajador-tipo">Cargando...</dd>
+          </div>
+          <div>
+            <dt>Disponibilidad</dt>
+            <dd id="perfil-trabajador-disponibilidad">Cargando...</dd>
           </div>
           <div>
             <dt>Email contacto</dt>
@@ -136,18 +140,6 @@
             <dd id="perfil-trabajador-estado">Cargando...</dd>
           </div>
         </dl>
-      </section>
-
-      <section class="card team-card">
-        <div class="card-head">
-          <div>
-            <p class="eyebrow">Equipo</p>
-            <h2>Equipo operativo</h2>
-          </div>
-        </div>
-        <p class="help">
-          La gestión de trabajadores, disponibilidad y asignaciones se realiza desde el módulo Equipo.
-        </p>
         <a class="btn team-link" href="equipo.html">Ir a Equipo</a>
       </section>
 

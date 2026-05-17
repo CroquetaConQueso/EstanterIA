@@ -65,6 +65,33 @@ public class PlanoService {
         return toPlanoResponse(plano);
     }
 
+    @Transactional(readOnly = true)
+    public List<SeccionResponse> listarSeccionesDisponiblesParaPlano(String codigoEmpresa, String planoCodigo) {
+        Empresa empresa = obtenerEmpresaActiva(codigoEmpresa);
+        Plano planoActual = null;
+        String codigoPlanoNormalizado = normalizarNullable(planoCodigo);
+        if (codigoPlanoNormalizado != null) {
+            planoActual = obtenerPlanoPorCodigo(codigoPlanoNormalizado);
+            if (!Objects.equals(planoActual.getEmpresa().getId(), empresa.getId())) {
+                throw ApiException.badRequest(
+                        "PLANO_EMPRESA_INCOHERENTE",
+                        "El plano indicado no pertenece a la empresa seleccionada"
+                );
+            }
+        }
+
+        Set<Long> seccionesUsadas = (planoActual == null
+                ? planoZonaRepository.findSeccionIdsUsadasEnPlanosActivos(empresa.getId())
+                : planoZonaRepository.findSeccionIdsUsadasEnOtrosPlanosActivos(empresa.getId(), planoActual.getId()))
+                .stream()
+                .collect(Collectors.toSet());
+
+        return seccionRepository.findByEmpresaCodigoAndActivaTrueOrderByNombreAsc(empresa.getCodigo()).stream()
+                .filter(seccion -> !seccionesUsadas.contains(seccion.getId()))
+                .map(this::toSeccionResponse)
+                .toList();
+    }
+
     @Transactional
     public PlanoResponse crearPlano(CrearPlanoRequest request) {
         String codigoPlano = normalizar(request.codigo());
@@ -125,12 +152,13 @@ public class PlanoService {
                                   List<PlanoEstanteriaLayoutRequest> estanteriasRequest,
                                   Instant ahora,
                                   Set<Long> estanteriasInactivasPermitidas) {
-        Map<Long, Seccion> secciones = cargarYValidarSecciones(plano.getEmpresa(), zonasRequest);
+        Map<Long, Seccion> secciones = cargarYValidarSecciones(plano, zonasRequest);
         Map<Long, PlanoZona> zonasPorSeccion = crearZonas(plano, zonasRequest, secciones, ahora);
         crearLayouts(plano, estanteriasRequest, zonasPorSeccion, ahora, estanteriasInactivasPermitidas);
     }
 
-    private Map<Long, Seccion> cargarYValidarSecciones(Empresa empresa, List<PlanoZonaRequest> zonasRequest) {
+    private Map<Long, Seccion> cargarYValidarSecciones(Plano plano, List<PlanoZonaRequest> zonasRequest) {
+        Empresa empresa = plano.getEmpresa();
         Set<Long> ids = new HashSet<>();
         for (PlanoZonaRequest zona : zonasRequest) {
             if (!ids.add(zona.seccionId())) {
@@ -139,6 +167,18 @@ public class PlanoService {
                         "Una seccion no puede aparecer dos veces en el mismo plano"
                 );
             }
+        }
+
+        Set<Long> seccionesUsadasEnOtrosPlanos = planoZonaRepository
+                .findSeccionIdsUsadasEnOtrosPlanosActivos(empresa.getId(), plano.getId())
+                .stream()
+                .collect(Collectors.toSet());
+        boolean haySeccionYaUsada = ids.stream().anyMatch(seccionesUsadasEnOtrosPlanos::contains);
+        if (haySeccionYaUsada) {
+            throw ApiException.conflict(
+                    "PLANO_SECCION_USADA_EN_OTRO_PLANO",
+                    "La seccion ya esta representada en otro plano."
+            );
         }
 
         Map<Long, Seccion> secciones = seccionRepository.findAllById(ids).stream()

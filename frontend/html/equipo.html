@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Equipo operativo · Suite Tienda</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+    <link href="../css/equipo.css" rel="stylesheet" />
+    <link href="../css/app-shell.css" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="inner">
+        <div class="left">
+          <a class="brand" href="../index.html">
+            <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+            <span class="brand-text">Suite<span class="brand-accent">Tienda</span></span>
+          </a>
+          <nav class="nav" aria-label="Principal">
+            <a class="nav-link" href="home.html">Inicio</a>
+            <a class="nav-link" href="planos.html">Planos</a>
+            <a class="nav-link" href="inspecciones.html">Inspecciones</a>
+            <a class="nav-link" href="inventario.html">Inventario</a>
+            <a class="nav-link" href="alertas_centro.html">Alertas</a>
+            <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
+            <a class="nav-link is-active" aria-current="page" href="equipo.html">Equipo</a>
+            <a class="nav-link" href="vision.html">Visión</a>
+          </nav>
+        </div>
+        <div class="right">
+          <a class="user" href="perfil.html">Mi perfil</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <header class="page-head">
+        <div>
+          <p class="eyebrow">Gestión operativa</p>
+          <h1>Equipo operativo</h1>
+          <p>
+            Gestiona trabajadores de la empresa para asignarlos a tareas, secciones
+            y estanterías sin crear cuentas de acceso ni roles administrativos.
+          </p>
+        </div>
+        <button class="btn primary" id="btn-new-worker" type="button">Nuevo trabajador</button>
+      </header>
+
+      <section class="filters-bar" aria-label="Filtros de equipo">
+        <label>
+          Buscar
+          <input id="filter-text" type="search" placeholder="Nombre, email, teléfono..." />
+        </label>
+        <label>
+          Estado
+          <select id="filter-active">
+            <option value="ALL">Todos</option>
+            <option value="ACTIVE">Activos</option>
+            <option value="INACTIVE">Inactivos</option>
+          </select>
+        </label>
+        <label>
+          Disponibilidad
+          <select id="filter-availability">
+            <option value="">Todas</option>
+            <option value="DISPONIBLE">Disponible</option>
+            <option value="AUSENTE">Ausente</option>
+            <option value="ENFERMO">Enfermo</option>
+          </select>
+        </label>
+        <label>
+          Tipo
+          <select id="filter-type">
+            <option value="">Todos</option>
+            <option value="TRABAJADOR">Trabajador</option>
+            <option value="ENCARGADO">Encargado</option>
+            <option value="ADMINISTRADOR">Administrador operativo</option>
+          </select>
+        </label>
+        <button class="btn ghost" id="btn-clear-filters" type="button">Limpiar</button>
+      </section>
+
+      <section class="workspace">
+        <section class="list-shell">
+          <div class="section-head">
+            <div>
+              <h2>Trabajadores</h2>
+              <p id="workers-summary" class="help">Cargando equipo...</p>
+            </div>
+          </div>
+          <div class="table-shell">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>Disponibilidad</th>
+                  <th>Estado</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                </tr>
+              </thead>
+              <tbody id="workers-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="detail-shell">
+          <h2>Detalle</h2>
+          <p class="help" id="detail-empty">Selecciona un trabajador para ver asignaciones y tareas activas.</p>
+
+          <div id="worker-detail" hidden>
+            <div class="detail-title">
+              <div>
+                <p class="eyebrow">Trabajador</p>
+                <h3 id="detail-name">Sin selección</h3>
+              </div>
+              <span class="badge" id="detail-active-badge">Activo</span>
+            </div>
+
+            <dl class="data-list" id="detail-data"></dl>
+
+            <div class="detail-actions">
+              <button class="btn ghost" id="btn-edit-worker" type="button">Editar trabajador</button>
+              <button class="btn danger" id="btn-deactivate-worker" type="button">Desactivar trabajador</button>
+              <button class="btn primary" id="btn-reactivate-worker" type="button">Reactivar trabajador</button>
+            </div>
+
+            <p class="form-status" id="worker-action-status" role="status" aria-live="polite"></p>
+
+            <div class="detail-block">
+              <h3>Estanterías asignadas</h3>
+              <ul class="stack-list" id="assigned-racks"></ul>
+            </div>
+
+            <div class="detail-block">
+              <h3>Tareas pendientes/en progreso</h3>
+              <ul class="stack-list" id="assigned-tasks"></ul>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <dialog class="worker-dialog" id="worker-dialog" aria-labelledby="worker-dialog-title">
+        <form class="worker-form" id="worker-form" method="dialog">
+          <div class="dialog-head">
+            <div>
+              <p class="eyebrow">Equipo operativo</p>
+              <h2 id="worker-dialog-title">Nuevo trabajador</h2>
+            </div>
+            <button class="btn ghost compact" id="btn-close-worker-dialog" type="button">Cerrar</button>
+          </div>
+
+          <p class="help">
+            Esta acción crea un trabajador operativo, no una cuenta de acceso.
+          </p>
+
+          <div class="field-grid">
+            <label>
+              Nombre
+              <input id="worker-name" type="text" maxlength="100" required />
+            </label>
+            <label>
+              Apellidos
+              <input id="worker-surname" type="text" maxlength="150" required />
+            </label>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              Email de contacto
+              <input id="worker-email" type="email" maxlength="160" />
+            </label>
+            <label>
+              Teléfono
+              <input id="worker-phone" type="tel" maxlength="40" />
+            </label>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              Tipo operativo
+              <select id="worker-type" required>
+                <option value="TRABAJADOR">Trabajador</option>
+                <option value="ENCARGADO">Encargado</option>
+                <option value="ADMINISTRADOR">Administrador operativo</option>
+              </select>
+            </label>
+            <label>
+              Disponibilidad
+              <select id="worker-availability" required>
+                <option value="DISPONIBLE">Disponible</option>
+                <option value="AUSENTE">Ausente</option>
+                <option value="ENFERMO">Enfermo</option>
+              </select>
+            </label>
+          </div>
+
+          <p class="form-status" id="worker-form-status" role="status" aria-live="polite"></p>
+
+          <div class="dialog-actions">
+            <button class="btn primary" id="btn-save-worker" type="submit">Crear trabajador</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog class="worker-dialog confirm-dialog" id="deactivate-worker-dialog">
+        <form class="worker-form" method="dialog">
+          <div class="dialog-head">
+            <div>
+              <p class="eyebrow">Equipo operativo</p>
+              <h2>Desactivar trabajador</h2>
+            </div>
+            <button class="btn ghost compact" id="btn-cancel-deactivate-worker" type="button">Cancelar</button>
+          </div>
+
+          <p class="help">
+            El trabajador dejará de estar disponible para nuevas asignaciones, pero se conservará el histórico operativo.
+          </p>
+
+          <div class="dialog-actions">
+            <button class="btn danger" id="btn-confirm-deactivate-worker" type="button">
+              Desactivar trabajador
+            </button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+
+    <footer class="foot">
+      <small>Suite Tienda · Equipo operativo · Gestión de trabajadores</small>
+    </footer>
+
+    <script type="module" src="/src/pages/equipo.ts"></script>
+  </body>
+</html>

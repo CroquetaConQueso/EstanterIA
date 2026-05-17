@@ -52,6 +52,16 @@ type PlanoResponsableResponse = {
   responsablePrincipal: boolean | null;
 };
 
+type TrabajadorAsignadoEstanteriaResponse = {
+  trabajadorId: number;
+  nombre: string | null;
+  apellidos: string | null;
+  emailContacto: string | null;
+  tipoTrabajador: string | null;
+  estadoDisponibilidad: string | null;
+  activo: boolean | null;
+};
+
 type PlanoZonaOperativaResponse = {
   id: number;
   seccion: SeccionResponse;
@@ -158,6 +168,7 @@ let planosDisponibles: PlanoResumenResponse[] = [];
 let zonaSeleccionada: PlanoZonaOperativaResponse | null = null;
 let estanteriaSeleccionada: PlanoEstanteriaOperativaResponse | null = null;
 let slotSeleccionado: PlanoSlotOperativoResponse | null = null;
+const trabajadoresPorEstanteria = new Map<string, TrabajadorAsignadoEstanteriaResponse[]>();
 const puedeConfigurarEstructura = isStructuralAdmin();
 
 if (!puedeConfigurarEstructura) {
@@ -192,6 +203,12 @@ const prioridadLabels: Record<string, string> = {
   BAJA: "Baja"
 };
 
+const disponibilidadLabels: Record<string, string> = {
+  DISPONIBLE: "Disponible",
+  AUSENTE: "Ausente",
+  ENFERMO: "Enfermo"
+};
+
 function textoSeguro(value: string | number | null | undefined, fallback = "No disponible"): string {
   if (value === null || value === undefined || value === "") return fallback;
   return String(value);
@@ -218,6 +235,20 @@ function esAlertaCaducidadRetirada(tipo: string): boolean {
 
 function slotTieneAlertaCaducidadRetirada(slot: PlanoSlotOperativoResponse): boolean {
   return slot.tiposAlertas.some(esAlertaCaducidadRetirada);
+}
+
+function estanteriaTieneAlertaCaducidadRetirada(estanteria: PlanoEstanteriaOperativaResponse): boolean {
+  return estanteria.alertasAbiertas.some((alerta) => esAlertaCaducidadRetirada(alerta.tipo))
+    || estanteria.slots.some(slotTieneAlertaCaducidadRetirada);
+}
+
+function totalTareas(estanterias: PlanoEstanteriaOperativaResponse[]): number {
+  return estanterias.reduce((total, estanteria) => total + estanteria.tareasActivas.length, 0);
+}
+
+function totalAlertasCaducidadRetirada(estanterias: PlanoEstanteriaOperativaResponse[]): number {
+  return estanterias.reduce((total, estanteria) =>
+    total + estanteria.alertasAbiertas.filter((alerta) => esAlertaCaducidadRetirada(alerta.tipo)).length, 0);
 }
 
 function formatFecha(value: string | null | undefined): string {
@@ -257,6 +288,26 @@ function textoResponsables(responsables: PlanoResponsableResponse[]): string {
   if (responsables.length === 0) return "Sin responsable asignado";
   const principal = responsables.find((responsable) => responsable.responsablePrincipal) ?? responsables[0];
   return nombreResponsable(principal);
+}
+
+function nombreTrabajador(trabajador: TrabajadorAsignadoEstanteriaResponse): string {
+  return [trabajador.nombre, trabajador.apellidos].filter(Boolean).join(" ").trim()
+    || `Trabajador #${trabajador.trabajadorId}`;
+}
+
+function etiquetaDisponibilidad(value: string | null | undefined): string {
+  if (!value) return "Disponible";
+  return disponibilidadLabels[value] ?? value.replaceAll("_", " ").toLowerCase();
+}
+
+function claseDisponibilidad(value: string | null | undefined): string {
+  if (value === "AUSENTE") return "is-absent";
+  if (value === "ENFERMO") return "is-sick";
+  return "is-available";
+}
+
+function plural(count: number, singular: string, pluralText: string): string {
+  return `${count} ${count === 1 ? singular : pluralText}`;
 }
 
 function estanteriasDeZona(plano: PlanoOperativoResponse, zonaId: number): PlanoEstanteriaOperativaResponse[] {
@@ -323,6 +374,18 @@ async function fetchJson<T>(url: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function cargarTrabajadoresEstanteria(codigo: string): Promise<TrabajadorAsignadoEstanteriaResponse[]> {
+  if (trabajadoresPorEstanteria.has(codigo)) {
+    return trabajadoresPorEstanteria.get(codigo) ?? [];
+  }
+
+  const trabajadores = await fetchJson<TrabajadorAsignadoEstanteriaResponse[]>(
+    `/api/estanterias/${encodeURIComponent(codigo)}/trabajadores`
+  );
+  trabajadoresPorEstanteria.set(codigo, trabajadores);
+  return trabajadores;
+}
+
 function getCodigoQueryParam(): string | null {
   const params = new URLSearchParams(window.location.search);
   return params.get("codigo")?.trim() || null;
@@ -383,6 +446,9 @@ function renderListaEstanterias(plano: PlanoOperativoResponse): void {
 
   plano.zonas.forEach((zona) => {
     const estanterias = estanteriasDeZona(plano, zona.id);
+    const alertasZona = totalAlertas(estanterias);
+    const tareasZona = totalTareas(estanterias);
+    const alertasCaducidadZona = totalAlertasCaducidadRetirada(estanterias);
     const item = document.createElement("li");
     item.className = `plan-item tree-zone${zonaSeleccionada?.id === zona.id ? " is-active" : ""}`;
 
@@ -402,10 +468,23 @@ function renderListaEstanterias(plano: PlanoOperativoResponse): void {
     const meta = document.createElement("span");
     meta.className = "plan-meta";
     const responsible = document.createElement("span");
+    responsible.className = "tree-meta-line";
     responsible.textContent = `Responsable: ${textoResponsables(zona.responsables)}`;
     const summary = document.createElement("span");
-    summary.textContent = `${estanterias.length} estanterías · ${totalAlertas(estanterias)} alertas`;
+    summary.className = "tree-meta-line tree-summary";
+    summary.textContent = [
+      plural(estanterias.length, "estantería", "estanterías"),
+      plural(alertasZona, "alerta", "alertas"),
+      plural(tareasZona, "tarea activa", "tareas activas")
+    ].join(" · ");
     meta.append(responsible, summary);
+
+    if (alertasCaducidadZona > 0) {
+      const expiry = document.createElement("span");
+      expiry.className = "tree-badge is-expiry";
+      expiry.textContent = "Alerta de caducidad/retirada";
+      meta.appendChild(expiry);
+    }
 
     button.append(title, meta);
     item.appendChild(button);
@@ -444,12 +523,26 @@ function renderListaEstanterias(plano: PlanoOperativoResponse): void {
         operationalState.className = activa ? "operational-state" : "operational-state is-inactive";
         operationalState.textContent = activa ? "Activa" : "Inactiva · histórico conservado";
         const visualState = document.createElement("span");
-        visualState.textContent = etiquetaEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual);
+        visualState.className = "tree-meta-line";
+        visualState.textContent = `Estado visual: ${etiquetaEstado(estanteria.ultimaInspeccion?.estadoGeneralVisual)}`;
         const alertsState = document.createElement("span");
+        alertsState.className = "tree-meta-line tree-summary";
         alertsState.textContent = estanteria.alertasAbiertas.length === 0
           ? "Sin alertas abiertas"
-          : `${estanteria.alertasAbiertas.length} alertas`;
-        rackMeta.append(operationalState, visualState, alertsState);
+          : plural(estanteria.alertasAbiertas.length, "alerta", "alertas");
+        const taskState = document.createElement("span");
+        taskState.className = "tree-meta-line";
+        taskState.textContent = estanteria.tareasActivas.length === 0
+          ? "Sin tareas activas"
+          : plural(estanteria.tareasActivas.length, "tarea activa", "tareas activas");
+        rackMeta.append(operationalState, visualState, alertsState, taskState);
+
+        if (estanteriaTieneAlertaCaducidadRetirada(estanteria)) {
+          const expiry = document.createElement("span");
+          expiry.className = "tree-badge is-expiry";
+          expiry.textContent = "Alerta de caducidad/retirada";
+          rackMeta.appendChild(expiry);
+        }
 
         rackButton.append(rackTitle, rackMeta);
         rackItem.appendChild(rackButton);
@@ -575,6 +668,8 @@ function renderDetalleEstanteria(estanteria: PlanoEstanteriaOperativaResponse | 
     crearLineaDetalle("Ocupados", textoSeguro(inspeccion?.ocupados, "0")),
     crearLineaDetalle("Vacíos", textoSeguro(inspeccion?.vacios, "0")),
     crearLineaDetalle("Anomalías", textoSeguro(inspeccion?.anomalias, "0")),
+    crearLineaDetalle("Caducidad/retirada", estanteriaTieneAlertaCaducidadRetirada(estanteria) ? "Alerta de caducidad/retirada activa" : "Sin alerta de caducidad/retirada"),
+    crearLineaDetalle("Alertas abiertas", String(estanteria.alertasAbiertas.length)),
     crearLineaDetalle("Tareas activas", String(estanteria.tareasActivas.length))
   );
 
@@ -584,6 +679,58 @@ function renderDetalleEstanteria(estanteria: PlanoEstanteriaOperativaResponse | 
     note.textContent = "Esta estantería está retirada de nuevas operaciones, pero conserva su histórico.";
     detalleEstanteria.appendChild(note);
   }
+
+  const workersBlock = document.createElement("div");
+  workersBlock.className = "assigned-workers";
+  const workersTitle = document.createElement("h4");
+  workersTitle.textContent = "Trabajadores asignados";
+  const workersContent = document.createElement("div");
+  workersContent.className = "assigned-workers-content";
+  workersContent.textContent = "Cargando trabajadores asignados...";
+  workersBlock.append(workersTitle, workersContent);
+  detalleEstanteria.appendChild(workersBlock);
+
+  const codigo = estanteria.estanteria.codigo;
+  const layoutId = estanteria.layoutId;
+  void cargarTrabajadoresEstanteria(codigo)
+    .then((trabajadores) => {
+      if (estanteriaSeleccionada?.layoutId !== layoutId) return;
+      renderTrabajadoresAsignados(workersContent, trabajadores);
+    })
+    .catch(() => {
+      if (estanteriaSeleccionada?.layoutId !== layoutId) return;
+      workersContent.textContent = "No se pudieron cargar los trabajadores asignados.";
+    });
+}
+
+function renderTrabajadoresAsignados(container: HTMLElement, trabajadores: TrabajadorAsignadoEstanteriaResponse[]): void {
+  container.innerHTML = "";
+
+  if (trabajadores.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "empty-note";
+    empty.textContent = "Sin trabajadores asignados";
+    container.appendChild(empty);
+    return;
+  }
+
+  const list = document.createElement("ul");
+  list.className = "assigned-workers-list";
+  trabajadores.forEach((trabajador) => {
+    const item = document.createElement("li");
+    item.className = "worker-item";
+
+    const name = document.createElement("strong");
+    name.textContent = nombreTrabajador(trabajador);
+
+    const badge = document.createElement("span");
+    badge.className = `worker-badge ${claseDisponibilidad(trabajador.estadoDisponibilidad)}`;
+    badge.textContent = etiquetaDisponibilidad(trabajador.estadoDisponibilidad);
+
+    item.append(name, badge);
+    list.appendChild(item);
+  });
+  container.appendChild(list);
 }
 
 function renderDetalleZona(zona: PlanoZonaOperativaResponse | null): void {
@@ -603,7 +750,9 @@ function renderDetalleZona(zona: PlanoZonaOperativaResponse | null): void {
     crearLineaDetalle("Descripción", textoSeguro(zona.seccion.descripcion)),
     crearLineaDetalle("Responsable", textoResponsables(zona.responsables)),
     crearLineaDetalle("Estanterías", String(estanterias.length)),
-    crearLineaDetalle("Alertas abiertas", String(totalAlertas(estanterias)))
+    crearLineaDetalle("Alertas abiertas", String(totalAlertas(estanterias))),
+    crearLineaDetalle("Tareas activas", String(totalTareas(estanterias))),
+    crearLineaDetalle("Caducidad/retirada", totalAlertasCaducidadRetirada(estanterias) > 0 ? `${totalAlertasCaducidadRetirada(estanterias)} alertas activas` : "Sin alertas de caducidad/retirada")
   );
 }
 
@@ -643,9 +792,15 @@ function renderDetalleAlertas(estanteria: PlanoEstanteriaOperativaResponse | nul
     detalleAlertas.appendChild(empty);
   } else {
     const list = document.createElement("ul");
+    list.className = "ops-list";
     estanteria.alertasAbiertas.forEach((alerta) => {
       const item = document.createElement("li");
-      item.textContent = `#${alerta.id} · ${etiquetaAlerta(alerta.tipo)} · ${etiquetaPrioridad(alerta.prioridad)} · ${textoSeguro(alerta.slotId, "sin slot")}`;
+      item.className = `ops-item${esAlertaCaducidadRetirada(alerta.tipo) ? " is-expiry" : ""}`;
+      const title = document.createElement("strong");
+      title.textContent = `#${alerta.id} · ${etiquetaAlerta(alerta.tipo)}`;
+      const meta = document.createElement("span");
+      meta.textContent = `Prioridad: ${etiquetaPrioridad(alerta.prioridad)} · Slot: ${textoSeguro(alerta.slotId, "sin slot")}`;
+      item.append(title, meta);
       list.appendChild(item);
     });
     detalleAlertas.appendChild(list);
@@ -655,9 +810,15 @@ function renderDetalleAlertas(estanteria: PlanoEstanteriaOperativaResponse | nul
     const title = document.createElement("h4");
     title.textContent = "Tareas activas";
     const tareas = document.createElement("ul");
+    tareas.className = "ops-list";
     estanteria.tareasActivas.forEach((tarea) => {
       const item = document.createElement("li");
-      item.textContent = `#${tarea.id} · ${tarea.titulo} · ${etiquetaEstado(tarea.estadoTarea)}`;
+      item.className = "ops-item";
+      const taskTitle = document.createElement("strong");
+      taskTitle.textContent = `#${tarea.id} · ${tarea.titulo}`;
+      const taskMeta = document.createElement("span");
+      taskMeta.textContent = `Estado: ${etiquetaEstado(tarea.estadoTarea)} · Prioridad: ${etiquetaPrioridad(tarea.prioridad)}`;
+      item.append(taskTitle, taskMeta);
       tareas.appendChild(item);
     });
     detalleAlertas.append(title, tareas);
@@ -685,9 +846,15 @@ function renderDetalleAlertasZona(zona: PlanoZonaOperativaResponse | null): void
   }
 
   const list = document.createElement("ul");
+  list.className = "ops-list";
   alertas.forEach(({ alerta, estanteria }) => {
     const item = document.createElement("li");
-    item.textContent = `${estanteria.estanteria.codigo} · #${alerta.id} · ${etiquetaAlerta(alerta.tipo)} · ${etiquetaPrioridad(alerta.prioridad)}`;
+    item.className = `ops-item${esAlertaCaducidadRetirada(alerta.tipo) ? " is-expiry" : ""}`;
+    const title = document.createElement("strong");
+    title.textContent = `${estanteria.estanteria.codigo} · #${alerta.id} · ${etiquetaAlerta(alerta.tipo)}`;
+    const meta = document.createElement("span");
+    meta.textContent = `Prioridad: ${etiquetaPrioridad(alerta.prioridad)} · Slot: ${textoSeguro(alerta.slotId, "sin slot")}`;
+    item.append(title, meta);
     list.appendChild(item);
   });
   detalleAlertas.appendChild(list);
@@ -740,6 +907,7 @@ function renderPlano(plano: PlanoOperativoResponse): void {
   zonaSeleccionada = plano.zonas[0] ?? null;
   estanteriaSeleccionada = null;
   slotSeleccionado = null;
+  trabajadoresPorEstanteria.clear();
 
   setTexto(planoMeta, `${plano.codigo} · ${plano.empresa.nombre} · ${plano.ancho} x ${plano.alto}`);
   setTexto(tituloPlano, plano.nombre);

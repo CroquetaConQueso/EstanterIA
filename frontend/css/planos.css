@@ -813,6 +813,28 @@ button {
   color: var(--black);
 }
 
+.btn.plan-action-primary {
+  background: var(--gold);
+  color: var(--black);
+  border-color: var(--black);
+  box-shadow: 4px 4px 0 var(--red);
+}
+
+.btn.plan-action-accent {
+  background: var(--gold);
+  color: var(--black);
+  border-color: var(--black);
+  box-shadow: 4px 4px 0 var(--black);
+}
+
+.btn.plan-action-primary:hover,
+.btn.plan-action-primary:focus-visible,
+.btn.plan-action-accent:hover,
+.btn.plan-action-accent:focus-visible {
+  background: var(--black);
+  color: var(--gold);
+}
+
 .btn[aria-disabled="true"] {
   opacity: 0.55;
   pointer-events: none;

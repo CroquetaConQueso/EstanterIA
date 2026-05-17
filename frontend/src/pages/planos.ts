@@ -441,19 +441,19 @@ function getCodigoQueryParam(): string | null {
 function getEstadoQueryParam(): EstadoListadoPlanos {
   const params = new URLSearchParams(window.location.search);
   const estado = params.get("estado")?.trim().toUpperCase();
-  return estadoPlanosPermitidos.includes(estado as EstadoListadoPlanos) ? estado as EstadoListadoPlanos : "ACTIVOS";
+  return estadoPlanosPermitidos.includes(estado as EstadoListadoPlanos) ? estado as EstadoListadoPlanos : "TODOS";
 }
 
 function estadoPlanosSeleccionado(): EstadoListadoPlanos {
   const estado = planoEstadoFilter?.value as EstadoListadoPlanos | undefined;
-  return estadoPlanosPermitidos.includes(estado as EstadoListadoPlanos) ? estado as EstadoListadoPlanos : "ACTIVOS";
+  return estadoPlanosPermitidos.includes(estado as EstadoListadoPlanos) ? estado as EstadoListadoPlanos : "TODOS";
 }
 
 function actualizarUrlPlano(codigo: string): void {
   const url = new URL(window.location.href);
   url.searchParams.set("codigo", codigo);
   const estado = estadoPlanosSeleccionado();
-  if (estado === "ACTIVOS") {
+  if (estado === "TODOS") {
     url.searchParams.delete("estado");
   } else {
     url.searchParams.set("estado", estado);
@@ -502,6 +502,16 @@ function seleccionarCodigoInicial(planos: PlanoResumenResponse[], codigoQuery: s
   const demo = planos.find((plano) => plano.codigo === CODIGO_PLANO_DEMO);
   if (demo) return demo.codigo;
   return planos.find((plano) => plano.activo !== false)?.codigo ?? planos[0]?.codigo ?? null;
+}
+
+function filtrarPlanosPorEstado(planos: PlanoResumenResponse[], estado: EstadoListadoPlanos): PlanoResumenResponse[] {
+  if (estado === "ACTIVOS") {
+    return planos.filter((plano) => plano.activo !== false);
+  }
+  if (estado === "INACTIVOS") {
+    return planos.filter((plano) => plano.activo === false);
+  }
+  return planos;
 }
 
 function mensajeSinPlanos(estado: EstadoListadoPlanos): string {
@@ -1204,9 +1214,10 @@ async function cargarPlanosDisponibles(): Promise<void> {
   const estado = estadoPlanosSeleccionado();
 
   try {
-    planosDisponibles = await fetchJson<PlanoResumenResponse[]>(
+    const planos = await fetchJson<PlanoResumenResponse[]>(
       `/api/empresas/${encodeURIComponent(EMPRESA_DEMO)}/planos?estado=${encodeURIComponent(estado)}`
     );
+    planosDisponibles = filtrarPlanosPorEstado(planos, estado);
     const codigoInicial = seleccionarCodigoInicial(planosDisponibles, codigoQuery);
 
     if (!codigoInicial) {
@@ -1234,7 +1245,7 @@ planoEstadoFilter?.addEventListener("change", () => {
   const url = new URL(window.location.href);
   url.searchParams.delete("codigo");
   const estado = estadoPlanosSeleccionado();
-  if (estado === "ACTIVOS") {
+  if (estado === "TODOS") {
     url.searchParams.delete("estado");
   } else {
     url.searchParams.set("estado", estado);

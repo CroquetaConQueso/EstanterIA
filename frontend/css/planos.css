@@ -484,6 +484,13 @@ button {
 
 .plan-filter select {
   background: var(--white);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.plan-filter option {
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .inactive-plan-note {

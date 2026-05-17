@@ -767,6 +767,13 @@ public class ModeloOperativoService {
         LocalDate fechaCaducidad = request.fechaCaducidad();
         LocalDate fechaRetiradaProgramada = request.fechaRetiradaProgramada();
 
+        if (fechaCaducidad != null && fechaCaducidad.isBefore(LocalDate.now())) {
+            throw ApiException.badRequest(
+                    "ASIGNACION_PRODUCTO_CADUCADO",
+                    "No se puede asignar un producto ya caducado a una estanteria."
+            );
+        }
+
         if (fechaColocacion != null && fechaCaducidad != null && fechaCaducidad.isBefore(fechaColocacion)) {
             throw ApiException.badRequest(
                     "ASIGNACION_FECHAS_INVALIDAS",

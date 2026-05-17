@@ -35,7 +35,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -93,7 +92,7 @@ class AlertaOperativaServiceTest {
     }
 
     @Test
-    void caducidadVencidaGeneraAlertaAlta() {
+    void caducidadHoyGeneraAlertaAltaDeProximaCaducidad() {
         AsignacionProductoSlot asignacion = asignacionBase();
         asignacion.setFechaCaducidad(LocalDate.now());
         when(asignacionProductoSlotRepository.findActivaConContextoById(1L, EstadoAsignacionProductoSlot.ACTIVA))
@@ -110,6 +109,27 @@ class AlertaOperativaServiceTest {
         ArgumentCaptor<Alerta> captor = ArgumentCaptor.forClass(Alerta.class);
         verify(alertaRepository).save(captor.capture());
         assertThat(captor.getValue().getPrioridad()).isEqualTo(PrioridadAlerta.ALTA);
+    }
+
+    @Test
+    void caducidadVencidaNoGeneraAlertaDeProximaCaducidad() {
+        AsignacionProductoSlot asignacion = asignacionBase();
+        asignacion.setFechaCaducidad(LocalDate.now().minusDays(1));
+        when(asignacionProductoSlotRepository.findActivaConContextoById(1L, EstadoAsignacionProductoSlot.ACTIVA))
+                .thenReturn(Optional.of(asignacion));
+        when(alertaRepository.findAlertasAbiertasPorAsignacion(
+                TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE,
+                EstadoAlerta.ABIERTA,
+                1L
+        )).thenReturn(List.of());
+        when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
+
+        service.evaluarAsignacionActiva(1L);
+
+        ArgumentCaptor<Alerta> captor = ArgumentCaptor.forClass(Alerta.class);
+        verify(alertaRepository).save(captor.capture());
+        assertThat(captor.getValue().getTipoAlerta()).isEqualTo(TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE);
+        assertThat(captor.getValue().getMensaje()).contains("ya esta caducado y debe retirarse");
     }
 
     @Test
@@ -168,11 +188,6 @@ class AlertaOperativaServiceTest {
                 any(LocalDate.class)
         )).thenReturn(List.of(asignacion));
         when(alertaRepository.findAlertasAbiertasPorAsignacion(
-                TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
-                EstadoAlerta.ABIERTA,
-                1L
-        )).thenReturn(List.of());
-        when(alertaRepository.findAlertasAbiertasPorAsignacion(
                 TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE,
                 EstadoAlerta.ABIERTA,
                 1L
@@ -182,15 +197,10 @@ class AlertaOperativaServiceTest {
         var response = service.revisarCaducidades();
 
         ArgumentCaptor<Alerta> captor = ArgumentCaptor.forClass(Alerta.class);
-        verify(alertaRepository, times(2)).save(captor.capture());
-        assertThat(captor.getAllValues())
-                .extracting(Alerta::getTipoAlerta)
-                .containsExactlyInAnyOrder(
-                        TipoAlerta.PRODUCTO_PROXIMO_A_CADUCAR,
-                        TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE
-                );
+        verify(alertaRepository).save(captor.capture());
+        assertThat(captor.getValue().getTipoAlerta()).isEqualTo(TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE);
         assertThat(response.asignacionesRevisadas()).isEqualTo(1);
-        assertThat(response.alertasCreadas()).isEqualTo(2);
+        assertThat(response.alertasCreadas()).isEqualTo(1);
         assertThat(response.alertasExistentes()).isZero();
     }
 

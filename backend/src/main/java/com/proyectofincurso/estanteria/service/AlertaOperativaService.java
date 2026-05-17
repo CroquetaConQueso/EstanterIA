@@ -385,7 +385,9 @@ public class AlertaOperativaService {
                                             LocalDate hoy,
                                             LocalDate limite,
                                             ContadorEvaluacion contador) {
-        if (asignacion.getFechaCaducidad() == null || asignacion.getFechaCaducidad().isAfter(limite)) {
+        if (asignacion.getFechaCaducidad() == null
+                || asignacion.getFechaCaducidad().isBefore(hoy)
+                || asignacion.getFechaCaducidad().isAfter(limite)) {
             return;
         }
 
@@ -410,19 +412,29 @@ public class AlertaOperativaService {
     private void evaluarRetiradaProgramada(AsignacionProductoSlot asignacion,
                                            LocalDate hoy,
                                            ContadorEvaluacion contador) {
-        if (asignacion.getFechaRetiradaProgramada() == null
-                || !asignacion.getFechaRetiradaProgramada().isBefore(hoy)
-                || asignacion.getFechaRetiradaConfirmada() != null) {
+        if (asignacion.getFechaRetiradaConfirmada() != null) {
+            return;
+        }
+
+        boolean retiradaProgramadaVencida = asignacion.getFechaRetiradaProgramada() != null
+                && asignacion.getFechaRetiradaProgramada().isBefore(hoy);
+        boolean productoCaducado = asignacion.getFechaCaducidad() != null
+                && asignacion.getFechaCaducidad().isBefore(hoy);
+        if (!retiradaProgramadaVencida && !productoCaducado) {
             return;
         }
 
         EstanteriaSlotConfiguracion slotConfigurado = asignacion.getSlotConfiguracion();
         Estanteria estanteria = slotConfigurado.getEstanteria();
+        String mensaje = productoCaducado
+                ? "El producto " + nombreProductoAsignado(asignacion) + " del slot " + slotConfigurado.getSlotId()
+                        + " ya esta caducado y debe retirarse."
+                : "La retirada programada del producto " + nombreProductoAsignado(asignacion)
+                        + " en " + slotConfigurado.getSlotId() + " esta pendiente.";
         crearOReutilizarAlertaPorAsignacion(
                 TipoAlerta.RETIRADA_PROGRAMADA_PENDIENTE,
                 PrioridadAlerta.ALTA,
-                "La retirada programada del producto " + nombreProductoAsignado(asignacion)
-                        + " en " + slotConfigurado.getSlotId() + " esta pendiente.",
+                mensaje,
                 estanteria,
                 slotConfigurado,
                 asignacion,

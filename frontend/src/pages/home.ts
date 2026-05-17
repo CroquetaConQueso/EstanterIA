@@ -423,7 +423,7 @@ function renderPlanoPreview(plano: PlanoOperativoResponse | null): void {
   if (!homePlanoPreview || !homePlanoStage || !plano) return;
 
   const previewWidth = homePlanoPreview.clientWidth || 520;
-  const previewHeight = homePlanoPreview.clientHeight || 220;
+  const previewHeight = homePlanoPreview.clientHeight || 360;
   const planoAncho = Math.max(plano.ancho, 1);
   const planoAlto = Math.max(plano.alto, 1);
   const scale = Math.min(previewWidth / planoAncho, previewHeight / planoAlto);

@@ -197,8 +197,8 @@ a {
 
 .dashboard-hero {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-  gap: 32px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
   align-items: stretch;
   margin-bottom: 32px;
 }
@@ -213,8 +213,9 @@ a {
 
 .alert-banner {
   display: grid;
-  align-content: start;
-  gap: 16px;
+  grid-template-columns: minmax(220px, 0.34fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
   width: 100%;
   max-width: 100%;
   min-height: 0;
@@ -223,6 +224,11 @@ a {
   background: var(--red);
   color: var(--white);
   box-shadow: var(--shadow-red);
+}
+
+.alert-banner .metric-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-content: stretch;
 }
 
 .banner-kicker,
@@ -374,7 +380,7 @@ a {
 
 .plan-preview-shell {
   position: relative;
-  height: 220px;
+  height: clamp(320px, 34vw, 470px);
   width: calc(100% - 44px);
   margin: 22px;
   overflow: hidden;
@@ -929,6 +935,14 @@ a {
   .dashboard-hero {
     grid-template-columns: 1fr;
   }
+
+  .alert-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .alert-banner .metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 700px) {
@@ -967,6 +981,7 @@ a {
   }
 
   .plan-preview-shell {
+    height: clamp(260px, 58vw, 360px);
     width: calc(100% - 36px);
     margin: 18px;
   }
@@ -986,6 +1001,10 @@ a {
   .plan-summary {
     width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .alert-banner .metric-strip {
+    grid-template-columns: 1fr;
   }
 
 }

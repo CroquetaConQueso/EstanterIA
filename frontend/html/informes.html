@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Informes operativos · Suite Tienda</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="../img/iconoFAV.png" />
+    <link href="../css/app-shell.css" rel="stylesheet" />
+    <link href="../css/informes.css" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="inner">
+        <div class="left">
+          <a class="brand" href="home.html">
+            <img src="../img/iconoFAV.png" alt="Suite Tienda" class="brand-icon" />
+            <span class="brand-text">
+              Suite<span class="brand-accent">Tienda</span>
+            </span>
+          </a>
+          <nav class="nav" aria-label="Principal">
+            <a class="nav-link" href="home.html">Inicio</a>
+            <a class="nav-link" href="planos.html">Planos</a>
+            <a class="nav-link" href="inspecciones.html">Inspecciones</a>
+            <a class="nav-link" href="inventario.html">Inventario</a>
+            <a class="nav-link" href="alertas_centro.html">Alertas</a>
+            <a class="nav-link" href="tareas_reposicion.html">Tareas</a>
+            <a class="nav-link" href="equipo.html">Equipo</a>
+            <a class="nav-link is-active" aria-current="page" href="informes.html">Informes</a>
+            <a class="nav-link" href="vision.html">Visión</a>
+          </nav>
+        </div>
+        <div class="right">
+          <a class="user" href="perfil.html">Mi perfil</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <header class="page-head">
+        <div>
+          <p class="eyebrow">Informes operativos</p>
+          <h1>Informe de rotación visual</h1>
+          <p>
+            Analiza vacíos detectados visualmente en inspecciones históricas. No representa ventas reales.
+          </p>
+        </div>
+      </header>
+
+      <section class="filters-card" aria-labelledby="filters-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Filtros</p>
+            <h2 id="filters-title">Periodo y alcance</h2>
+          </div>
+          <button class="btn primary" id="btn-generar-informe" type="button">Generar informe</button>
+        </div>
+
+        <div class="filters-grid">
+          <label>
+            Plano
+            <select id="f-plano">
+              <option value="">Cargando planos...</option>
+            </select>
+          </label>
+          <label>
+            Sección
+            <select id="f-seccion">
+              <option value="">Todas</option>
+            </select>
+          </label>
+          <label>
+            Estantería
+            <select id="f-estanteria">
+              <option value="">Todas</option>
+            </select>
+          </label>
+          <label>
+            Fecha desde
+            <input id="f-fecha-desde" type="date" />
+          </label>
+          <label>
+            Fecha hasta
+            <input id="f-fecha-hasta" type="date" />
+          </label>
+        </div>
+
+        <p class="status-message" id="informes-status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="summary-grid" aria-label="Resumen del informe">
+        <article class="metric-card">
+          <span>Total inspecciones</span>
+          <strong id="metric-inspecciones">-</strong>
+        </article>
+        <article class="metric-card">
+          <span>Resultados de slot</span>
+          <strong id="metric-resultados">-</strong>
+        </article>
+        <article class="metric-card highlight">
+          <span>Vacíos detectados</span>
+          <strong id="metric-vacios">-</strong>
+        </article>
+        <article class="metric-card">
+          <span>Ocupados detectados</span>
+          <strong id="metric-ocupados">-</strong>
+        </article>
+        <article class="metric-card">
+          <span>Anomalías detectadas</span>
+          <strong id="metric-anomalias">-</strong>
+        </article>
+      </section>
+
+      <section class="report-grid">
+        <article class="panel chart-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Vaciados detectados</p>
+              <h2>Productos con más vacíos</h2>
+            </div>
+          </div>
+          <div class="bar-list" id="productos-vaciados"></div>
+        </article>
+
+        <article class="panel days-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Patrón semanal</p>
+              <h2>Vacíos por día</h2>
+            </div>
+          </div>
+          <div class="day-list" id="resumen-dias"></div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Slots</p>
+            <h2>Slots más vaciados</h2>
+          </div>
+        </div>
+        <div class="table-shell">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Sección</th>
+                <th>Estantería</th>
+                <th>Slot</th>
+                <th>Producto esperado</th>
+                <th>Vacíos</th>
+                <th>Total inspecciones</th>
+                <th>% vacío</th>
+              </tr>
+            </thead>
+            <tbody id="slots-vaciados"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Estabilidad visual</p>
+            <h2>Productos sin vacíos detectados</h2>
+          </div>
+        </div>
+        <p class="help">
+          Estos productos no aparecieron vacíos en las inspecciones del periodo. Esto puede indicar baja rotación visual o estabilidad de stock visible.
+        </p>
+        <div class="quiet-list" id="productos-sin-vacios"></div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <small>Suite Tienda · Informes operativos · Rotación visual</small>
+    </footer>
+
+    <script type="module" src="/src/pages/informes.ts"></script>
+  </body>
+</html>

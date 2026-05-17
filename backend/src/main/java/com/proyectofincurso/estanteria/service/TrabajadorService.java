@@ -65,13 +65,15 @@ public class TrabajadorService {
 
         String email = normalizarNullable(request.emailContacto());
         validarEmailDisponible(email, null);
+        String telefono = normalizarNullable(request.telefonoContacto());
+        validarTelefonoDisponible(telefono, null);
 
         Trabajador trabajador = new Trabajador();
         trabajador.setEmpresa(empresa);
         trabajador.setNombre(request.nombre().trim());
         trabajador.setApellidos(request.apellidos().trim());
         trabajador.setEmailContacto(email);
-        trabajador.setTelefonoContacto(normalizarNullable(request.telefonoContacto()));
+        trabajador.setTelefonoContacto(telefono);
         trabajador.setTipoTrabajador(request.tipoTrabajador());
         trabajador.setEstadoDisponibilidad(request.estadoDisponibilidad() == null
                 ? EstadoDisponibilidadTrabajador.DISPONIBLE
@@ -103,11 +105,13 @@ public class TrabajadorService {
 
         String email = normalizarNullable(request.emailContacto());
         validarEmailDisponible(email, id);
+        String telefono = normalizarNullable(request.telefonoContacto());
+        validarTelefonoDisponible(telefono, id);
 
         trabajador.setNombre(request.nombre().trim());
         trabajador.setApellidos(request.apellidos().trim());
         trabajador.setEmailContacto(email);
-        trabajador.setTelefonoContacto(normalizarNullable(request.telefonoContacto()));
+        trabajador.setTelefonoContacto(telefono);
         trabajador.setTipoTrabajador(request.tipoTrabajador());
         trabajador.setEstadoDisponibilidad(request.estadoDisponibilidad());
         trabajador.setUpdatedAt(Instant.now());
@@ -146,14 +150,30 @@ public class TrabajadorService {
         if (email == null) {
             return;
         }
-        trabajadorRepository.findByEmailContactoIgnoreCase(email)
-                .filter(existente -> trabajadorIdActual == null || !existente.getId().equals(trabajadorIdActual))
-                .ifPresent(existente -> {
-                    throw ApiException.conflict(
-                            "TRABAJADOR_EMAIL_DUPLICADO",
-                            "Ya existe un trabajador con ese email de contacto"
-                    );
-                });
+        boolean duplicado = trabajadorIdActual == null
+                ? trabajadorRepository.existsByEmailContactoIgnoreCase(email)
+                : trabajadorRepository.existsByEmailContactoIgnoreCaseAndIdNot(email, trabajadorIdActual);
+        if (duplicado) {
+            throw ApiException.conflict(
+                    "TRABAJADOR_EMAIL_DUPLICADO",
+                    "Ya existe un trabajador con ese email de contacto."
+            );
+        }
+    }
+
+    private void validarTelefonoDisponible(String telefono, Long trabajadorIdActual) {
+        if (telefono == null) {
+            return;
+        }
+        boolean duplicado = trabajadorIdActual == null
+                ? trabajadorRepository.existsByTelefonoContacto(telefono)
+                : trabajadorRepository.existsByTelefonoContactoAndIdNot(telefono, trabajadorIdActual);
+        if (duplicado) {
+            throw ApiException.conflict(
+                    "TRABAJADOR_TELEFONO_DUPLICADO",
+                    "Ya existe un trabajador con ese teléfono de contacto."
+            );
+        }
     }
 
     private TrabajadorResponse toResponse(Trabajador trabajador) {

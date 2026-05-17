@@ -210,6 +210,21 @@ select {
   background: var(--white);
 }
 
+.btn.edit-action {
+  background: var(--gold);
+  color: var(--black);
+  border-color: var(--black);
+  box-shadow: 3px 3px 0 var(--red);
+}
+
+.btn.edit-action:hover:not(:disabled),
+.btn.edit-action:focus-visible {
+  background: var(--black);
+  color: var(--gold);
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .btn.close-action {
   background: var(--black);
   color: var(--white);

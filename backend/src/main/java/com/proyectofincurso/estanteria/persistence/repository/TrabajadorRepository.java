@@ -30,4 +30,12 @@ public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
     Optional<Trabajador> findByIdAndActivoTrue(Long id);
 
     Optional<Trabajador> findByEmailContactoIgnoreCase(String emailContacto);
+
+    boolean existsByEmailContactoIgnoreCase(String emailContacto);
+
+    boolean existsByEmailContactoIgnoreCaseAndIdNot(String emailContacto, Long id);
+
+    boolean existsByTelefonoContacto(String telefonoContacto);
+
+    boolean existsByTelefonoContactoAndIdNot(String telefonoContacto, Long id);
 }

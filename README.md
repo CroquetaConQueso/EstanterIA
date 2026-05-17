@@ -547,7 +547,144 @@ Notas ampliadas de API:
 
 - `docs/API_NOTES.md`
 
-## 23. Testing y validación
+## 23. Endpoints principales
+
+Listado resumido de endpoints REST relevantes. Swagger UI mantiene el contrato ejecutable completo con parámetros, cuerpos y respuestas.
+
+### 23.1. Autenticación
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| POST | `/api/login` | Público | Autentica usuario y devuelve JWT |
+| POST | `/api/logout` | Autenticado | Revoca la sesión actual |
+| POST | `/api/registro` | Público | Registra una cuenta de usuario |
+| POST | `/api/forgot-password` | Público | Solicita recuperación de contraseña |
+| GET | `/api/reset-password/validate` | Público | Valida token de recuperación |
+| POST | `/api/reset-password` | Público | Restablece contraseña |
+
+### 23.2. Perfil
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| GET | `/api/perfil` | Autenticado | Obtiene datos de cuenta y contexto operativo |
+| PATCH | `/api/perfil` | Autenticado | Actualiza datos editables del perfil |
+
+### 23.3. Planos
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| GET | `/api/empresas/{codigoEmpresa}/planos` | ADMIN/SUPERADMIN | Lista planos por estado |
+| GET | `/api/planos/{codigo}` | ADMIN/SUPERADMIN | Obtiene un plano persistido |
+| GET | `/api/planos/{codigo}/operativo` | ADMIN/SUPERADMIN | Obtiene plano operativo con zonas y estanterías |
+| POST | `/api/planos` | ADMIN/SUPERADMIN | Crea un plano |
+| PUT | `/api/planos/{codigo}` | ADMIN/SUPERADMIN | Actualiza layout/configuración de plano |
+| PATCH | `/api/planos/{codigo}/desactivar` | ADMIN/SUPERADMIN | Desactiva plano |
+| PATCH | `/api/planos/{codigo}/reactivar` | ADMIN/SUPERADMIN | Reactiva plano |
+
+### 23.4. Editor / configuración operativa
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| GET | `/api/empresas/{codigo}` | ADMIN/SUPERADMIN | Obtiene empresa por código |
+| GET | `/api/empresas/{codigoEmpresa}/secciones` | ADMIN/SUPERADMIN | Lista secciones de empresa |
+| GET | `/api/empresas/{codigoEmpresa}/secciones/disponibles-para-plano` | ADMIN/SUPERADMIN | Lista secciones disponibles para añadir a un plano |
+| POST | `/api/secciones` | ADMIN/SUPERADMIN | Crea sección |
+| PATCH | `/api/secciones/{seccionId}` | ADMIN/SUPERADMIN | Actualiza sección |
+| PATCH | `/api/secciones/{seccionId}/desactivar` | ADMIN/SUPERADMIN | Desactiva sección |
+| PATCH | `/api/secciones/{seccionId}/reactivar` | ADMIN/SUPERADMIN | Reactiva sección |
+| PATCH | `/api/secciones/{seccionId}/responsable-principal` | ADMIN/SUPERADMIN | Asigna responsable principal |
+| GET | `/api/secciones/{seccionId}/estanterias` | ADMIN/SUPERADMIN | Lista estanterías de una sección |
+| GET | `/api/secciones/{seccionId}/alertas/abiertas` | ADMIN/SUPERADMIN | Lista alertas abiertas de sección |
+| POST | `/api/estanterias` | ADMIN/SUPERADMIN | Crea estantería |
+| PATCH | `/api/estanterias/{codigo}` | ADMIN/SUPERADMIN | Actualiza estantería |
+| PATCH | `/api/estanterias/{codigo}/desactivar` | ADMIN/SUPERADMIN | Desactiva estantería |
+| PATCH | `/api/estanterias/{codigo}/reactivar` | ADMIN/SUPERADMIN | Reactiva estantería |
+| GET | `/api/estanterias/{codigo}/configuracion` | ADMIN/SUPERADMIN | Obtiene configuración de estantería |
+
+### 23.5. Productos / inventario
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| GET | `/api/productos` | ADMIN/SUPERADMIN | Lista productos |
+| POST | `/api/productos` | ADMIN/SUPERADMIN | Crea producto |
+| PATCH | `/api/productos/{id}` | ADMIN/SUPERADMIN | Actualiza producto |
+| PATCH | `/api/productos/{id}/desactivar` | ADMIN/SUPERADMIN | Desactiva producto |
+| PATCH | `/api/productos/{id}/reactivar` | ADMIN/SUPERADMIN | Reactiva producto |
+| GET | `/api/productos-proveedor/activos` | ADMIN/SUPERADMIN | Lista productos/proveedor activos |
+
+### 23.6. Slots / asignaciones activas
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| PUT | `/api/slots/{slotConfiguracionId}/asignacion-activa` | ADMIN/SUPERADMIN | Guarda asignación activa de producto en slot |
+| PATCH | `/api/slots/{slotConfiguracionId}/asignacion-activa/retirar` | ADMIN/SUPERADMIN | Retira asignación activa conservando histórico |
+
+### 23.7. Capturas y Vision
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| GET | `/api/capturas` | ADMIN/SUPERADMIN | Lista capturas disponibles, opcionalmente por estantería |
+| POST | `/api/vision/inspeccionar/{estanteriaCodigo}` | ADMIN/SUPERADMIN | Ejecuta inspección visual usando Vision/FastAPI |
+
+### 23.8. Inspecciones
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| POST | `/api/inspeccion_nueva` | ADMIN/SUPERADMIN | Crea inspección manual |
+| GET | `/api/inspecciones` | ADMIN/SUPERADMIN | Lista inspecciones |
+| GET | `/api/inspecciones/{id}` | ADMIN/SUPERADMIN | Obtiene detalle de inspección |
+| PATCH | `/api/inspecciones/{id}/imagen` | ADMIN/SUPERADMIN | Actualiza imagen asociada a inspección |
+| DELETE | `/api/inspecciones/{id}` | ADMIN/SUPERADMIN | Elimina inspección si no tiene dependencias bloqueantes |
+
+### 23.9. Alertas
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| GET | `/api/alertas/abiertas` | ADMIN/SUPERADMIN | Lista alertas abiertas |
+| POST | `/api/alertas/evaluar-caducidad` | ADMIN/SUPERADMIN | Evalúa caducidad de una asignación concreta |
+| POST | `/api/alertas/revisar-caducidades` | ADMIN/SUPERADMIN | Revisa caducidades y retiradas programadas |
+| POST | `/api/alertas/revisar-trabajadores-no-disponibles` | ADMIN/SUPERADMIN | Revisa trabajadores no disponibles asignados |
+| PATCH | `/api/alertas/{id}/resolver` | ADMIN/SUPERADMIN | Resuelve alerta |
+| PATCH | `/api/alertas/{id}/descartar` | ADMIN/SUPERADMIN | Descarta alerta |
+| PATCH | `/api/notificaciones-alerta/{alertaTrabajadorId}/leer` | Autenticado | Marca notificación de alerta como leída |
+
+### 23.10. Tareas
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| GET | `/api/tareas` | ADMIN/SUPERADMIN | Lista tareas operativas |
+| GET | `/api/tareas/pendientes` | ADMIN/SUPERADMIN | Lista tareas pendientes |
+| GET | `/api/tareas/{id}` | ADMIN/SUPERADMIN | Obtiene detalle de tarea |
+| POST | `/api/tareas` | ADMIN/SUPERADMIN | Crea tarea manual |
+| PATCH | `/api/tareas/{id}` | ADMIN/SUPERADMIN | Actualiza tarea |
+| PATCH | `/api/tareas/{id}/asignar` | ADMIN/SUPERADMIN | Asigna trabajador a tarea |
+| PATCH | `/api/tareas/{id}/estado` | ADMIN/SUPERADMIN | Cambia estado de tarea |
+| PATCH | `/api/tareas/{id}/reabrir` | ADMIN/SUPERADMIN | Reabre tarea finalizada |
+
+### 23.11. Equipo / trabajadores
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| GET | `/api/trabajadores` | ADMIN/SUPERADMIN | Lista trabajadores |
+| GET | `/api/trabajadores/activos` | ADMIN/SUPERADMIN | Lista trabajadores activos |
+| GET | `/api/trabajadores/{trabajadorId}` | ADMIN/SUPERADMIN | Obtiene detalle de trabajador |
+| POST | `/api/trabajadores` | ADMIN/SUPERADMIN | Crea trabajador operativo |
+| PATCH | `/api/trabajadores/{trabajadorId}` | ADMIN/SUPERADMIN | Actualiza trabajador |
+| PATCH | `/api/trabajadores/{trabajadorId}/desactivar` | ADMIN/SUPERADMIN | Desactiva trabajador |
+| PATCH | `/api/trabajadores/{trabajadorId}/reactivar` | ADMIN/SUPERADMIN | Reactiva trabajador |
+| GET | `/api/trabajadores/{trabajadorId}/alertas` | ADMIN/SUPERADMIN | Lista alertas vinculadas al trabajador |
+| GET | `/api/estanterias/{codigo}/trabajadores` | ADMIN/SUPERADMIN | Lista trabajadores asignados a estantería |
+| POST | `/api/estanterias/{codigo}/trabajadores/{trabajadorId}` | ADMIN/SUPERADMIN | Asigna trabajador a estantería |
+| PATCH | `/api/estanterias/{codigo}/trabajadores/{trabajadorId}/desasignar` | ADMIN/SUPERADMIN | Desasigna trabajador de estantería |
+
+### 23.12. Informes
+
+| Método | Endpoint | Rol | Descripción |
+|---|---|---|---|
+| GET | `/api/informes/rotacion-visual` | ADMIN/SUPERADMIN | Genera informe JSON de rotación visual |
+| GET | `/api/informes/rotacion-visual/pdf` | ADMIN/SUPERADMIN | Exporta informe de rotación visual en PDF |
+
+## 24. Testing y validación
 
 Backend:
 
@@ -567,7 +704,7 @@ npm exec tsc -- --noEmit
 
 La QA funcional del proyecto se apoya además en Swagger, Postman y revisión manual de los flujos principales: planos, editor, inventario, inspecciones, alertas, tareas, equipo e informes.
 
-## 24. Estructura del proyecto
+## 25. Estructura del proyecto
 
 ```text
 estanteria/
@@ -589,7 +726,7 @@ estanteria/
 └── README.md
 ```
 
-## 25. Documentación ampliada
+## 26. Documentación ampliada
 
 Documentación incluida:
 
@@ -608,6 +745,6 @@ Pendiente para siguientes iteraciones:
 
 Para la memoria final se recomienda complementar este README con capturas de Swagger, flujos de uso y evidencia de pruebas.
 
-## 26. Autor
+## 27. Autor
 
 Proyecto desarrollado como Proyecto Fin de Curso.

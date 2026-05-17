@@ -41,7 +41,7 @@
         <p class="page-desc">Módulo de visión</p>
         <h1>Inspección visual asistida</h1>
         <p class="page-desc" style="color: var(--black); margin-top: 10px">
-          Selecciona sección y estantería, lanza una inspección desde cámara o desde una imagen existente,
+          Selecciona plano, sección y estantería, lanza una inspección desde cámara o desde una imagen existente,
           y revisa el resultado al instante.
         </p>
       </header>
@@ -73,9 +73,17 @@
 
             <form id="vision-form" class="vision-form">
               <label class="field">
+                <span>Plano</span>
+                <select id="vision-plano" name="planoCodigo" required>
+                  <option value="">Cargando planos activos...</option>
+                </select>
+                <small id="vision-plano-help" class="field-help">Solo se muestran planos activos.</small>
+              </label>
+
+              <label class="field">
                 <span>Sección</span>
                 <select id="vision-seccion" name="seccionId" required>
-                  <option value="">Cargando secciones...</option>
+                  <option value="">Selecciona primero un plano</option>
                 </select>
               </label>
 
@@ -102,8 +110,11 @@
                   type="text"
                   placeholder="/captures/capture_000012.png"
                   autocomplete="off"
+                  list="vision-capturas-list"
                   maxlength="500"
                 />
+                <datalist id="vision-capturas-list"></datalist>
+                <small id="vision-capturas-help" class="field-help">Selecciona una estantería para cargar capturas disponibles.</small>
               </label>
 
               <label class="field">
@@ -115,6 +126,7 @@
                   maxlength="1000"
                   placeholder="Comentario breve si aplica"
                 ></textarea>
+                <small class="field-help">Notas internas de la inspección. No afectan al análisis visual ni modifican alertas o tareas.</small>
               </label>
 
               <div class="form-actions">
@@ -144,6 +156,10 @@
             </div>
 
             <ul class="detail-list">
+              <li class="meta-item">
+                <span class="meta-label">Plano actual</span>
+                <strong class="meta-value" id="preview-plan">—</strong>
+              </li>
               <li class="meta-item">
                 <span class="meta-label">Sección actual</span>
                 <strong class="meta-value" id="preview-section">—</strong>

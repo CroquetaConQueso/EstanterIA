@@ -204,6 +204,12 @@ function formatFecha(value: string | null | undefined): string {
   }).format(fecha);
 }
 
+function todayIsoDate(): string {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60_000;
+  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
+}
+
 function formatStock(value: boolean | null | undefined): string {
   if (value === true) return "Stock disponible: Sí";
   if (value === false) return "Stock disponible: No · requiere pedido o reposición externa";
@@ -776,6 +782,10 @@ async function guardarAsignacionDesdeFormulario(): Promise<void> {
   const fechaColocacion = assignmentPlacementDateInput?.value || null;
   const fechaCaducidad = assignmentExpiryDateInput?.value || null;
   const fechaRetiradaProgramada = assignmentPlannedRemovalDateInput?.value || null;
+  if (fechaCaducidad && fechaCaducidad < todayIsoDate()) {
+    setAssignmentFormStatus("No se puede asignar un producto ya caducado a una estantería.", "error");
+    return;
+  }
 
   setAssignmentFormStatus("Guardando asignación activa...", "info");
   if (btnSaveAssignment) btnSaveAssignment.disabled = true;

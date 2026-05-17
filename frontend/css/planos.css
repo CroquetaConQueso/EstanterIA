@@ -420,12 +420,28 @@ button {
   margin-bottom: 18px;
 }
 
-.current-plan {
+.plan-control-panel {
   display: grid;
-  grid-template-columns: minmax(260px, 360px) minmax(160px, 220px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 560px) minmax(0, 1fr) auto;
   gap: 18px;
   align-items: end;
   width: 100%;
+}
+
+.plan-control-group {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(150px, 0.55fr);
+  gap: 14px;
+  align-items: end;
+  min-width: 0;
+}
+
+.plan-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .plan-selector {
@@ -469,6 +485,25 @@ button {
   font-family: 'Courier New', Courier, monospace;
   font-weight: 900;
   text-transform: none;
+}
+
+.plan-action-feedback {
+  margin: -4px 0 18px;
+  border: var(--border-light);
+  background: var(--paper);
+  color: var(--black);
+  padding: 12px 14px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  text-transform: none;
+}
+
+.plan-action-feedback.is-ok {
+  background: #b7e6bf;
+}
+
+.plan-action-feedback.is-error {
+  background: #ff9b8f;
 }
 
 .status-pill {
@@ -868,6 +903,88 @@ button {
   pointer-events: none;
 }
 
+.plan-modal[hidden] {
+  display: none;
+}
+
+.plan-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.plan-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.72);
+}
+
+.plan-modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  background: var(--white);
+  color: var(--black);
+  border: var(--border-heavy);
+  box-shadow: var(--shadow-red);
+  padding: 24px;
+}
+
+.plan-modal-card h2 {
+  margin: 0 0 14px;
+  font-size: 1.8rem;
+  text-shadow: 2px 2px 0 var(--gold);
+}
+
+.plan-modal-card p,
+.plan-modal-confirm {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  line-height: 1.45;
+  text-transform: none;
+}
+
+.plan-modal-confirm {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.plan-modal-confirm input {
+  min-height: 52px;
+  border: var(--border-heavy);
+  background: var(--paper);
+  color: var(--black);
+  box-shadow: 4px 4px 0 var(--black);
+  padding: 0 14px;
+  font: inherit;
+  text-transform: uppercase;
+}
+
+.plan-modal-error {
+  margin: 16px 0 0;
+  border: var(--border-light);
+  background: #ff9b8f;
+  padding: 10px;
+}
+
+.plan-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .canvas-empty-link {
   display: inline-flex;
   margin-top: 14px;
@@ -892,13 +1009,22 @@ button {
   .left,
   .page-head,
   .card-head,
-  .current-plan {
+  .plan-control-panel {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .current-plan {
+  .plan-control-panel {
     display: flex;
+  }
+
+  .plan-control-group {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .plan-actions {
+    justify-content: flex-start;
   }
 
   .layout,

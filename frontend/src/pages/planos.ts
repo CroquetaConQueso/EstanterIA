@@ -162,17 +162,27 @@ const tituloPlano = document.querySelector<HTMLElement>("#titulo-plano");
 const subtituloPlano = document.querySelector<HTMLElement>("#subtitulo-plano");
 const estadoCarga = document.querySelector<HTMLElement>("#estado-carga");
 const planoInactivoAviso = document.querySelector<HTMLElement>("#plano-inactivo-aviso");
+const planoAccionFeedback = document.querySelector<HTMLElement>("#plano-accion-feedback");
 const canvas = document.querySelector<HTMLElement>("#plano-canvas");
 const detalleEstanteria = document.querySelector<HTMLElement>("#detalle-estanteria");
 const detallePrincipalTitulo = document.querySelector<HTMLElement>("#detalle-principal-titulo");
 const detalleSlot = document.querySelector<HTMLElement>("#detalle-slot");
 const detalleAlertas = document.querySelector<HTMLElement>("#detalle-alertas");
+const planoEstadoModal = document.querySelector<HTMLElement>("#plano-estado-modal");
+const planoEstadoModalTitle = document.querySelector<HTMLElement>("#plano-estado-modal-title");
+const planoEstadoModalText = document.querySelector<HTMLElement>("#plano-estado-modal-text");
+const planoDesactivarConfirmGroup = document.querySelector<HTMLElement>("#plano-desactivar-confirm-group");
+const planoDesactivarConfirmInput = document.querySelector<HTMLInputElement>("#plano-desactivar-confirm");
+const planoEstadoModalError = document.querySelector<HTMLElement>("#plano-estado-modal-error");
+const planoEstadoModalConfirm = document.querySelector<HTMLButtonElement>("#plano-estado-modal-confirm");
+const planoEstadoModalCancelButtons = document.querySelectorAll<HTMLElement>("[data-modal-cancel]");
 
 let planoActual: PlanoOperativoResponse | null = null;
 let planosDisponibles: PlanoResumenResponse[] = [];
 let zonaSeleccionada: PlanoZonaOperativaResponse | null = null;
 let estanteriaSeleccionada: PlanoEstanteriaOperativaResponse | null = null;
 let slotSeleccionado: PlanoSlotOperativoResponse | null = null;
+let accionModalActual: "desactivar" | "reactivar" | null = null;
 const trabajadoresPorEstanteria = new Map<string, TrabajadorAsignadoEstanteriaResponse[]>();
 const puedeConfigurarEstructura = isStructuralAdmin();
 
@@ -342,6 +352,19 @@ function setHtml(element: HTMLElement | null, html: string): void {
   if (element) element.innerHTML = html;
 }
 
+function setFeedback(message: string | null, kind: "ok" | "error" | "info" = "info"): void {
+  if (!planoAccionFeedback) return;
+  if (!message) {
+    planoAccionFeedback.hidden = true;
+    planoAccionFeedback.textContent = "";
+    planoAccionFeedback.className = "plan-action-feedback";
+    return;
+  }
+  planoAccionFeedback.hidden = false;
+  planoAccionFeedback.textContent = message;
+  planoAccionFeedback.className = `plan-action-feedback is-${kind}`;
+}
+
 function posicionar(element: HTMLElement, x: number, y: number, width: number, height: number, plano: PlanoOperativoResponse): void {
   element.style.left = `${(x / plano.ancho) * 100}%`;
   element.style.top = `${(y / plano.alto) * 100}%`;
@@ -446,7 +469,7 @@ function renderSelectorPlanos(codigoSeleccionado: string | null): void {
   if (planosDisponibles.length === 0) {
     const option = document.createElement("option");
     option.value = "";
-    option.textContent = "No hay planos configurados";
+    option.textContent = mensajeSinPlanos(estadoPlanosSeleccionado());
     planoSelect.appendChild(option);
     planoSelect.disabled = true;
     return;
@@ -475,10 +498,16 @@ function renderSelectorPlanos(codigoSeleccionado: string | null): void {
 }
 
 function seleccionarCodigoInicial(planos: PlanoResumenResponse[], codigoQuery: string | null): string | null {
-  if (codigoQuery) return codigoQuery;
+  if (codigoQuery && planos.some((plano) => plano.codigo === codigoQuery)) return codigoQuery;
   const demo = planos.find((plano) => plano.codigo === CODIGO_PLANO_DEMO);
   if (demo) return demo.codigo;
   return planos.find((plano) => plano.activo !== false)?.codigo ?? planos[0]?.codigo ?? null;
+}
+
+function mensajeSinPlanos(estado: EstadoListadoPlanos): string {
+  if (estado === "INACTIVOS") return "No hay planos inactivos.";
+  if (estado === "TODOS") return "No hay planos registrados.";
+  return "No hay planos activos.";
 }
 
 function renderEstadoPlano(plano: PlanoOperativoResponse | null): void {
@@ -497,6 +526,98 @@ function renderEstadoPlano(plano: PlanoOperativoResponse | null): void {
   btnTogglePlano.textContent = inactivo ? "Reactivar plano" : "Desactivar plano";
   btnTogglePlano.classList.toggle("danger", !inactivo);
   btnTogglePlano.classList.toggle("plan-action-primary", inactivo);
+}
+
+function cerrarModalEstadoPlano(): void {
+  accionModalActual = null;
+  if (planoEstadoModal) planoEstadoModal.hidden = true;
+  if (planoDesactivarConfirmInput) planoDesactivarConfirmInput.value = "";
+  if (planoEstadoModalError) {
+    planoEstadoModalError.hidden = true;
+    planoEstadoModalError.textContent = "";
+  }
+  if (planoEstadoModalConfirm) {
+    planoEstadoModalConfirm.disabled = true;
+  }
+}
+
+function actualizarEstadoConfirmacionModal(): void {
+  if (!planoEstadoModalConfirm) return;
+  if (accionModalActual === "reactivar") {
+    planoEstadoModalConfirm.disabled = false;
+    return;
+  }
+  planoEstadoModalConfirm.disabled = planoDesactivarConfirmInput?.value !== "DESACTIVAR";
+}
+
+function abrirModalEstadoPlano(accion: "desactivar" | "reactivar"): void {
+  if (!planoActual || !planoEstadoModal || !planoEstadoModalConfirm) return;
+  accionModalActual = accion;
+  const desactivar = accion === "desactivar";
+
+  if (planoEstadoModalTitle) {
+    planoEstadoModalTitle.textContent = desactivar ? "Desactivar plano" : "Reactivar plano";
+  }
+  if (planoEstadoModalText) {
+    planoEstadoModalText.textContent = desactivar
+      ? "El plano dejará de aparecer en los flujos operativos por defecto. Se conservarán sus zonas, estanterías, inspecciones, alertas, tareas e histórico."
+      : "El plano volverá a aparecer en los flujos operativos normales.";
+  }
+  if (planoDesactivarConfirmGroup) {
+    planoDesactivarConfirmGroup.hidden = !desactivar;
+  }
+  if (planoDesactivarConfirmInput) {
+    planoDesactivarConfirmInput.value = "";
+  }
+  if (planoEstadoModalError) {
+    planoEstadoModalError.hidden = true;
+    planoEstadoModalError.textContent = "";
+  }
+
+  planoEstadoModalConfirm.textContent = desactivar ? "Desactivar plano" : "Reactivar plano";
+  planoEstadoModalConfirm.classList.toggle("danger", desactivar);
+  planoEstadoModalConfirm.classList.toggle("plan-action-primary", !desactivar);
+  planoEstadoModal.hidden = false;
+  actualizarEstadoConfirmacionModal();
+
+  if (desactivar) {
+    planoDesactivarConfirmInput?.focus();
+  } else {
+    planoEstadoModalConfirm.focus();
+  }
+}
+
+async function ejecutarCambioEstadoPlano(): Promise<void> {
+  if (!accionModalActual || !planoActual || !planoEstadoModalConfirm) return;
+  const accion = accionModalActual;
+  const codigo = planoActual.codigo;
+  const reactivar = accion === "reactivar";
+
+  planoEstadoModalConfirm.disabled = true;
+  setTexto(estadoCarga, reactivar ? "Reactivando" : "Desactivando");
+
+  try {
+    await patchJson<unknown>(`/api/planos/${encodeURIComponent(codigo)}/${accion}`);
+    cerrarModalEstadoPlano();
+    const successMessage = reactivar ? "Plano reactivado correctamente." : "Plano desactivado. Se conserva su histórico operativo.";
+
+    const estado = estadoPlanosSeleccionado();
+    if ((!reactivar && estado === "ACTIVOS") || (reactivar && estado === "INACTIVOS")) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("codigo");
+      window.history.replaceState({}, "", url);
+    }
+    await cargarPlanosDisponibles();
+    setFeedback(successMessage, "ok");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "No se pudo actualizar el estado del plano.";
+    if (planoEstadoModalError) {
+      planoEstadoModalError.hidden = false;
+      planoEstadoModalError.textContent = message;
+    }
+    setTexto(estadoCarga, "Error");
+    actualizarEstadoConfirmacionModal();
+  }
 }
 
 function renderListaEstanterias(plano: PlanoOperativoResponse): void {
@@ -1026,13 +1147,18 @@ function renderError(message: string): void {
 }
 
 function renderSinPlanos(): void {
+  planoActual = null;
   zonaSeleccionada = null;
   estanteriaSeleccionada = null;
   slotSeleccionado = null;
+  const estado = estadoPlanosSeleccionado();
+  const mensaje = mensajeSinPlanos(estado);
   renderSelectorPlanos(null);
-  setTexto(planoMeta, "Todavía no hay planos configurados.");
+  setTexto(planoMeta, mensaje);
   setTexto(tituloPlano, "Sin planos configurados");
-  setTexto(subtituloPlano, "Crea el primer plano para empezar a visualizar zonas y estanterías.");
+  setTexto(subtituloPlano, estado === "ACTIVOS"
+    ? "Crea un plano nuevo o cambia a Inactivos/Todos para consultar históricos."
+    : "Cambia el filtro de visualización o crea un nuevo plano si necesitas configurar uno.");
   setTexto(estadoCarga, "Sin planos");
   renderEstadoPlano(null);
   if (btnEditarPlano) {
@@ -1043,12 +1169,12 @@ function renderSinPlanos(): void {
     canvas.innerHTML = "";
     const empty = document.createElement("span");
     empty.innerHTML = puedeConfigurarEstructura
-      ? `Todavía no hay planos configurados.<br><a class="canvas-empty-link" href="editor.html">Crear primer plano</a>`
-      : "Todavía no hay planos configurados.";
+      ? `${mensaje}<br><a class="canvas-empty-link" href="editor.html">Crear plano</a>`
+      : mensaje;
     canvas.appendChild(empty);
   }
   if (listaEstanterias) {
-    listaEstanterias.innerHTML = "<li class=\"plan-item\">Crea un plano para ver estanterías.</li>";
+    listaEstanterias.innerHTML = `<li class="plan-item">${mensaje}</li>`;
   }
   renderDetalleEstanteria(null);
   renderDetalleSlot(null);
@@ -1057,6 +1183,7 @@ function renderSinPlanos(): void {
 
 async function cargarPlanoOperativo(codigo: string): Promise<void> {
   setTexto(estadoCarga, "Cargando");
+  setFeedback(null);
 
   try {
     const plano = await fetchJson<PlanoOperativoResponse>(`/api/planos/${encodeURIComponent(codigo)}/operativo`);
@@ -1070,6 +1197,9 @@ async function cargarPlanoOperativo(codigo: string): Promise<void> {
 
 async function cargarPlanosDisponibles(): Promise<void> {
   setTexto(estadoCarga, "Cargando");
+  setFeedback(null);
+  if (planoSelect) planoSelect.disabled = true;
+  if (planoEstadoFilter) planoEstadoFilter.disabled = true;
   const codigoQuery = getCodigoQueryParam();
   const estado = estadoPlanosSeleccionado();
 
@@ -1088,7 +1218,10 @@ async function cargarPlanosDisponibles(): Promise<void> {
     await cargarPlanoOperativo(codigoInicial);
   } catch (err) {
     const message = err instanceof Error ? err.message : "No se pudieron cargar los planos disponibles.";
+    setFeedback(message, "error");
     renderError(message);
+  } finally {
+    if (planoEstadoFilter) planoEstadoFilter.disabled = false;
   }
 }
 
@@ -1111,37 +1244,20 @@ planoEstadoFilter?.addEventListener("change", () => {
 });
 
 btnTogglePlano?.addEventListener("click", async () => {
-  const toggleButton = btnTogglePlano;
-  if (!toggleButton || !planoActual) return;
-  const inactivo = planoActual.activo === false;
-  const confirmado = inactivo
-    ? window.confirm("¿Reactivar este plano?")
-    : window.confirm("El plano dejará de aparecer en los flujos operativos por defecto, pero se conservarán sus zonas, estanterías e histórico.");
-  if (!confirmado) return;
+  if (!planoActual) return;
+  abrirModalEstadoPlano(planoActual.activo === false ? "reactivar" : "desactivar");
+});
 
-  toggleButton.disabled = true;
-  setTexto(estadoCarga, inactivo ? "Reactivando" : "Desactivando");
-
-  try {
-    const accion = inactivo ? "reactivar" : "desactivar";
-    await patchJson<unknown>(`/api/planos/${encodeURIComponent(planoActual.codigo)}/${accion}`);
-    if (inactivo) {
-      setTexto(estadoCarga, "Reactivado");
-    } else {
-      setTexto(estadoCarga, "Desactivado");
-    }
-    const estado = estadoPlanosSeleccionado();
-    if ((!inactivo && estado === "ACTIVOS") || (inactivo && estado === "INACTIVOS")) {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("codigo");
-      window.history.replaceState({}, "", url);
-    }
-    await cargarPlanosDisponibles();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "No se pudo actualizar el estado del plano.";
-    renderError(message);
-  } finally {
-    toggleButton.disabled = false;
+planoDesactivarConfirmInput?.addEventListener("input", actualizarEstadoConfirmacionModal);
+planoEstadoModalConfirm?.addEventListener("click", () => {
+  void ejecutarCambioEstadoPlano();
+});
+planoEstadoModalCancelButtons.forEach((button) => {
+  button.addEventListener("click", cerrarModalEstadoPlano);
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !planoEstadoModal?.hidden) {
+    cerrarModalEstadoPlano();
   }
 });
 

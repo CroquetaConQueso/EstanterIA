@@ -44,12 +44,6 @@
         de sus slots con alertas abiertas.
       </p>
     </div>
-    <div class="toolbar">
-      <a class="btn primary plan-action-primary" id="btn-crear-plano" href="editor.html">Crear plano</a>
-      <a class="btn ghost" id="btn-editar-plano" href="editor.html?codigo=PLANO-DEMO">Editar plano</a>
-      <button class="btn danger" id="btn-toggle-plano" type="button" hidden>Desactivar plano</button>
-      <a class="btn plan-action-accent" href="inspecciones.html">Ver inspecciones</a>
-    </div>
   </header>
 
   <section class="layout">
@@ -79,28 +73,37 @@
     <section class="col-main">
       <div class="card canvas-card">
         <div class="card-head">
-          <div class="current-plan">
-            <label class="plan-selector" for="plano-select">
-              <span>Plano actual</span>
-              <select id="plano-select">
-                <option value="">Cargando planos...</option>
-              </select>
-            </label>
-            <label class="plan-selector plan-filter" for="plano-estado-filter">
-              <span>Ver</span>
-              <select id="plano-estado-filter">
-                <option value="ACTIVOS" selected>Activos</option>
-                <option value="INACTIVOS">Inactivos</option>
-                <option value="TODOS">Todos</option>
-              </select>
-            </label>
+          <div class="plan-control-panel">
+            <div class="plan-control-group">
+              <label class="plan-selector" for="plano-select">
+                <span>Plano</span>
+                <select id="plano-select">
+                  <option value="">Cargando planos...</option>
+                </select>
+              </label>
+              <label class="plan-selector plan-filter" for="plano-estado-filter">
+                <span>Ver</span>
+                <select id="plano-estado-filter">
+                  <option value="ACTIVOS" selected>Activos</option>
+                  <option value="INACTIVOS">Inactivos</option>
+                  <option value="TODOS">Todos</option>
+                </select>
+              </label>
+            </div>
             <div>
               <h2 id="titulo-plano">PLANO-DEMO</h2>
               <p id="subtitulo-plano">Cargando plano operativo...</p>
             </div>
+            <div class="plan-actions" aria-label="Acciones de plano">
+              <a class="btn primary plan-action-primary" id="btn-crear-plano" href="editor.html">Crear plano</a>
+              <a class="btn ghost" id="btn-editar-plano" href="editor.html?codigo=PLANO-DEMO">Editar plano</a>
+              <button class="btn danger" id="btn-toggle-plano" type="button" hidden>Desactivar plano</button>
+              <a class="btn plan-action-accent" href="inspecciones.html">Ver inspecciones</a>
+            </div>
           </div>
           <span class="status-pill" id="estado-carga">Cargando</span>
         </div>
+        <p class="plan-action-feedback" id="plano-accion-feedback" hidden></p>
         <p class="inactive-plan-note" id="plano-inactivo-aviso" hidden>
           Este plano estÃ¡ inactivo. Se conserva por histÃ³rico y no participa en flujos operativos por defecto.
         </p>
@@ -136,6 +139,25 @@
     </section>
   </section>
 </main>
+
+<div class="plan-modal" id="plano-estado-modal" hidden role="dialog" aria-modal="true" aria-labelledby="plano-estado-modal-title">
+  <div class="plan-modal-backdrop" data-modal-cancel></div>
+  <section class="plan-modal-card">
+    <h2 id="plano-estado-modal-title">Desactivar plano</h2>
+    <p id="plano-estado-modal-text">
+      El plano dejarÃ¡ de aparecer en los flujos operativos por defecto. Se conservarÃ¡ su histÃ³rico.
+    </p>
+    <label class="plan-modal-confirm" id="plano-desactivar-confirm-group" for="plano-desactivar-confirm">
+      <span>Para confirmar, escribe DESACTIVAR.</span>
+      <input id="plano-desactivar-confirm" type="text" autocomplete="off" />
+    </label>
+    <p class="plan-modal-error" id="plano-estado-modal-error" hidden></p>
+    <div class="plan-modal-actions">
+      <button class="btn ghost" type="button" data-modal-cancel>Cancelar</button>
+      <button class="btn danger" id="plano-estado-modal-confirm" type="button" disabled>Desactivar plano</button>
+    </div>
+  </section>
+</div>
 
 <footer class="foot">
   <small>Suite Tienda · Plano operativo 2D · Estado visual por slots</small>

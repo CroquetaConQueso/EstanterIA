@@ -100,6 +100,7 @@ const estanteriaSelect = document.querySelector<HTMLSelectElement>("#f-estanteri
 const fechaDesdeInput = document.querySelector<HTMLInputElement>("#f-fecha-desde");
 const fechaHastaInput = document.querySelector<HTMLInputElement>("#f-fecha-hasta");
 const generarBtn = document.querySelector<HTMLButtonElement>("#btn-generar-informe");
+const descargarPdfBtn = document.querySelector<HTMLButtonElement>("#btn-descargar-pdf");
 const statusEl = document.querySelector<HTMLElement>("#informes-status");
 
 const metricInspecciones = document.querySelector<HTMLElement>("#metric-inspecciones");
@@ -157,6 +158,15 @@ function setLoading(loading: boolean): void {
     generarBtn.disabled = loading;
     generarBtn.textContent = loading ? "Generando..." : "Generar informe";
   }
+  if (descargarPdfBtn) descargarPdfBtn.disabled = loading;
+}
+
+function setPdfLoading(loading: boolean): void {
+  if (descargarPdfBtn) {
+    descargarPdfBtn.disabled = loading;
+    descargarPdfBtn.textContent = loading ? "Generando PDF..." : "Descargar PDF";
+  }
+  if (generarBtn) generarBtn.disabled = loading;
 }
 
 function setText(element: HTMLElement | null, value: string | number): void {
@@ -244,7 +254,7 @@ function validarFechas(): boolean {
   return true;
 }
 
-function construirInformeUrl(): string {
+function construirInformeUrl(pdf = false): string {
   const params = new URLSearchParams();
   if (planoSelect?.value) params.set("planoCodigo", planoSelect.value);
   if (seccionSelect?.value) params.set("seccionId", seccionSelect.value);
@@ -253,7 +263,8 @@ function construirInformeUrl(): string {
   if (fechaHastaInput?.value) params.set("fechaHasta", fechaHastaInput.value);
 
   const query = params.toString();
-  return query ? `/api/informes/rotacion-visual?${query}` : "/api/informes/rotacion-visual";
+  const path = pdf ? "/api/informes/rotacion-visual/pdf" : "/api/informes/rotacion-visual";
+  return query ? `${path}?${query}` : path;
 }
 
 function formatPercent(value: number | null | undefined): string {
@@ -447,6 +458,51 @@ async function generarInforme(): Promise<void> {
   }
 }
 
+function nombreArchivoPdf(response: Response): string {
+  const disposition = response.headers.get("Content-Disposition") ?? response.headers.get("content-disposition");
+  const match = disposition?.match(/filename="?([^"]+)"?/i);
+  if (match?.[1]) return match[1];
+  return `informe-rotacion-visual-${toDateInputValue(new Date())}.pdf`;
+}
+
+function descargarBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function descargarPdf(): Promise<void> {
+  if (!validarFechas()) return;
+
+  setPdfLoading(true);
+  setStatus("Generando PDF del informe de rotación visual...");
+  try {
+    const response = await authFetch(construirInformeUrl(true), {
+      method: "GET",
+      headers: { Accept: "application/pdf" }
+    });
+
+    if (!response.ok) {
+      const errorData = await parseErrorResponse(response);
+      throw new Error(getBackendErrorMessage(errorData, response.status));
+    }
+
+    const blob = await response.blob();
+    descargarBlob(blob, nombreArchivoPdf(response));
+    setStatus("PDF del informe generado correctamente.");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "No se pudo generar el PDF del informe.";
+    setStatus(message, true);
+  } finally {
+    setPdfLoading(false);
+  }
+}
+
 async function inicializar(): Promise<void> {
   inicializarFechas();
   try {
@@ -465,6 +521,10 @@ seccionSelect?.addEventListener("change", () => {
 
 generarBtn?.addEventListener("click", () => {
   void generarInforme();
+});
+
+descargarPdfBtn?.addEventListener("click", () => {
+  void descargarPdf();
 });
 
 void inicializar();

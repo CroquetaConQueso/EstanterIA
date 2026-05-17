@@ -116,6 +116,13 @@ type ProductoProveedorResumenResponse = {
   stockMensaje: string | null;
 };
 
+type RevisionCaducidadesResponse = {
+  asignacionesRevisadas: number;
+  alertasCreadas: number;
+  alertasExistentes: number;
+  mensaje: string | null;
+};
+
 const CODIGO_EMPRESA_DEMO = "EMP-DEMO";
 
 const seccionSelect = document.querySelector<HTMLSelectElement>("#f-seccion");
@@ -123,6 +130,8 @@ const estanteriaSelect = document.querySelector<HTMLSelectElement>("#f-estanteri
 const busquedaInput = document.querySelector<HTMLInputElement>("#f-busqueda");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar-inv");
 const btnOpenProductDialog = document.querySelector<HTMLButtonElement>("#btn-open-product-dialog");
+const btnReviewExpiry = document.querySelector<HTMLButtonElement>("#btn-review-expiry");
+const inventoryReviewStatus = document.querySelector<HTMLElement>("#inventory-review-status");
 const productDialog = document.querySelector<HTMLDialogElement>("#product-dialog");
 const btnCloseProductDialog = document.querySelector<HTMLButtonElement>("#btn-close-product-dialog");
 const productForm = document.querySelector<HTMLFormElement>("#product-form");
@@ -173,6 +182,10 @@ const puedeGestionarProductos = isStructuralAdmin();
 
 if (!puedeGestionarProductos && btnOpenProductDialog) {
   btnOpenProductDialog.hidden = true;
+}
+
+if (!puedeGestionarProductos && btnReviewExpiry) {
+  btnReviewExpiry.hidden = true;
 }
 
 function textoSeguro(value: string | number | boolean | null | undefined, fallback = "No disponible"): string {
@@ -333,6 +346,22 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function postEmptyJson<T>(url: string): Promise<T> {
+  const response = await authFetch(url, {
+    method: "POST",
+    headers: {
+      "Accept": "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await parseErrorResponse(response);
+    throw new Error(getBackendErrorMessage(errorData, response.status));
+  }
+
+  return response.json() as Promise<T>;
+}
+
 async function putJson<T>(url: string, body: unknown): Promise<T> {
   const response = await authFetch(url, {
     method: "PUT",
@@ -419,6 +448,12 @@ function setInventoryActionStatus(message = "", type: "info" | "success" | "erro
   if (!inventoryActionStatus) return;
   inventoryActionStatus.textContent = message;
   inventoryActionStatus.dataset.type = type;
+}
+
+function setInventoryReviewStatus(message = "", type: "info" | "success" | "error" = "info"): void {
+  if (!inventoryReviewStatus) return;
+  inventoryReviewStatus.textContent = message;
+  inventoryReviewStatus.dataset.type = type;
 }
 
 function renderProductBadge(producto: ProductoResumenResponse | null | undefined): HTMLSpanElement {
@@ -1024,6 +1059,25 @@ async function reactivarProductoSeleccionado(): Promise<void> {
   setInventoryActionStatus("Producto reactivado. Ya puede usarse en nuevas configuraciones.", "success");
 }
 
+async function revisarCaducidadesInventario(): Promise<void> {
+  if (!puedeGestionarProductos) {
+    setInventoryReviewStatus("Solo un administrador puede revisar caducidades.", "error");
+    return;
+  }
+
+  btnReviewExpiry?.setAttribute("disabled", "");
+  setInventoryReviewStatus("Revisando caducidades y retiradas programadas...", "info");
+  try {
+    const response = await postEmptyJson<RevisionCaducidadesResponse>("/api/alertas/revisar-caducidades");
+    setInventoryReviewStatus(
+      `Revision completada: ${response.alertasCreadas} alertas creadas, ${response.alertasExistentes} ya existentes. Asignaciones revisadas: ${response.asignacionesRevisadas}.`,
+      "success"
+    );
+  } finally {
+    btnReviewExpiry?.removeAttribute("disabled");
+  }
+}
+
 async function cargarEstanteriasDeSeccion(seccionId: number): Promise<void> {
   setRowMessage("Cargando estanter\u00edas...");
   setDetalleMessage("Cargando estanter\u00edas de la secci\u00f3n...");
@@ -1105,6 +1159,12 @@ btnLimpiar?.addEventListener("click", () => {
 });
 
 btnOpenProductDialog?.addEventListener("click", abrirDialogoProducto);
+btnReviewExpiry?.addEventListener("click", () => {
+  void revisarCaducidadesInventario().catch((err: unknown) => {
+    setInventoryReviewStatus(err instanceof Error ? err.message : "No se pudo revisar caducidades.", "error");
+    btnReviewExpiry?.removeAttribute("disabled");
+  });
+});
 btnCloseProductDialog?.addEventListener("click", cerrarDialogoProducto);
 productForm?.addEventListener("submit", (event) => {
   event.preventDefault();

@@ -33,6 +33,7 @@ import com.proyectofincurso.estanteria.web.dto.EvaluacionCaducidadResponse;
 import com.proyectofincurso.estanteria.web.dto.EvaluacionInspeccionAlertasResponse;
 import com.proyectofincurso.estanteria.web.dto.ProductoResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.ProveedorResumenResponse;
+import com.proyectofincurso.estanteria.web.dto.RevisionCaducidadesResponse;
 import com.proyectofincurso.estanteria.web.dto.SeccionResponse;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -199,6 +201,27 @@ public class AlertaOperativaService {
 
     @Transactional
     public EvaluacionCaducidadResponse evaluarCaducidad() {
+        ResultadoRevisionCaducidad resultado = revisarCaducidadesInterno();
+        return new EvaluacionCaducidadResponse(
+                resultado.asignacionesRevisadas(),
+                resultado.alertasCreadas(),
+                resultado.alertasExistentes(),
+                resultado.notificacionesCreadas()
+        );
+    }
+
+    @Transactional
+    public RevisionCaducidadesResponse revisarCaducidades() {
+        ResultadoRevisionCaducidad resultado = revisarCaducidadesInterno();
+        return new RevisionCaducidadesResponse(
+                resultado.asignacionesRevisadas(),
+                resultado.alertasCreadas(),
+                resultado.alertasExistentes(),
+                "Revision de caducidades completada."
+        );
+    }
+
+    private ResultadoRevisionCaducidad revisarCaducidadesInterno() {
         LocalDate hoy = LocalDate.now();
         LocalDate limite = hoy.plusDays(diasUmbralCaducidad);
         List<AsignacionProductoSlot> asignaciones = asignacionProductoSlotRepository
@@ -206,16 +229,18 @@ public class AlertaOperativaService {
         List<AsignacionProductoSlot> retiradasPendientes = asignacionProductoSlotRepository
                 .findActivasConRetiradaProgramadaAntesDe(EstadoAsignacionProductoSlot.ACTIVA, hoy);
 
+        Map<Long, AsignacionProductoSlot> asignacionesPorId = new LinkedHashMap<>();
+        asignaciones.forEach(asignacion -> asignacionesPorId.put(asignacion.getId(), asignacion));
+        retiradasPendientes.forEach(asignacion -> asignacionesPorId.putIfAbsent(asignacion.getId(), asignacion));
+
         ContadorEvaluacion contador = new ContadorEvaluacion();
-        for (AsignacionProductoSlot asignacion : asignaciones) {
+        for (AsignacionProductoSlot asignacion : asignacionesPorId.values()) {
             evaluarCaducidadAsignacion(asignacion, hoy, limite, contador);
-        }
-        for (AsignacionProductoSlot asignacion : retiradasPendientes) {
             evaluarRetiradaProgramada(asignacion, hoy, contador);
         }
 
-        return new EvaluacionCaducidadResponse(
-                asignaciones.size() + retiradasPendientes.size(),
+        return new ResultadoRevisionCaducidad(
+                asignacionesPorId.size(),
                 contador.alertasCreadas,
                 contador.alertasExistentes,
                 contador.notificacionesCreadas
@@ -731,6 +756,14 @@ public class AlertaOperativaService {
         private int alertasCreadas;
         private int alertasExistentes;
         private int notificacionesCreadas;
+    }
+
+    private record ResultadoRevisionCaducidad(
+            int asignacionesRevisadas,
+            int alertasCreadas,
+            int alertasExistentes,
+            int notificacionesCreadas
+    ) {
     }
 
     private record StockResumen(

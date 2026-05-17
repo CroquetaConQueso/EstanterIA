@@ -322,6 +322,7 @@ class AlertaOperativaServiceTest {
         assertThat(response.asignacionesRevisadas()).isEqualTo(1);
         assertThat(response.estanteriasAfectadas()).isEqualTo(1);
         assertThat(response.alertasCreadas()).isEqualTo(1);
+        verify(tareaOperativaService).crearAutomaticaSiNoExiste(alerta);
     }
 
     @Test
@@ -341,6 +342,7 @@ class AlertaOperativaServiceTest {
         var response = service.revisarTrabajadoresNoDisponiblesAsignados();
 
         verify(alertaRepository, never()).save(any(Alerta.class));
+        verify(tareaOperativaService).crearAutomaticaSiNoExiste(existente);
         assertThat(response.alertasCreadas()).isZero();
         assertThat(response.alertasExistentes()).isEqualTo(1);
     }
@@ -353,6 +355,7 @@ class AlertaOperativaServiceTest {
         var response = service.revisarTrabajadoresNoDisponiblesAsignados();
 
         verify(alertaRepository, never()).save(any(Alerta.class));
+        verify(tareaOperativaService, never()).crearAutomaticaSiNoExiste(any(Alerta.class));
         assertThat(response.asignacionesRevisadas()).isZero();
         assertThat(response.estanteriasAfectadas()).isZero();
         assertThat(response.alertasCreadas()).isZero();

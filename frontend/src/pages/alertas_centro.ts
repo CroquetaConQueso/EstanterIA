@@ -98,13 +98,23 @@ type ApiErrorResponse = {
   status?: number;
 };
 
+type RevisionTrabajadoresNoDisponiblesResponse = {
+  asignacionesRevisadas: number;
+  estanteriasAfectadas: number;
+  alertasCreadas: number;
+  alertasExistentes: number;
+  mensaje: string;
+};
+
 const API_ALERTAS_ABIERTAS = "/api/alertas/abiertas";
+const API_REVISAR_TRABAJADORES = "/api/alertas/revisar-trabajadores-no-disponibles";
 
 const tbody = document.querySelector<HTMLTableSectionElement>("#tbody-alertas");
 const filtroGravedad = document.querySelector<HTMLSelectElement>("#filtro-gravedad");
 const filtroEstado = document.querySelector<HTMLSelectElement>("#filtro-estado");
 const filtroTexto = document.querySelector<HTMLInputElement>("#filtro-texto");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar");
+const btnRevisarTrabajadores = document.querySelector<HTMLButtonElement>("#btn-revisar-trabajadores");
 
 const detalle = document.querySelector<HTMLUListElement>("#detalle-alerta");
 const detallePanel = document.querySelector<HTMLElement>("#detalle-alerta-panel");
@@ -555,6 +565,15 @@ function getBackendErrorMessage(data: ApiErrorResponse | null, status: number): 
   return `Error HTTP ${status}`;
 }
 
+function mensajeRevisionTrabajadores(data: RevisionTrabajadoresNoDisponiblesResponse): string {
+  return [
+    data.mensaje,
+    `${data.estanteriasAfectadas} estanterias afectadas.`,
+    `${data.alertasCreadas} alertas nuevas.`,
+    `${data.alertasExistentes} ya existentes.`
+  ].join(" ");
+}
+
 async function cargarAlertas(mensajeDetalle?: string): Promise<void> {
   setRowMessage("Cargando alertas abiertas...");
   setDetalleMessage("Cargando detalle de alertas...");
@@ -601,6 +620,38 @@ async function cargarAlertas(mensajeDetalle?: string): Promise<void> {
     updateMetrics();
     setRowMessage("No se pudo conectar con el servidor de alertas");
     setDetalleMessage("Revisa que el servidor esté arrancado para consultar las alertas");
+  }
+}
+
+async function revisarTrabajadoresNoDisponibles(): Promise<void> {
+  if (!puedeCerrarAlertas) {
+    setActionStatus("Solo un administrador puede revisar trabajadores no disponibles.", "error");
+    return;
+  }
+
+  if (btnRevisarTrabajadores) btnRevisarTrabajadores.disabled = true;
+  setActionStatus("Revisando trabajadores no disponibles asignados...", "info");
+
+  try {
+    const response = await authFetch(API_REVISAR_TRABAJADORES, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await parseErrorResponse(response);
+      setActionStatus(getBackendErrorMessage(errorData, response.status), "error");
+      return;
+    }
+
+    const data = await response.json() as RevisionTrabajadoresNoDisponiblesResponse;
+    await cargarAlertas(mensajeRevisionTrabajadores(data));
+  } catch {
+    setActionStatus("No se pudo conectar con el servidor para revisar trabajadores.", "error");
+  } finally {
+    if (btnRevisarTrabajadores) btnRevisarTrabajadores.disabled = false;
   }
 }
 
@@ -677,6 +728,10 @@ btnResolver?.addEventListener("click", () => {
 
 btnDescartar?.addEventListener("click", () => {
   void cerrarAlerta("descartar");
+});
+
+btnRevisarTrabajadores?.addEventListener("click", () => {
+  void revisarTrabajadoresNoDisponibles();
 });
 
 filtroGravedad?.addEventListener("change", renderTable);

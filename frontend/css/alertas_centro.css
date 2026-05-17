@@ -258,6 +258,13 @@ button, input, select {
   flex: 1;
 }
 
+.toolbar-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
 .layout,
 .layout-grid {
   display: grid;

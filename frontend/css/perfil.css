@@ -112,6 +112,24 @@ body {
   box-shadow: var(--profile-shadow-red);
 }
 
+.account-card .card-head {
+  align-items: center;
+  background: var(--profile-black);
+  color: var(--profile-white);
+  margin: -22px -22px 22px;
+  padding: 22px;
+  border-bottom: var(--profile-border-heavy);
+}
+
+.account-card .eyebrow {
+  color: var(--profile-gold);
+}
+
+.account-card h2 {
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  text-shadow: 2px 2px 0 var(--profile-red);
+}
+
 .card-head {
   display: flex;
   align-items: flex-start;
@@ -243,6 +261,22 @@ body {
   text-transform: none;
 }
 
+.worker-help {
+  margin-bottom: 16px;
+}
+
+.empty-state {
+  margin: 0 0 16px;
+  border: var(--profile-border-main);
+  background: var(--profile-paper);
+  color: var(--profile-black);
+  padding: 14px;
+  font-family: Arial, sans-serif;
+  font-weight: 800;
+  line-height: 1.45;
+  text-transform: none;
+}
+
 .data-list {
   display: grid;
   gap: 12px;
@@ -296,7 +330,8 @@ body {
   margin-top: 14px;
 }
 
-.team-card .btn {
+.team-card .btn,
+.btn.team-link {
   width: 100%;
   margin-top: 16px;
   display: inline-flex;

@@ -16,6 +16,7 @@ type PerfilTrabajador = {
   emailContacto?: string | null;
   telefonoContacto?: string | null;
   tipoTrabajador?: string | null;
+  estadoDisponibilidad?: string | null;
   activo?: boolean | null;
 };
 
@@ -44,10 +45,18 @@ const ROLE_LABELS: Record<string, string> = {
 
 const TRABAJADOR_LABELS: Record<string, string> = {
   GERENTE: "Gerente",
+  ENCARGADO: "Encargado",
+  TRABAJADOR: "Trabajador",
   ENCARGADO_SECCION: "Encargado de sección",
   REPONEDOR: "Reponedor",
   CAJERO: "Cajero",
   ADMINISTRATIVO: "Administrativo"
+};
+
+const DISPONIBILIDAD_LABELS: Record<string, string> = {
+  DISPONIBLE: "Disponible",
+  AUSENTE: "Ausente",
+  ENFERMO: "Enfermo"
 };
 
 const form = document.querySelector<HTMLFormElement>("#perfil-form");
@@ -62,9 +71,11 @@ const guardarBtn = document.querySelector<HTMLButtonElement>("#btn-guardar-perfi
 
 const empresaCodigoEl = document.querySelector<HTMLElement>("#perfil-empresa-codigo");
 const empresaNombreEl = document.querySelector<HTMLElement>("#perfil-empresa-nombre");
+const trabajadorDatosEl = document.querySelector<HTMLElement>("#perfil-trabajador-datos");
+const trabajadorEmptyEl = document.querySelector<HTMLElement>("#perfil-trabajador-empty");
 const trabajadorNombreEl = document.querySelector<HTMLElement>("#perfil-trabajador-nombre");
-const trabajadorApellidosEl = document.querySelector<HTMLElement>("#perfil-trabajador-apellidos");
 const trabajadorTipoEl = document.querySelector<HTMLElement>("#perfil-trabajador-tipo");
+const trabajadorDisponibilidadEl = document.querySelector<HTMLElement>("#perfil-trabajador-disponibilidad");
 const trabajadorEmailEl = document.querySelector<HTMLElement>("#perfil-trabajador-email");
 const trabajadorTelefonoEl = document.querySelector<HTMLElement>("#perfil-trabajador-telefono");
 const trabajadorEstadoEl = document.querySelector<HTMLElement>("#perfil-trabajador-estado");
@@ -108,6 +119,15 @@ function formatearTipoTrabajador(tipo: string | undefined | null): string {
   return TRABAJADOR_LABELS[tipo] ?? tipo;
 }
 
+function formatearDisponibilidad(disponibilidad: string | undefined | null): string {
+  if (!disponibilidad) return "No disponible";
+  return DISPONIBILIDAD_LABELS[disponibilidad] ?? disponibilidad;
+}
+
+function nombreCompletoTrabajador(trabajador: PerfilTrabajador): string {
+  return [trabajador.nombre, trabajador.apellidos].filter(Boolean).join(" ").trim() || "No disponible";
+}
+
 function setLoading(loading: boolean): void {
   if (guardarBtn) guardarBtn.disabled = loading;
   if (logoutBtn) logoutBtn.disabled = loading;
@@ -140,19 +160,17 @@ function pintarPerfil(perfil: PerfilResponse): void {
   }
 
   if (perfil.trabajador) {
-    setText(trabajadorNombreEl, perfil.trabajador.nombre);
-    setText(trabajadorApellidosEl, perfil.trabajador.apellidos);
+    trabajadorDatosEl?.removeAttribute("hidden");
+    trabajadorEmptyEl?.setAttribute("hidden", "true");
+    setText(trabajadorNombreEl, nombreCompletoTrabajador(perfil.trabajador));
     setText(trabajadorTipoEl, formatearTipoTrabajador(perfil.trabajador.tipoTrabajador));
+    setText(trabajadorDisponibilidadEl, formatearDisponibilidad(perfil.trabajador.estadoDisponibilidad));
     setText(trabajadorEmailEl, perfil.trabajador.emailContacto);
     setText(trabajadorTelefonoEl, perfil.trabajador.telefonoContacto);
     setText(trabajadorEstadoEl, perfil.trabajador.activo ? "Activo" : "Inactivo");
   } else {
-    setText(trabajadorNombreEl, "Sin trabajador vinculado");
-    setText(trabajadorApellidosEl, "Sin trabajador vinculado");
-    setText(trabajadorTipoEl, "Sin trabajador vinculado");
-    setText(trabajadorEmailEl, "Sin trabajador vinculado");
-    setText(trabajadorTelefonoEl, "Sin trabajador vinculado");
-    setText(trabajadorEstadoEl, "Sin trabajador vinculado");
+    trabajadorDatosEl?.setAttribute("hidden", "true");
+    trabajadorEmptyEl?.removeAttribute("hidden");
   }
 }
 

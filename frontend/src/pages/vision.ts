@@ -17,12 +17,55 @@ type SeccionResponse = {
   id: number;
   codigo: string;
   nombre: string;
+  descripcion?: string | null;
+  activa?: boolean | null;
 };
 
 type EstanteriaResumenResponse = {
   id: number;
   codigo: string;
   nombre: string;
+  descripcion?: string | null;
+  activa?: boolean | null;
+};
+
+type PlanoResumenResponse = {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+  ancho: number;
+  alto: number;
+  activo: boolean | null;
+};
+
+type PlanoZonaOperativaResponse = {
+  id: number;
+  seccion: SeccionResponse;
+};
+
+type PlanoEstanteriaOperativaResponse = {
+  layoutId: number;
+  zonaId: number;
+  estanteria: EstanteriaResumenResponse;
+};
+
+type PlanoOperativoResponse = {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string | null;
+  activo: boolean | null;
+  zonas: PlanoZonaOperativaResponse[];
+  estanterias: PlanoEstanteriaOperativaResponse[];
+};
+
+type CapturaResponse = {
+  fileName: string;
+  relativePath: string;
+  imageUrl: string;
+  sizeBytes: number;
+  createdAt: string;
 };
 
 type ResultadoVisualResponse = {
@@ -65,17 +108,22 @@ type ApiErrorResponse = {
 };
 
 const form = document.querySelector<HTMLFormElement>("#vision-form");
+const planoSelect = document.querySelector<HTMLSelectElement>("#vision-plano");
+const planoHelp = document.querySelector<HTMLElement>("#vision-plano-help");
 const seccionSelect = document.querySelector<HTMLSelectElement>("#vision-seccion");
 const estanteriaSelect = document.querySelector<HTMLSelectElement>("#vision-estanteria");
 const modoSelect = document.querySelector<HTMLSelectElement>("#vision-modo");
 const imagePathInput = document.querySelector<HTMLInputElement>("#vision-image-path");
 const imagePathField = document.querySelector<HTMLElement>("#vision-image-path-field");
+const capturasDatalist = document.querySelector<HTMLDataListElement>("#vision-capturas-list");
+const capturasHelp = document.querySelector<HTMLElement>("#vision-capturas-help");
 const notasInput = document.querySelector<HTMLTextAreaElement>("#vision-notas");
 
 const errorEl = document.querySelector<HTMLElement>("#vision-error");
 const successEl = document.querySelector<HTMLElement>("#vision-success");
 
 const previewBox = document.querySelector<HTMLElement>("#preview-box");
+const previewPlan = document.querySelector<HTMLElement>("#preview-plan");
 const previewSection = document.querySelector<HTMLElement>("#preview-section");
 const previewShelf = document.querySelector<HTMLElement>("#preview-shelf");
 const previewShelfCode = document.querySelector<HTMLElement>("#preview-shelf-code");
@@ -102,9 +150,13 @@ const visionStatusText = document.querySelector<HTMLElement>("#vision-status-tex
 const visionStatusChip = document.querySelector<HTMLElement>("#vision-status-chip");
 
 const EMPRESA_CODIGO = "EMP-DEMO";
+const PLANO_DEMO_CODIGO = "PLANO-DEMO";
 
+let planosActivos: PlanoResumenResponse[] = [];
+let planoActual: PlanoOperativoResponse | null = null;
 let secciones: SeccionResponse[] = [];
 let estanteriasActuales: EstanteriaResumenResponse[] = [];
+let capturasActuales: CapturaResponse[] = [];
 
 function setError(msg: string | null): void {
   if (!errorEl) return;
@@ -181,6 +233,30 @@ function setSelectOptions(
   });
 }
 
+function setCapturasHelp(message: string): void {
+  if (capturasHelp) capturasHelp.textContent = message;
+}
+
+function renderCapturasDatalist(capturas: CapturaResponse[]): void {
+  if (!capturasDatalist) return;
+  capturasDatalist.innerHTML = "";
+
+  capturas.forEach((captura) => {
+    const option = document.createElement("option");
+    option.value = captura.imageUrl;
+    option.label = formatCaptureLabel(captura);
+    capturasDatalist.appendChild(option);
+  });
+}
+
+function resetCapturas(message = "Selecciona una estantería para cargar capturas disponibles."): void {
+  capturasActuales = [];
+  renderCapturasDatalist([]);
+  setCapturasHelp(message);
+  if (imagePathInput) imagePathInput.value = "";
+  if (previewImage) previewImage.textContent = "—";
+}
+
 function getResumen(resultadoVisual: ResultadoVisualResponse | null | undefined): ResultadoVisualResponse["resumen"] {
   return resultadoVisual?.resumen ?? null;
 }
@@ -211,6 +287,11 @@ function getEstadoGeneral(result: Partial<VisionResponse>): string {
   return labelEstadoVisual(getResumen(result.resultadoVisual)?.estadoGeneralVisual) || "Sin análisis";
 }
 
+function getPlanoSeleccionado(): PlanoResumenResponse | null {
+  const codigo = planoSelect?.value ?? "";
+  return planosActivos.find((plano) => plano.codigo === codigo) ?? null;
+}
+
 function getSeccionSeleccionada(): SeccionResponse | null {
   const id = Number(seccionSelect?.value ?? "");
   return secciones.find((seccion) => seccion.id === id) ?? null;
@@ -219,6 +300,15 @@ function getSeccionSeleccionada(): SeccionResponse | null {
 function getEstanteriaSeleccionada(): EstanteriaResumenResponse | null {
   const codigo = estanteriaSelect?.value ?? "";
   return estanteriasActuales.find((estanteria) => estanteria.codigo === codigo) ?? null;
+}
+
+function updateSubmitAvailability(): void {
+  const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (!submitBtn) return;
+
+  const disabled = !planoSelect?.value || !seccionSelect?.value || !estanteriaSelect?.value || !getEstanteriaSeleccionada();
+  submitBtn.disabled = disabled;
+  submitBtn.classList.toggle("disabled", disabled);
 }
 
 function isResultadoRevisable(result: VisionResponse): boolean {
@@ -234,6 +324,11 @@ function formatFecha(value: string | null | undefined): string {
     dateStyle: "short",
     timeStyle: "short"
   }).format(fecha);
+}
+
+function formatCaptureLabel(captura: CapturaResponse): string {
+  const fecha = formatFecha(captura.createdAt);
+  return fecha === "—" ? captura.fileName : `${captura.fileName} · ${fecha}`;
 }
 
 async function parseErrorResponse(res: Response): Promise<ApiErrorResponse | null> {
@@ -273,9 +368,11 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 function updateCurrentSelectionMeta(): void {
+  const plano = getPlanoSeleccionado();
   const seccion = getSeccionSeleccionada();
   const estanteria = getEstanteriaSeleccionada();
 
+  if (previewPlan) previewPlan.textContent = plano ? `${plano.codigo} · ${plano.nombre}` : "—";
   if (previewSection) previewSection.textContent = seccion ? `${seccion.codigo} · ${seccion.nombre}` : "—";
   if (previewShelf) previewShelf.textContent = estanteria ? estanteria.nombre : "—";
   if (previewShelfCode) previewShelfCode.textContent = estanteria?.codigo ?? "—";
@@ -379,13 +476,22 @@ function updateImagePathState(): void {
   imagePathField?.classList.toggle("input-disabled", !isExisting);
 
   if (!isExisting) imagePathInput.value = "";
+  if (isExisting && capturasActuales.length > 0) {
+    setCapturasHelp(`${capturasActuales.length} captura${capturasActuales.length === 1 ? "" : "s"} disponible${capturasActuales.length === 1 ? "" : "s"} para la estantería seleccionada.`);
+  } else if (isExisting) {
+    setCapturasHelp(estanteriaSelect?.value ? "No hay capturas disponibles para esta estantería." : "Selecciona una estantería para cargar capturas disponibles.");
+  }
 }
 
 function validateClient(estanteriaCodigo: string, modo: string, imagePath: string, notas: string): Record<string, string> {
   const errors: Record<string, string> = {};
 
+  if (!planoSelect?.value) errors.plano = "Debes seleccionar un plano activo";
   if (!seccionSelect?.value) errors.seccion = "Debes seleccionar una sección";
   if (!estanteriaCodigo.trim()) errors.estanteriaCodigo = "Debes seleccionar una estantería";
+  if (estanteriaCodigo.trim() && !getEstanteriaSeleccionada()) {
+    errors.estanteriaCodigo = "Selecciona una estantería activa del plano y sección actuales";
+  }
   if (!modo) errors.modo = "Debes seleccionar un modo de ejecución";
   if (modo === "predict-existing" && !imagePath.trim()) errors.imagePath = "Debes indicar la ruta de la imagen";
   if (imagePath.length > 500) errors.imagePath = "La ruta de imagen no puede superar 500 caracteres";
@@ -425,72 +531,189 @@ async function runVision(payload: VisionRequest): Promise<VisionResponse> {
   return res.json() as Promise<VisionResponse>;
 }
 
-async function cargarSecciones(): Promise<void> {
-  if (!seccionSelect) return;
-
-  try {
-    secciones = await fetchJson<SeccionResponse[]>(`/api/empresas/${encodeURIComponent(EMPRESA_CODIGO)}/secciones`);
-
-    if (secciones.length === 0) {
-      setSelectOptions(seccionSelect, "No hay secciones disponibles", []);
-      seccionSelect.disabled = true;
-      setError("No hay secciones disponibles para ejecutar Vision.");
-      return;
-    }
-
-    setSelectOptions(
-      seccionSelect,
-      "Selecciona una sección",
-      secciones.map((seccion) => ({
-        value: String(seccion.id),
-        label: `${seccion.codigo} · ${seccion.nombre}`
-      }))
-    );
-    seccionSelect.disabled = false;
-  } catch (err) {
-    setSelectOptions(seccionSelect, "No se pudieron cargar secciones", []);
-    seccionSelect.disabled = true;
-    setError(err instanceof Error ? err.message : "No se pudieron cargar las secciones.");
-  }
+function disableInspectionSelection(message: string): void {
+  setSelectOptions(seccionSelect, message, []);
+  if (seccionSelect) seccionSelect.disabled = true;
+  setSelectOptions(estanteriaSelect, "Sin estanterías disponibles", []);
+  if (estanteriaSelect) estanteriaSelect.disabled = true;
+  estanteriasActuales = [];
+  resetCapturas();
+  updateCurrentSelectionMeta();
+  updateSubmitAvailability();
 }
 
-async function cargarEstanteriasDeSeccion(seccionId: string): Promise<void> {
-  if (!estanteriaSelect) return;
+function renderSeccionesDePlano(plano: PlanoOperativoResponse): void {
+  if (!seccionSelect) return;
 
-  estanteriasActuales = [];
-  setSelectOptions(estanteriaSelect, "Cargando estanterías...", []);
-  estanteriaSelect.disabled = true;
-  updateCurrentSelectionMeta();
+  secciones = plano.zonas
+    .map((zona) => zona.seccion)
+    .filter((seccion, index, all) =>
+      seccion.activa !== false && all.findIndex((item) => item.id === seccion.id) === index
+    );
 
-  if (!seccionId) {
-    setSelectOptions(estanteriaSelect, "Selecciona primero una sección", []);
+  if (secciones.length === 0) {
+    disableInspectionSelection("El plano no tiene secciones colocadas");
+    setError("El plano seleccionado no tiene secciones colocadas.");
     return;
   }
 
-  try {
-    estanteriasActuales = await fetchJson<EstanteriaResumenResponse[]>(`/api/secciones/${encodeURIComponent(seccionId)}/estanterias`);
+  setSelectOptions(
+    seccionSelect,
+    "Selecciona una sección del plano",
+    secciones.map((seccion) => ({
+      value: String(seccion.id),
+      label: `${seccion.codigo} · ${seccion.nombre}`
+    }))
+  );
+  seccionSelect.disabled = false;
+  renderEstanteriasDeSeccion("");
+  updateSubmitAvailability();
+}
 
-    if (estanteriasActuales.length === 0) {
-      setSelectOptions(estanteriaSelect, "Esta sección no tiene estanterías", []);
-      setError("La sección seleccionada no tiene estanterías configuradas.");
-      updateCurrentSelectionMeta();
+function renderEstanteriasDeSeccion(seccionId: string): void {
+  if (!estanteriaSelect) return;
+
+  estanteriasActuales = [];
+  setSelectOptions(estanteriaSelect, "Selecciona primero una sección", []);
+  estanteriaSelect.disabled = true;
+  resetCapturas();
+
+  if (!planoActual || !seccionId) {
+    updateCurrentSelectionMeta();
+    updateSubmitAvailability();
+    return;
+  }
+
+  const zonaIds = new Set(
+    planoActual.zonas
+      .filter((zona) => String(zona.seccion.id) === seccionId)
+      .map((zona) => zona.id)
+  );
+
+  estanteriasActuales = planoActual.estanterias
+    .filter((layout) => zonaIds.has(layout.zonaId) && layout.estanteria.activa !== false)
+    .map((layout) => layout.estanteria)
+    .filter((estanteria, index, all) =>
+      all.findIndex((item) => item.codigo === estanteria.codigo) === index
+    );
+
+  if (estanteriasActuales.length === 0) {
+    setSelectOptions(estanteriaSelect, "No hay estanterías activas en esta sección", []);
+    setError("No hay estanterías activas en esta sección del plano.");
+    updateCurrentSelectionMeta();
+    updateSubmitAvailability();
+    return;
+  }
+
+  setSelectOptions(
+    estanteriaSelect,
+    "Selecciona una estantería activa del plano",
+    estanteriasActuales.map((estanteria) => ({
+      value: estanteria.codigo,
+      label: `${estanteria.codigo} · ${estanteria.nombre}`
+    }))
+  );
+  estanteriaSelect.disabled = false;
+  updateCurrentSelectionMeta();
+  updateSubmitAvailability();
+}
+
+async function cargarCapturasDeEstanteria(estanteriaCodigo: string): Promise<void> {
+  if (!estanteriaCodigo) {
+    resetCapturas();
+    return;
+  }
+
+  resetCapturas("Cargando capturas disponibles...");
+  updateSubmitAvailability();
+
+  try {
+    capturasActuales = await fetchJson<CapturaResponse[]>(
+      `/api/capturas?estanteriaCodigo=${encodeURIComponent(estanteriaCodigo)}`
+    );
+    renderCapturasDatalist(capturasActuales);
+
+    if (capturasActuales.length === 0) {
+      setCapturasHelp("No hay capturas disponibles para esta estantería.");
+      return;
+    }
+
+    setCapturasHelp(`${capturasActuales.length} captura${capturasActuales.length === 1 ? "" : "s"} disponible${capturasActuales.length === 1 ? "" : "s"}.`);
+  } catch (err) {
+    resetCapturas("No se pudieron cargar las capturas disponibles.");
+    setError(err instanceof Error ? err.message : "No se pudieron cargar las capturas disponibles.");
+  }
+}
+
+async function cargarPlanoOperativo(codigo: string): Promise<void> {
+  if (!codigo) {
+    planoActual = null;
+    disableInspectionSelection("Selecciona primero un plano");
+    return;
+  }
+
+  setSelectOptions(seccionSelect, "Cargando secciones del plano...", []);
+  if (seccionSelect) seccionSelect.disabled = true;
+  setSelectOptions(estanteriaSelect, "Selecciona primero una sección", []);
+  if (estanteriaSelect) estanteriaSelect.disabled = true;
+  resetCapturas();
+  updateCurrentSelectionMeta();
+  updateSubmitAvailability();
+
+  try {
+    planoActual = await fetchJson<PlanoOperativoResponse>(`/api/planos/${encodeURIComponent(codigo)}/operativo`);
+    renderSeccionesDePlano(planoActual);
+    if (planoHelp) planoHelp.textContent = `${planoActual.codigo} · ${planoActual.nombre}`;
+  } catch (err) {
+    planoActual = null;
+    disableInspectionSelection("No se pudo cargar el plano");
+    setError(err instanceof Error ? err.message : "No se pudo cargar el plano operativo.");
+  } finally {
+    updateCurrentSelectionMeta();
+    updateSubmitAvailability();
+  }
+}
+
+async function cargarPlanosActivos(): Promise<void> {
+  if (!planoSelect) return;
+
+  setSelectOptions(planoSelect, "Cargando planos activos...", []);
+  planoSelect.disabled = true;
+  disableInspectionSelection("Selecciona primero un plano");
+  updateSubmitAvailability();
+
+  try {
+    planosActivos = await fetchJson<PlanoResumenResponse[]>(
+      `/api/empresas/${encodeURIComponent(EMPRESA_CODIGO)}/planos?estado=ACTIVOS`
+    );
+
+    if (planosActivos.length === 0) {
+      setSelectOptions(planoSelect, "No hay planos activos disponibles", []);
+      if (planoHelp) planoHelp.textContent = "No hay planos activos disponibles para inspección.";
+      setError("No hay planos activos disponibles para inspección.");
+      updateSubmitAvailability();
       return;
     }
 
     setSelectOptions(
-      estanteriaSelect,
-      "Selecciona una estantería",
-      estanteriasActuales.map((estanteria) => ({
-        value: estanteria.codigo,
-        label: `${estanteria.codigo} · ${estanteria.nombre}`
+      planoSelect,
+      "Selecciona un plano activo",
+      planosActivos.map((plano) => ({
+        value: plano.codigo,
+        label: `${plano.codigo} · ${plano.nombre}`
       }))
     );
-    estanteriaSelect.disabled = false;
+    planoSelect.disabled = false;
+
+    const inicial = planosActivos.find((plano) => plano.codigo === PLANO_DEMO_CODIGO)?.codigo
+      ?? planosActivos[0].codigo;
+    planoSelect.value = inicial;
+    await cargarPlanoOperativo(inicial);
   } catch (err) {
-    setSelectOptions(estanteriaSelect, "No se pudieron cargar estanterías", []);
-    setError(err instanceof Error ? err.message : "No se pudieron cargar las estanterías.");
-  } finally {
-    updateCurrentSelectionMeta();
+    setSelectOptions(planoSelect, "No se pudieron cargar planos activos", []);
+    if (planoHelp) planoHelp.textContent = "Error cargando planos activos.";
+    setError(err instanceof Error ? err.message : "No se pudieron cargar los planos activos.");
+    updateSubmitAvailability();
   }
 }
 
@@ -503,27 +726,35 @@ function resetView(): void {
   toggleNextLinks(false, false, null);
   setOperationalStatus("idle", "El módulo está listo para ejecutar una inspección.");
   updateImagePathState();
+  updateSubmitAvailability();
 }
+
+planoSelect?.addEventListener("change", () => {
+  setError(null);
+  setSuccess(null);
+  void cargarPlanoOperativo(planoSelect.value);
+});
 
 seccionSelect?.addEventListener("change", () => {
   setError(null);
   setSuccess(null);
-  void cargarEstanteriasDeSeccion(seccionSelect.value);
+  renderEstanteriasDeSeccion(seccionSelect.value);
 });
 
 estanteriaSelect?.addEventListener("change", () => {
   setError(null);
   setSuccess(null);
   updateCurrentSelectionMeta();
+  void cargarCapturasDeEstanteria(estanteriaSelect.value);
+  updateSubmitAvailability();
 });
 
 modoSelect?.addEventListener("change", updateImagePathState);
 
 btnReset?.addEventListener("click", () => {
-  form?.reset();
-  estanteriasActuales = [];
-  setSelectOptions(estanteriaSelect, "Selecciona primero una sección", []);
-  if (estanteriaSelect) estanteriaSelect.disabled = true;
+  if (modoSelect) modoSelect.value = "capture-and-predict";
+  if (imagePathInput) imagePathInput.value = "";
+  if (notasInput) notasInput.value = "";
   resetView();
 });
 
@@ -576,13 +807,12 @@ form?.addEventListener("submit", async (e: SubmitEvent) => {
     setOperationalStatus("error", "Se produjo un error durante la ejecución del flujo de visión.");
   } finally {
     if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.classList.remove("disabled");
+      updateSubmitAvailability();
     }
   }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
   resetView();
-  void cargarSecciones();
+  void cargarPlanosActivos();
 });

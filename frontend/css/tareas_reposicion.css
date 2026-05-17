@@ -539,6 +539,49 @@ button, input, select {
   color: var(--gold);
 }
 
+.btn.action-edit,
+.btn.action-reopen {
+  background: var(--gold);
+  color: var(--ink);
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.btn.action-assign {
+  background: var(--info);
+  color: var(--surface);
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.btn.action-start {
+  background: var(--ok);
+  color: var(--surface);
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.btn.action-cancel {
+  background: var(--alert);
+  color: var(--surface);
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.btn.action-edit:hover,
+.btn.action-assign:hover,
+.btn.action-start:hover,
+.btn.action-cancel:hover,
+.btn.action-reopen:hover,
+.btn.action-edit:focus-visible,
+.btn.action-assign:focus-visible,
+.btn.action-start:focus-visible,
+.btn.action-cancel:focus-visible,
+.btn.action-reopen:focus-visible {
+  background: var(--ink);
+  color: var(--gold);
+}
+
 .foot {
   text-align: center;
   padding: 32px;

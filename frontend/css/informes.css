@@ -109,6 +109,13 @@ body {
   line-height: 1.1;
 }
 
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
 .filters-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(150px, 1fr));
@@ -166,6 +173,17 @@ input:focus {
 .btn.primary:focus-visible:not(:disabled) {
   background: var(--gold);
   color: var(--black);
+}
+
+.btn.ghost {
+  background: var(--gold);
+  color: var(--black);
+}
+
+.btn.ghost:hover:not(:disabled),
+.btn.ghost:focus-visible:not(:disabled) {
+  background: var(--black);
+  color: var(--gold);
 }
 
 .btn:active {
@@ -400,6 +418,10 @@ input:focus {
   }
 
   .btn {
+    width: 100%;
+  }
+
+  .filter-actions {
     width: 100%;
   }
 }

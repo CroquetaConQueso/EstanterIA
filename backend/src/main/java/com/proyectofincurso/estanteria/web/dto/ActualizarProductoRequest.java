@@ -13,6 +13,7 @@ public record ActualizarProductoRequest(
         @Size(max = 2000, message = "La descripcion no puede superar 2000 caracteres")
         String descripcion,
 
+        Boolean registrarStockDemo,
         Boolean stockDisponible
 ) {
 }

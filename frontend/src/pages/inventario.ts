@@ -139,6 +139,9 @@ const productCodeInput = document.querySelector<HTMLInputElement>("#product-code
 const productNameInput = document.querySelector<HTMLInputElement>("#product-name");
 const productDescriptionInput = document.querySelector<HTMLTextAreaElement>("#product-description");
 const productLinkDemoProviderInput = document.querySelector<HTMLInputElement>("#product-link-demo-provider");
+const productStockDemoLabel = document.querySelector<HTMLElement>("#product-stock-demo-label");
+const productStockDemoHelp = document.querySelector<HTMLElement>("#product-stock-demo-help");
+const productStockLabelText = document.querySelector<HTMLElement>("#product-stock-label-text");
 const productStockSelect = document.querySelector<HTMLSelectElement>("#product-stock");
 const productFormStatus = document.querySelector<HTMLElement>("#product-form-status");
 const productDialogTitle = document.querySelector<HTMLElement>("#product-dialog-title");
@@ -271,6 +274,11 @@ function productoProveedorLabel(opcion: ProductoProveedorResumenResponse): strin
   const productoCodigo = producto?.codigoInterno ? `${producto.codigoInterno} - ` : "";
   const proveedorTexto = proveedor?.nombre ?? proveedor?.codigo ?? "Proveedor sin nombre";
   return `${productoCodigo}${producto?.nombre ?? "Producto sin nombre"} / ${proveedorTexto}`;
+}
+
+function productoProveedorDemoParaProducto(productoId: number | null | undefined): ProductoProveedorResumenResponse | null {
+  if (!productoId) return null;
+  return productoProveedorOpciones.find((opcion) => opcion.producto?.id === productoId) ?? null;
 }
 
 function fechasSlot(slot: SlotConfiguradoResponse): string {
@@ -896,6 +904,11 @@ function abrirDialogoProducto(): void {
   if (productCodeInput) productCodeInput.readOnly = false;
   if (productLinkDemoProviderInput) productLinkDemoProviderInput.disabled = false;
   if (productLinkDemoProviderInput) productLinkDemoProviderInput.checked = true;
+  if (productStockDemoLabel) productStockDemoLabel.textContent = "Registrar stock demo para este producto";
+  if (productStockDemoHelp) {
+    productStockDemoHelp.textContent = "Permite mostrar si el producto tiene stock disponible en Inventario, Alertas y Tareas. Si no se activa, el producto puede aparecer como \"Sin dato de stock\".";
+  }
+  if (productStockLabelText) productStockLabelText.textContent = "Stock disponible inicial";
   if (productStockSelect) productStockSelect.value = "true";
   setProductFormStatus();
   productDialog?.showModal();
@@ -923,12 +936,28 @@ function abrirDialogoEditarProducto(): void {
   }
   if (productNameInput) productNameInput.value = producto.nombre ?? "";
   if (productDescriptionInput) productDescriptionInput.value = producto.descripcion ?? "";
+  const productoProveedorDemo = productoProveedorDemoParaProducto(producto.id);
   if (productLinkDemoProviderInput) {
-    productLinkDemoProviderInput.checked = Boolean(slot?.asignacionActiva?.proveedor);
-    productLinkDemoProviderInput.disabled = true;
+    productLinkDemoProviderInput.checked = Boolean(productoProveedorDemo);
+    productLinkDemoProviderInput.disabled = Boolean(productoProveedorDemo);
+  }
+  if (productStockDemoLabel) {
+    productStockDemoLabel.textContent = productoProveedorDemo
+      ? "Stock demo registrado"
+      : "Registrar stock demo para este producto";
+  }
+  if (productStockDemoHelp) {
+    productStockDemoHelp.textContent = productoProveedorDemo
+      ? "Permite actualizar si este producto tiene stock disponible para asignaciones activas."
+      : "Permite usar este producto en asignaciones activas y mostrar disponibilidad de stock.";
+  }
+  if (productStockLabelText) {
+    productStockLabelText.textContent = productoProveedorDemo
+      ? "Stock disponible"
+      : "Stock disponible inicial";
   }
   if (productStockSelect) {
-    const stock = slot?.asignacionActiva?.stockDisponible;
+    const stock = productoProveedorDemo?.stockDisponible;
     productStockSelect.value = stock === false ? "false" : "true";
   }
   setProductFormStatus();
@@ -999,14 +1028,22 @@ async function editarProductoDesdeFormulario(): Promise<void> {
   }
 
   setProductFormStatus("Guardando producto...", "info");
+  const teniaStockDemo = Boolean(productoProveedorDemoParaProducto(productoActual.id));
 
   const producto = await patchJson<ProductoCreadoResponse>(`/api/productos/${encodeURIComponent(String(productoActual.id))}`, {
     nombre,
     descripcion: descripcion || null,
+    registrarStockDemo: productLinkDemoProviderInput?.checked ?? false,
     stockDisponible: productStockSelect?.value !== "false"
   });
 
-  setProductFormStatus(`${producto.codigoInterno} actualizado correctamente.`, "success");
+  const registroStockDemo = !teniaStockDemo && Boolean(producto.proveedor);
+  setProductFormStatus(
+    registroStockDemo
+      ? "Stock demo registrado. El producto ya puede usarse en asignaciones activas."
+      : `${producto.codigoInterno} actualizado correctamente.`,
+    "success"
+  );
   await cargarOpcionesProductoProveedor();
   await refrescarConfiguracionManteniendoSeleccion(productoActual.id);
 

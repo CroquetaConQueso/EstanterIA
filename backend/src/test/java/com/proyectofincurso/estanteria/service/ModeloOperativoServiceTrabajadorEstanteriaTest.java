@@ -24,6 +24,7 @@ import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRe
 import com.proyectofincurso.estanteria.persistence.repository.SeccionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.TrabajadorEstanteriaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.TrabajadorRepository;
+import com.proyectofincurso.estanteria.web.dto.ActualizarProductoRequest;
 import com.proyectofincurso.estanteria.web.dto.GuardarAsignacionActivaSlotRequest;
 import com.proyectofincurso.estanteria.web.error.ApiException;
 import org.junit.jupiter.api.Test;
@@ -112,6 +113,78 @@ class ModeloOperativoServiceTrabajadorEstanteriaTest {
                 .isInstanceOf(ApiException.class)
                 .extracting("status")
                 .isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void editarProductoPermiteRegistrarStockDemoSiNoExisteRelacion() {
+        Producto producto = productoBasico(true);
+        Proveedor proveedor = proveedorDemo();
+        when(productoRepository.findById(30L)).thenReturn(Optional.of(producto));
+        when(productoProveedorRepository.findByProductoIdAndProveedorCodigoIgnoreCase(30L, "PROV-DEMO"))
+                .thenReturn(Optional.empty());
+        when(proveedorRepository.findByCodigoAndActivoTrue("PROV-DEMO")).thenReturn(Optional.of(proveedor));
+        when(productoRepository.save(any(Producto.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productoProveedorRepository.save(any(ProductoProveedor.class))).thenAnswer(invocation -> {
+            ProductoProveedor relacion = invocation.getArgument(0);
+            relacion.setId(50L);
+            return relacion;
+        });
+
+        var response = service.actualizarProducto(
+                30L,
+                new ActualizarProductoRequest("Comida del Perro", "Saco", true, true)
+        );
+
+        ArgumentCaptor<ProductoProveedor> captor = ArgumentCaptor.forClass(ProductoProveedor.class);
+        verify(productoProveedorRepository).save(captor.capture());
+        assertThat(captor.getValue().getProducto()).isEqualTo(producto);
+        assertThat(captor.getValue().getProveedor()).isEqualTo(proveedor);
+        assertThat(captor.getValue().getClaveProductoProveedor()).isEqualTo("PROV-DEMO-PROD-PERRO");
+        assertThat(captor.getValue().getStockDisponible()).isTrue();
+        assertThat(captor.getValue().getActivo()).isTrue();
+        assertThat(response.proveedor()).isNotNull();
+        assertThat(response.stockDisponible()).isTrue();
+    }
+
+    @Test
+    void editarProductoActualizaStockDemoExistenteSinDuplicarRelacion() {
+        Producto producto = productoBasico(true);
+        ProductoProveedor relacion = productoProveedor();
+        relacion.setProducto(producto);
+        when(productoRepository.findById(30L)).thenReturn(Optional.of(producto));
+        when(productoProveedorRepository.findByProductoIdAndProveedorCodigoIgnoreCase(30L, "PROV-DEMO"))
+                .thenReturn(Optional.of(relacion));
+        when(productoRepository.save(any(Producto.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productoProveedorRepository.save(any(ProductoProveedor.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = service.actualizarProducto(
+                30L,
+                new ActualizarProductoRequest("Comida del Perro", "Saco", true, false)
+        );
+
+        verify(proveedorRepository, never()).findByCodigoAndActivoTrue(any());
+        verify(productoProveedorRepository).save(relacion);
+        assertThat(relacion.getStockDisponible()).isFalse();
+        assertThat(relacion.getActivo()).isTrue();
+        assertThat(response.stockDisponible()).isFalse();
+    }
+
+    @Test
+    void noPermiteRegistrarStockDemoEnProductoInactivo() {
+        Producto producto = productoBasico(false);
+        when(productoRepository.findById(30L)).thenReturn(Optional.of(producto));
+        when(productoProveedorRepository.findByProductoIdAndProveedorCodigoIgnoreCase(30L, "PROV-DEMO"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.actualizarProducto(
+                30L,
+                new ActualizarProductoRequest("Comida del Perro", null, true, true)
+        ))
+                .isInstanceOf(ApiException.class)
+                .extracting("status")
+                .isEqualTo(HttpStatus.CONFLICT);
+
+        verify(productoProveedorRepository, never()).save(any(ProductoProveedor.class));
     }
 
     @Test
@@ -247,17 +320,10 @@ class ModeloOperativoServiceTrabajadorEstanteriaTest {
     }
 
     private ProductoProveedor productoProveedor() {
-        Producto producto = new Producto();
-        producto.setId(30L);
+        Producto producto = productoBasico(true);
         producto.setCodigoInterno("PROD-ARROZ");
         producto.setNombre("Arroz");
-        producto.setActivo(true);
-
-        Proveedor proveedor = new Proveedor();
-        proveedor.setId(40L);
-        proveedor.setCodigo("PROV-DEMO");
-        proveedor.setNombre("Proveedor demo");
-        proveedor.setActivo(true);
+        Proveedor proveedor = proveedorDemo();
 
         ProductoProveedor productoProveedor = new ProductoProveedor();
         productoProveedor.setId(50L);
@@ -267,5 +333,24 @@ class ModeloOperativoServiceTrabajadorEstanteriaTest {
         productoProveedor.setStockDisponible(true);
         productoProveedor.setClaveProductoProveedor("PROV-DEMO:PROD-ARROZ");
         return productoProveedor;
+    }
+
+    private Producto productoBasico(boolean activo) {
+        Producto producto = new Producto();
+        producto.setId(30L);
+        producto.setCodigoInterno("PROD-PERRO");
+        producto.setNombre("Comida del Perro");
+        producto.setDescripcion("Saco");
+        producto.setActivo(activo);
+        return producto;
+    }
+
+    private Proveedor proveedorDemo() {
+        Proveedor proveedor = new Proveedor();
+        proveedor.setId(40L);
+        proveedor.setCodigo("PROV-DEMO");
+        proveedor.setNombre("Proveedor demo");
+        proveedor.setActivo(true);
+        return proveedor;
     }
 }

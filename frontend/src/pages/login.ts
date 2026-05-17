@@ -1,3 +1,5 @@
+import { clearAuthSession } from "../lib/api";
+
 type LoginRequest = { email: string; password: string };
 type LoginResponse = { message: string; userName: string; role: string; token: string };
 type ApiErrorResponse = {
@@ -7,7 +9,6 @@ type ApiErrorResponse = {
   fieldErrors?: Record<string, string>;
 };
 
-const WORKER_ACCESS_URL = "/html/acceso_trabajador.html";
 const ADMIN_HOME_URL = "/html/home.html";
 
 const form = document.querySelector<HTMLFormElement>("#form-login");
@@ -61,8 +62,9 @@ function getLoginErrorMessage(data: ApiErrorResponse | null, status: number): st
   return data?.message ?? `Error HTTP ${status}`;
 }
 
-function getRedirectUrl(role: string): string {
-  return role.toUpperCase() === "WORKER" ? WORKER_ACCESS_URL : ADMIN_HOME_URL;
+function isAdminPanelRole(role: string): boolean {
+  const normalizedRole = role.toUpperCase();
+  return normalizedRole === "ADMIN" || normalizedRole === "SUPERADMIN";
 }
 
 if (form && emailInput && passwordInput) {
@@ -101,12 +103,18 @@ if (form && emailInput && passwordInput) {
       }
 
       const data = await res.json() as LoginResponse;
+      if (!isAdminPanelRole(data.role)) {
+        clearAuthSession();
+        setError("El panel web está reservado a administradores y gerentes.");
+        return;
+      }
+
       const storage = rememberInput?.checked ? localStorage : sessionStorage;
       storage.setItem("auth_token", data.token);
       storage.setItem("auth_user", data.userName);
       storage.setItem("auth_role", data.role);
 
-      window.location.href = getRedirectUrl(data.role);
+      window.location.href = ADMIN_HOME_URL;
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally {

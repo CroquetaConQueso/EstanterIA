@@ -233,15 +233,19 @@ textarea {
   letter-spacing: 1px;
 }
 
-.registro-form input {
+.registro-form input,
+.registro-form select {
   padding: 12px 16px;
   background: var(--white);
   border: var(--border-light);
   color: var(--black);
   font-size: 1rem;
+  font-family: inherit;
+  text-transform: none;
 }
 
-.registro-form input:focus {
+.registro-form input:focus,
+.registro-form select:focus {
   outline: none;
   background: var(--black);
   color: var(--gold);

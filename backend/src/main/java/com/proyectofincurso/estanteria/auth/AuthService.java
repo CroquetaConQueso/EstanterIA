@@ -42,9 +42,10 @@ public class AuthService {
         return new AuthUser(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
     }
 
-    public void verificar(String username, String email, String password) {
+    public void verificar(String username, String email, String password, UserRole role) {
         String usernameNormalizado = username.trim();
         String emailNormalizado = email.trim();
+        UserRole roleRegistro = normalizarRolRegistro(role);
 
         if (repo.existsByUsernameIgnoreCase(usernameNormalizado)) {
             throw ApiException.conflict(
@@ -64,9 +65,24 @@ public class AuthService {
         user.setUsername(usernameNormalizado);
         user.setEmail(emailNormalizado);
         user.setPasswordHash(encoder.encode(password));
-        user.setRole(UserRole.WORKER);
+        user.setRole(roleRegistro);
         user.setEnabled(true);
 
         repo.save(user);
+    }
+
+    private UserRole normalizarRolRegistro(UserRole role) {
+        if (role == null) {
+            return UserRole.ADMIN;
+        }
+
+        if (role == UserRole.ADMIN || role == UserRole.SUPERADMIN) {
+            return role;
+        }
+
+        throw ApiException.badRequest(
+                "REGISTRO_ROLE_INVALIDO",
+                "Selecciona un rol de cuenta valido"
+        );
     }
 }

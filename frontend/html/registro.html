@@ -37,6 +37,7 @@
       </p>
       <ol class="steps">
         <li>Usuario de acceso.</li>
+        <li>Rol de cuenta web.</li>
         <li>Correo electrónico.</li>
         <li>Contraseña segura.</li>
       </ol>
@@ -53,6 +54,14 @@
       <label>
         Correo electrónico
         <input type="email" id="reg-email" name="email" maxlength="120" autocomplete="email" required />
+      </label>
+
+      <label>
+        Rol de cuenta
+        <select id="reg-role" name="role" required>
+          <option value="ADMIN" selected>Administrador</option>
+          <option value="SUPERADMIN">Gerente</option>
+        </select>
       </label>
 
       <label>

@@ -612,13 +612,47 @@ public class ModeloOperativoService {
                 .findByProductoIdAndProveedorCodigoIgnoreCase(producto.getId(), PROVEEDOR_DEMO_CODIGO)
                 .orElse(null);
 
-        if (request.stockDisponible() != null && productoProveedor != null) {
+        if (Boolean.TRUE.equals(request.registrarStockDemo())) {
+            if (!Boolean.TRUE.equals(producto.getActivo())) {
+                throw ApiException.conflict(
+                        "PRODUCTO_INACTIVO",
+                        "No se puede registrar stock demo en un producto inactivo."
+                );
+            }
+
+            productoProveedor = registrarOActualizarStockDemo(producto, productoProveedor, request.stockDisponible());
+        } else if (request.stockDisponible() != null && productoProveedor != null) {
             productoProveedor.setStockDisponible(request.stockDisponible());
             productoProveedor.setUpdatedAt(Instant.now());
             productoProveedorRepository.save(productoProveedor);
         }
 
         return toProductoCreadoResponse(productoRepository.save(producto), productoProveedor);
+    }
+
+    private ProductoProveedor registrarOActualizarStockDemo(Producto producto,
+                                                            ProductoProveedor productoProveedor,
+                                                            Boolean stockDisponible) {
+        Instant ahora = Instant.now();
+        ProductoProveedor relacion = productoProveedor;
+        if (relacion == null) {
+            Proveedor proveedorDemo = proveedorRepository.findByCodigoAndActivoTrue(PROVEEDOR_DEMO_CODIGO)
+                    .orElseThrow(() -> ApiException.conflict(
+                            "PROVEEDOR_DEMO_NO_ENCONTRADO",
+                            "No se encontró proveedor demo para registrar stock."
+                    ));
+
+            relacion = new ProductoProveedor();
+            relacion.setProducto(producto);
+            relacion.setProveedor(proveedorDemo);
+            relacion.setClaveProductoProveedor(PROVEEDOR_DEMO_CODIGO + "-" + producto.getCodigoInterno());
+            relacion.setCreatedAt(ahora);
+        }
+
+        relacion.setStockDisponible(stockDisponible == null ? Boolean.TRUE : stockDisponible);
+        relacion.setActivo(true);
+        relacion.setUpdatedAt(ahora);
+        return productoProveedorRepository.save(relacion);
     }
 
     @Transactional

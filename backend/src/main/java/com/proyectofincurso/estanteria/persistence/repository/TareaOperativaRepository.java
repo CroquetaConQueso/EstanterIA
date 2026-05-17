@@ -93,4 +93,16 @@ public interface TareaOperativaRepository extends JpaRepository<TareaOperativa, 
             where tarea.id = :id
             """)
     Optional<TareaOperativa> findByIdConContexto(@Param("id") Long id);
+
+    @Query("""
+            select distinct tarea
+            from TareaOperativa tarea
+            left join fetch tarea.estanteria
+            left join fetch tarea.seccion
+            where tarea.trabajadorAsignado.id = :trabajadorId
+              and tarea.estadoTarea in :estados
+            order by tarea.prioridad desc, tarea.createdAt desc
+            """)
+    List<TareaOperativa> findAsignadasByTrabajadorAndEstadoIn(@Param("trabajadorId") Long trabajadorId,
+                                                              @Param("estados") Collection<EstadoTareaOperativa> estados);
 }

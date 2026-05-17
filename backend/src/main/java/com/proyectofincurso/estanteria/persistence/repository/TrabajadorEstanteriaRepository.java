@@ -14,4 +14,7 @@ public interface TrabajadorEstanteriaRepository extends JpaRepository<Trabajador
 
     @EntityGraph(attributePaths = {"trabajador", "estanteria", "estanteria.seccion", "estanteria.seccion.empresa"})
     Optional<TrabajadorEstanteria> findByEstanteriaIdAndTrabajadorId(Long estanteriaId, Long trabajadorId);
+
+    @EntityGraph(attributePaths = {"estanteria", "estanteria.seccion"})
+    List<TrabajadorEstanteria> findByTrabajadorIdAndActivaTrueOrderByEstanteriaCodigoAsc(Long trabajadorId);
 }

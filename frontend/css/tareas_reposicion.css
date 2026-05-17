@@ -11,7 +11,7 @@
   --white: #f4f0ec;
   
   /* Colores funcionales */
-  --alert: #d32f2f;
+  --alert: #d52b1e;
   --alert-bg: #ffebee;
   --warn: #f57f17;
   --warn-bg: #fff8e1;
@@ -474,6 +474,7 @@ button, input, select {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: stretch;
   margin-top: auto;
   padding: 0 20px 20px;
 }
@@ -482,18 +483,23 @@ button, input, select {
    BOTONES
    ========================================================================== */
 .btn {
-  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
   padding: 0 20px;
   border: var(--border-main);
   background: var(--surface);
   color: var(--ink);
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   cursor: pointer;
   box-shadow: 2px 2px 0 var(--ink);
   flex: 1;
   text-align: center;
+  line-height: 1.15;
+  white-space: normal;
   transition: background 0.12s, color 0.12s, transform 0.1s, box-shadow 0.1s;
 }
 
@@ -548,8 +554,8 @@ button, input, select {
 }
 
 .btn.action-assign {
-  background: var(--info);
-  color: var(--surface);
+  background: var(--highlight);
+  color: var(--ink);
   border-color: var(--ink);
   box-shadow: 4px 4px 0 var(--ink);
 }
@@ -566,6 +572,11 @@ button, input, select {
   color: var(--surface);
   border-color: var(--ink);
   box-shadow: 4px 4px 0 var(--ink);
+}
+
+.btn.action-reopen {
+  background: var(--warn);
+  color: var(--ink);
 }
 
 .btn.action-edit:hover,

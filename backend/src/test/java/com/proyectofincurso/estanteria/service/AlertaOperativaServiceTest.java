@@ -5,6 +5,7 @@ import com.proyectofincurso.estanteria.persistence.entity.AsignacionProductoSlot
 import com.proyectofincurso.estanteria.persistence.entity.EstadoAlerta;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoAsignacionProductoSlot;
 import com.proyectofincurso.estanteria.persistence.entity.EstadoDisponibilidadTrabajador;
+import com.proyectofincurso.estanteria.persistence.entity.EstadoTareaOperativa;
 import com.proyectofincurso.estanteria.persistence.entity.Estanteria;
 import com.proyectofincurso.estanteria.persistence.entity.EstanteriaSlotConfiguracion;
 import com.proyectofincurso.estanteria.persistence.entity.PrioridadAlerta;
@@ -13,6 +14,7 @@ import com.proyectofincurso.estanteria.persistence.entity.ProductoProveedor;
 import com.proyectofincurso.estanteria.persistence.entity.Proveedor;
 import com.proyectofincurso.estanteria.persistence.entity.Seccion;
 import com.proyectofincurso.estanteria.persistence.entity.TipoAlerta;
+import com.proyectofincurso.estanteria.persistence.entity.TareaOperativa;
 import com.proyectofincurso.estanteria.persistence.entity.TipoTrabajador;
 import com.proyectofincurso.estanteria.persistence.entity.Trabajador;
 import com.proyectofincurso.estanteria.persistence.entity.TrabajadorEstanteria;
@@ -23,6 +25,7 @@ import com.proyectofincurso.estanteria.persistence.repository.EstanteriaReposito
 import com.proyectofincurso.estanteria.persistence.repository.EstanteriaSlotConfiguracionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.InspeccionRepository;
 import com.proyectofincurso.estanteria.persistence.repository.SeccionEncargadoRepository;
+import com.proyectofincurso.estanteria.persistence.repository.TareaOperativaRepository;
 import com.proyectofincurso.estanteria.persistence.repository.TrabajadorEstanteriaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,6 +61,8 @@ class AlertaOperativaServiceTest {
     private SeccionEncargadoRepository seccionEncargadoRepository;
     @Mock
     private TrabajadorEstanteriaRepository trabajadorEstanteriaRepository;
+    @Mock
+    private TareaOperativaRepository tareaOperativaRepository;
     @Mock
     private AlertaRepository alertaRepository;
     @Mock
@@ -302,6 +307,7 @@ class AlertaOperativaServiceTest {
         TrabajadorEstanteria asignacion = asignacionTrabajadorEstanteria(EstadoDisponibilidadTrabajador.ENFERMO);
         when(trabajadorEstanteriaRepository.findActivasConTrabajadorNoDisponible(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(List.of(asignacion));
+        when(tareaOperativaRepository.findConContextoByEstadoIn(any())).thenReturn(List.of());
         when(alertaRepository.findAlertasAbiertasPorEstanteria(
                 TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO,
                 EstadoAlerta.ABIERTA,
@@ -333,6 +339,7 @@ class AlertaOperativaServiceTest {
         existente.setTipoAlerta(TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO);
         when(trabajadorEstanteriaRepository.findActivasConTrabajadorNoDisponible(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(List.of(asignacion));
+        when(tareaOperativaRepository.findConContextoByEstadoIn(any())).thenReturn(List.of());
         when(alertaRepository.findAlertasAbiertasPorEstanteria(
                 TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO,
                 EstadoAlerta.ABIERTA,
@@ -348,9 +355,63 @@ class AlertaOperativaServiceTest {
     }
 
     @Test
+    void trabajadorInactivoAsignadoGeneraAlertaDeEstanteria() {
+        TrabajadorEstanteria asignacion = asignacionTrabajadorEstanteria(EstadoDisponibilidadTrabajador.DISPONIBLE);
+        asignacion.getTrabajador().setActivo(false);
+        when(trabajadorEstanteriaRepository.findActivasConTrabajadorNoDisponible(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of(asignacion));
+        when(tareaOperativaRepository.findConContextoByEstadoIn(any())).thenReturn(List.of());
+        when(alertaRepository.findAlertasAbiertasPorEstanteria(
+                TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO,
+                EstadoAlerta.ABIERTA,
+                20L
+        )).thenReturn(List.of());
+        when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
+
+        var response = service.revisarTrabajadoresNoDisponiblesAsignados();
+
+        ArgumentCaptor<Alerta> captor = ArgumentCaptor.forClass(Alerta.class);
+        verify(alertaRepository).save(captor.capture());
+        Alerta alerta = captor.getValue();
+        assertThat(alerta.getPrioridad()).isEqualTo(PrioridadAlerta.ALTA);
+        assertThat(alerta.getMensaje()).contains("EST-001", "Mario", "INACTIVO");
+        assertThat(response.alertasCreadas()).isEqualTo(1);
+        verify(tareaOperativaService).crearAutomaticaSiNoExiste(alerta);
+    }
+
+    @Test
+    void trabajadorEnfermoConTareaActivaGeneraAlertaDeEstanteria() {
+        TareaOperativa tarea = tareaActivaConTrabajador(
+                EstadoDisponibilidadTrabajador.ENFERMO,
+                EstadoTareaOperativa.EN_PROGRESO
+        );
+        when(trabajadorEstanteriaRepository.findActivasConTrabajadorNoDisponible(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of());
+        when(tareaOperativaRepository.findConContextoByEstadoIn(any())).thenReturn(List.of(tarea));
+        when(alertaRepository.findAlertasAbiertasPorEstanteria(
+                TipoAlerta.TRABAJADOR_NO_DISPONIBLE_ASIGNADO,
+                EstadoAlerta.ABIERTA,
+                20L
+        )).thenReturn(List.of());
+        when(seccionEncargadoRepository.findEncargadosActivosBySeccionId(10L)).thenReturn(List.of());
+
+        var response = service.revisarTrabajadoresNoDisponiblesAsignados();
+
+        ArgumentCaptor<Alerta> captor = ArgumentCaptor.forClass(Alerta.class);
+        verify(alertaRepository).save(captor.capture());
+        Alerta alerta = captor.getValue();
+        assertThat(alerta.getPrioridad()).isEqualTo(PrioridadAlerta.ALTA);
+        assertThat(alerta.getMensaje()).contains("tareas activas", "Mario", "ENFERMO");
+        assertThat(response.estanteriasAfectadas()).isEqualTo(1);
+        assertThat(response.alertasCreadas()).isEqualTo(1);
+        verify(tareaOperativaService).crearAutomaticaSiNoExiste(alerta);
+    }
+
+    @Test
     void sinTrabajadoresNoDisponiblesAsignadosNoGeneraAlertas() {
         when(trabajadorEstanteriaRepository.findActivasConTrabajadorNoDisponible(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(List.of());
+        when(tareaOperativaRepository.findConContextoByEstadoIn(any())).thenReturn(List.of());
 
         var response = service.revisarTrabajadoresNoDisponiblesAsignados();
 
@@ -428,5 +489,20 @@ class AlertaOperativaServiceTest {
         asignacion.setEstanteria(estanteria);
         asignacion.setActiva(true);
         return asignacion;
+    }
+
+    private TareaOperativa tareaActivaConTrabajador(EstadoDisponibilidadTrabajador disponibilidad,
+                                                    EstadoTareaOperativa estadoTarea) {
+        TrabajadorEstanteria asignacion = asignacionTrabajadorEstanteria(disponibilidad);
+        TareaOperativa tarea = new TareaOperativa();
+        tarea.setId(50L);
+        tarea.setEstadoTarea(estadoTarea);
+        tarea.setPrioridad(PrioridadAlerta.MEDIA);
+        tarea.setTitulo("Tarea activa");
+        tarea.setDescripcion("Tarea asignada a trabajador no disponible");
+        tarea.setEstanteria(asignacion.getEstanteria());
+        tarea.setSeccion(asignacion.getEstanteria().getSeccion());
+        tarea.setTrabajadorAsignado(asignacion.getTrabajador());
+        return tarea;
     }
 }

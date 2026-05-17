@@ -28,8 +28,10 @@ public interface TrabajadorEstanteriaRepository extends JpaRepository<Trabajador
             from TrabajadorEstanteria asignacion
             where asignacion.activa = true
               and asignacion.estanteria.activa = true
-              and asignacion.trabajador.activo = true
-              and asignacion.trabajador.estadoDisponibilidad in :estados
+              and (
+                    asignacion.trabajador.activo = false
+                    or asignacion.trabajador.estadoDisponibilidad in :estados
+              )
             order by asignacion.estanteria.codigo asc, asignacion.trabajador.apellidos asc, asignacion.trabajador.nombre asc
             """)
     List<TrabajadorEstanteria> findActivasConTrabajadorNoDisponible(@Param("estados") Collection<EstadoDisponibilidadTrabajador> estados);

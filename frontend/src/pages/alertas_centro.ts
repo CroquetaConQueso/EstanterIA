@@ -124,6 +124,7 @@ const filtroTexto = document.querySelector<HTMLInputElement>("#filtro-texto");
 const btnLimpiar = document.querySelector<HTMLButtonElement>("#btn-limpiar");
 const btnRevisarCaducidades = document.querySelector<HTMLButtonElement>("#btn-revisar-caducidades");
 const btnRevisarTrabajadores = document.querySelector<HTMLButtonElement>("#btn-revisar-trabajadores");
+const reviewFeedback = document.querySelector<HTMLElement>("#review-feedback");
 
 const detalle = document.querySelector<HTMLUListElement>("#detalle-alerta");
 const detallePanel = document.querySelector<HTMLElement>("#detalle-alerta-panel");
@@ -329,6 +330,12 @@ function setActionStatus(message = "", type: "success" | "error" | "info" = "inf
   if (!alertaActionStatus) return;
   alertaActionStatus.textContent = message;
   alertaActionStatus.dataset.type = type;
+}
+
+function setReviewStatus(message = "", type: "success" | "error" | "info" = "info"): void {
+  if (!reviewFeedback) return;
+  reviewFeedback.textContent = message;
+  reviewFeedback.dataset.type = type;
 }
 
 function updateMetrics(): void {
@@ -592,7 +599,7 @@ function mensajeRevisionCaducidades(data: RevisionCaducidadesResponse): string {
   ].join(" ");
 }
 
-async function cargarAlertas(mensajeDetalle?: string): Promise<void> {
+async function cargarAlertas(): Promise<void> {
   setRowMessage("Cargando alertas abiertas...");
   setDetalleMessage("Cargando detalle de alertas...");
 
@@ -620,14 +627,6 @@ async function cargarAlertas(mensajeDetalle?: string): Promise<void> {
     updateMetrics();
     renderTable();
 
-    if (mensajeDetalle) {
-      selectedId = null;
-      renderTable();
-      setDetalleMessage(mensajeDetalle);
-      setActionStatus(mensajeDetalle, "success");
-      return;
-    }
-
     if (alertas.length > 0) {
       selectAlert(alertas[0].id);
     } else {
@@ -643,12 +642,12 @@ async function cargarAlertas(mensajeDetalle?: string): Promise<void> {
 
 async function revisarTrabajadoresNoDisponibles(): Promise<void> {
   if (!puedeCerrarAlertas) {
-    setActionStatus("Solo un administrador puede revisar trabajadores no disponibles.", "error");
+    setReviewStatus("Solo un administrador puede revisar trabajadores no disponibles.", "error");
     return;
   }
 
   if (btnRevisarTrabajadores) btnRevisarTrabajadores.disabled = true;
-  setActionStatus("Revisando trabajadores no disponibles asignados...", "info");
+  setReviewStatus("Revisando trabajadores no disponibles asignados...", "info");
 
   try {
     const response = await authFetch(API_REVISAR_TRABAJADORES, {
@@ -660,14 +659,15 @@ async function revisarTrabajadoresNoDisponibles(): Promise<void> {
 
     if (!response.ok) {
       const errorData = await parseErrorResponse(response);
-      setActionStatus(getBackendErrorMessage(errorData, response.status), "error");
+      setReviewStatus(getBackendErrorMessage(errorData, response.status), "error");
       return;
     }
 
     const data = await response.json() as RevisionTrabajadoresNoDisponiblesResponse;
-    await cargarAlertas(mensajeRevisionTrabajadores(data));
+    setReviewStatus(mensajeRevisionTrabajadores(data), "success");
+    await cargarAlertas();
   } catch {
-    setActionStatus("No se pudo conectar con el servidor para revisar trabajadores.", "error");
+    setReviewStatus("No se pudo conectar con el servidor para revisar trabajadores.", "error");
   } finally {
     if (btnRevisarTrabajadores) btnRevisarTrabajadores.disabled = false;
   }
@@ -675,12 +675,12 @@ async function revisarTrabajadoresNoDisponibles(): Promise<void> {
 
 async function revisarCaducidades(): Promise<void> {
   if (!puedeCerrarAlertas) {
-    setActionStatus("Solo un administrador puede revisar caducidades.", "error");
+    setReviewStatus("Solo un administrador puede revisar caducidades.", "error");
     return;
   }
 
   if (btnRevisarCaducidades) btnRevisarCaducidades.disabled = true;
-  setActionStatus("Revisando caducidades y retiradas programadas...", "info");
+  setReviewStatus("Revisando caducidades y retiradas programadas...", "info");
 
   try {
     const response = await authFetch(API_REVISAR_CADUCIDADES, {
@@ -692,14 +692,15 @@ async function revisarCaducidades(): Promise<void> {
 
     if (!response.ok) {
       const errorData = await parseErrorResponse(response);
-      setActionStatus(getBackendErrorMessage(errorData, response.status), "error");
+      setReviewStatus(getBackendErrorMessage(errorData, response.status), "error");
       return;
     }
 
     const data = await response.json() as RevisionCaducidadesResponse;
-    await cargarAlertas(mensajeRevisionCaducidades(data));
+    setReviewStatus(mensajeRevisionCaducidades(data), "success");
+    await cargarAlertas();
   } catch {
-    setActionStatus("No se pudo conectar con el servidor para revisar caducidades.", "error");
+    setReviewStatus("No se pudo conectar con el servidor para revisar caducidades.", "error");
   } finally {
     if (btnRevisarCaducidades) btnRevisarCaducidades.disabled = false;
   }
@@ -741,7 +742,8 @@ async function cerrarAlerta(accion: "resolver" | "descartar"): Promise<void> {
       return;
     }
 
-    await cargarAlertas("La alerta se cerro correctamente.");
+    await cargarAlertas();
+    setActionStatus("La alerta se cerro correctamente.", "success");
   } catch {
     renderDetail(alerta);
     setActionStatus("No se pudo conectar con el servidor de alertas.", "error");

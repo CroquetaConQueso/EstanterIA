@@ -131,6 +131,21 @@ class TrabajadorServiceTest {
                 });
     }
 
+    @Test
+    void desactivarTrabajadorRevisaAlertasOperativasSiEstabaAsignado() {
+        Trabajador trabajador = trabajadorBase();
+        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
+        when(trabajadorEstanteriaRepository.findByTrabajadorIdAndActivaTrueOrderByEstanteriaCodigoAsc(1L))
+                .thenReturn(List.of());
+        when(tareaOperativaRepository.findAsignadasByTrabajadorAndEstadoIn(org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of());
+
+        service.desactivarTrabajador(1L);
+
+        assertThat(trabajador.getActivo()).isFalse();
+        verify(alertaOperativaService).revisarTrabajadorNoDisponibleAsignado(1L);
+    }
+
     private CrearTrabajadorRequest crearRequest(String email, String telefono) {
         return new CrearTrabajadorRequest(
                 "Laura",

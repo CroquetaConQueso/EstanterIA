@@ -422,7 +422,7 @@ button {
 
 .current-plan {
   display: grid;
-  grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 360px) minmax(160px, 220px) minmax(0, 1fr);
   gap: 18px;
   align-items: end;
   width: 100%;
@@ -454,6 +454,21 @@ button {
   box-shadow: 4px 4px 0 var(--black);
   padding: 0 14px;
   font: inherit;
+}
+
+.plan-filter select {
+  background: var(--white);
+}
+
+.inactive-plan-note {
+  margin: -4px 0 18px;
+  border: var(--border-light);
+  background: #d7d7d7;
+  color: var(--black);
+  padding: 12px 14px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  text-transform: none;
 }
 
 .status-pill {
@@ -831,6 +846,19 @@ button {
 .btn.plan-action-primary:focus-visible,
 .btn.plan-action-accent:hover,
 .btn.plan-action-accent:focus-visible {
+  background: var(--black);
+  color: var(--gold);
+}
+
+.btn.danger {
+  background: var(--danger);
+  color: var(--white);
+  border-color: var(--black);
+  box-shadow: 4px 4px 0 var(--black);
+}
+
+.btn.danger:hover,
+.btn.danger:focus-visible {
   background: var(--black);
   color: var(--gold);
 }

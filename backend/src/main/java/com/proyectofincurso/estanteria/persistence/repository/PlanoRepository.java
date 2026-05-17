@@ -17,4 +17,8 @@ public interface PlanoRepository extends JpaRepository<Plano, Long> {
     Optional<Plano> findByCodigoIgnoreCase(String codigo);
 
     List<Plano> findByEmpresaCodigoAndActivoTrueOrderByNombreAsc(String codigoEmpresa);
+
+    List<Plano> findByEmpresaCodigoAndActivoFalseOrderByNombreAsc(String codigoEmpresa);
+
+    List<Plano> findByEmpresaCodigoOrderByNombreAsc(String codigoEmpresa);
 }

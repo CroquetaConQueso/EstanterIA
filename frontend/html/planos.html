@@ -47,6 +47,7 @@
     <div class="toolbar">
       <a class="btn primary plan-action-primary" id="btn-crear-plano" href="editor.html">Crear plano</a>
       <a class="btn ghost" id="btn-editar-plano" href="editor.html?codigo=PLANO-DEMO">Editar plano</a>
+      <button class="btn danger" id="btn-toggle-plano" type="button" hidden>Desactivar plano</button>
       <a class="btn plan-action-accent" href="inspecciones.html">Ver inspecciones</a>
     </div>
   </header>
@@ -85,6 +86,14 @@
                 <option value="">Cargando planos...</option>
               </select>
             </label>
+            <label class="plan-selector plan-filter" for="plano-estado-filter">
+              <span>Ver</span>
+              <select id="plano-estado-filter">
+                <option value="ACTIVOS" selected>Activos</option>
+                <option value="INACTIVOS">Inactivos</option>
+                <option value="TODOS">Todos</option>
+              </select>
+            </label>
             <div>
               <h2 id="titulo-plano">PLANO-DEMO</h2>
               <p id="subtitulo-plano">Cargando plano operativo...</p>
@@ -92,6 +101,9 @@
           </div>
           <span class="status-pill" id="estado-carga">Cargando</span>
         </div>
+        <p class="inactive-plan-note" id="plano-inactivo-aviso" hidden>
+          Este plano estÃ¡ inactivo. Se conserva por histÃ³rico y no participa en flujos operativos por defecto.
+        </p>
         <div class="canvas-shell">
           <div class="plan-canvas" id="plano-canvas" aria-label="Plano operativo 2D">
             <span>Cargando plano operativo...</span>

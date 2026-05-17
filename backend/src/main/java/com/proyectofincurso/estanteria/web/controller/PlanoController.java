@@ -5,6 +5,7 @@ import com.proyectofincurso.estanteria.service.PlanoService;
 import com.proyectofincurso.estanteria.service.PlanoOperativoService;
 import com.proyectofincurso.estanteria.web.dto.ActualizarPlanoRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearPlanoRequest;
+import com.proyectofincurso.estanteria.web.dto.EstadoListadoPlanos;
 import com.proyectofincurso.estanteria.web.dto.PlanoOperativoResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoResumenResponse;
@@ -17,10 +18,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,9 +39,11 @@ public class PlanoController {
     private final PlanoOperativoService planoOperativoService;
 
     @GetMapping(value = "/api/empresas/{codigoEmpresa}/planos", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar planos de empresa", description = "Requiere autenticacion. Devuelve los planos activos disponibles para la empresa.")
-    public List<PlanoResumenResponse> listarPlanosDeEmpresa(@PathVariable String codigoEmpresa) {
-        return planoService.listarPlanosDeEmpresa(codigoEmpresa);
+    @Operation(summary = "Listar planos de empresa", description = "Requiere autenticacion. Por defecto devuelve planos activos.")
+    public List<PlanoResumenResponse> listarPlanosDeEmpresa(
+            @PathVariable String codigoEmpresa,
+            @RequestParam(name = "estado", defaultValue = "ACTIVOS") EstadoListadoPlanos estado) {
+        return planoService.listarPlanosDeEmpresa(codigoEmpresa, estado);
     }
 
     @GetMapping(value = "/api/planos/{codigo}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -67,5 +72,19 @@ public class PlanoController {
     public PlanoResponse actualizarPlano(@PathVariable String codigo,
                                          @Valid @RequestBody ActualizarPlanoRequest request) {
         return planoService.actualizarPlanoCompleto(codigo, request);
+    }
+
+    @PatchMapping(value = "/api/planos/{codigo}/desactivar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Desactivar plano", description = "Requiere ADMIN/SUPERADMIN. Desactiva el plano sin borrar zonas, layouts ni historico.")
+    public PlanoResponse desactivarPlano(@PathVariable String codigo) {
+        return planoService.desactivarPlano(codigo);
+    }
+
+    @PatchMapping(value = "/api/planos/{codigo}/reactivar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Reactivar plano", description = "Requiere ADMIN/SUPERADMIN. Vuelve a marcar el plano como activo.")
+    public PlanoResponse reactivarPlano(@PathVariable String codigo) {
+        return planoService.reactivarPlano(codigo);
     }
 }

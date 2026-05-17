@@ -36,8 +36,8 @@ public class InspeccionService {
     private static final int IMAGEN_PATH_CAPACIDAD = 255;
     private static final String CAPTURES_PREFIX = "/captures/";
     private static final String CAPTURES_RELATIVE_PREFIX = "captures/";
-    private static final String MOTIVO_INSPECCION_CON_ALERTAS = "La inspecciÃ³n generÃ³ alertas operativas.";
-    private static final String MENSAJE_CONFLICTO_ELIMINACION = "No se puede eliminar esta inspecciÃ³n porque generÃ³ alertas operativas.";
+    private static final String MOTIVO_INSPECCION_CON_ALERTAS = "La inspeccion genero alertas operativas.";
+    private static final String MENSAJE_CONFLICTO_ELIMINACION = "No se puede eliminar esta inspeccion porque genero alertas operativas.";
     private static final Pattern SAFE_RELATIVE_PATH = Pattern.compile("^[a-zA-Z0-9/_\\-.]+$");
     private static final Set<String> ALLOWED_EXT = Set.of("jpg", "jpeg", "png", "webp");
 
@@ -304,7 +304,7 @@ public class InspeccionService {
         Inspeccion ins = insRepo.findByIdConSlotsYEstanteria(id)
                 .orElseThrow(() -> ApiException.notFound(
                         "INSPECCION_NOT_FOUND",
-                        "No existe la inspecciÃ³n solicitada"
+                        "No existe la inspeccion solicitada"
                 ));
 
         if (!esEliminable(id)) {

@@ -18,6 +18,10 @@
   --ok: #388e3c;
   --ok-bg: #e8f5e9;
   --info: #0288d1;
+  --danger: #b51212;
+  --industrial: #d8d0c7;
+  --industrial-dark: #3a332c;
+  --amber-action: #c87910;
   
   /* Estilos estructurales */
   --border-light: 1px solid var(--ink);
@@ -487,7 +491,7 @@ button, input, select {
   align-items: center;
   justify-content: center;
   min-height: 48px;
-  padding: 0 20px;
+  padding: 12px 18px;
   border: var(--border-main);
   background: var(--surface);
   color: var(--ink);
@@ -498,9 +502,15 @@ button, input, select {
   box-shadow: 2px 2px 0 var(--ink);
   flex: 1;
   text-align: center;
-  line-height: 1.15;
+  line-height: 1;
   white-space: normal;
   transition: background 0.12s, color 0.12s, transform 0.1s, box-shadow 0.1s;
+}
+
+.task-actions .btn {
+  min-width: 126px;
+  min-height: 50px;
+  text-decoration: none;
 }
 
 .btn:active {
@@ -553,22 +563,26 @@ button, input, select {
   box-shadow: 4px 4px 0 var(--ink);
 }
 
+.btn.action-edit {
+  align-self: stretch;
+}
+
 .btn.action-assign {
-  background: var(--highlight);
-  color: var(--ink);
+  background: var(--industrial);
+  color: var(--industrial-dark);
   border-color: var(--ink);
   box-shadow: 4px 4px 0 var(--ink);
 }
 
 .btn.action-start {
-  background: var(--ok);
+  background: var(--amber-action);
   color: var(--surface);
   border-color: var(--ink);
   box-shadow: 4px 4px 0 var(--ink);
 }
 
 .btn.action-cancel {
-  background: var(--alert);
+  background: var(--danger);
   color: var(--surface);
   border-color: var(--ink);
   box-shadow: 4px 4px 0 var(--ink);

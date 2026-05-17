@@ -141,12 +141,13 @@ button {
 }
 
 .page-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 32px;
+  display: block;
   margin-bottom: 32px;
   padding: 32px;
+}
+
+.page-head > div {
+  width: 100%;
 }
 
 .eyebrow {
@@ -422,10 +423,11 @@ button {
 
 .plan-control-panel {
   display: grid;
-  grid-template-columns: minmax(0, 560px) minmax(0, 1fr) auto;
-  gap: 18px;
+  grid-template-columns: minmax(280px, 1fr) minmax(150px, 180px) auto;
+  gap: 14px;
   align-items: end;
   width: 100%;
+  margin-top: 22px;
 }
 
 .plan-control-group {
@@ -441,7 +443,15 @@ button {
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.plan-actions .btn {
+  white-space: nowrap;
+  min-height: 52px;
+  padding-inline: 16px;
+  font-size: 0.82rem;
 }
 
 .plan-selector {
@@ -1007,7 +1017,6 @@ button {
 @media (max-width: 1100px) {
   .inner,
   .left,
-  .page-head,
   .card-head,
   .plan-control-panel {
     align-items: flex-start;
@@ -1025,6 +1034,7 @@ button {
 
   .plan-actions {
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .layout,
@@ -1035,6 +1045,18 @@ button {
   .col-list {
     position: static;
     max-height: none;
+  }
+}
+
+@media (max-width: 1350px) and (min-width: 1101px) {
+  .plan-control-panel {
+    grid-template-columns: minmax(280px, 1fr) minmax(150px, 180px);
+  }
+
+  .plan-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 }
 

@@ -2,6 +2,7 @@ package com.proyectofincurso.estanteria.web.controller;
 
 import com.proyectofincurso.estanteria.config.OpenApiConfig;
 import com.proyectofincurso.estanteria.service.InspeccionService;
+import com.proyectofincurso.estanteria.web.dto.ActualizarImagenInspeccionRequest;
 import com.proyectofincurso.estanteria.web.dto.InspeccionDetalleResponse;
 import com.proyectofincurso.estanteria.web.dto.InspeccionItemResponse;
 import com.proyectofincurso.estanteria.web.dto.InspeccionarRequest;
@@ -19,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -56,6 +58,17 @@ public class InspeccionController {
     @Operation(summary = "Obtener inspeccion", description = "Requiere autenticacion. Devuelve el detalle de una inspeccion y sus resultados.")
     public InspeccionDetalleResponse obtenerInspeccion(@PathVariable Long id) {
         return inspeccionService.obtenerInspeccion(id);
+    }
+
+    @PatchMapping(value="/inspecciones/{id}/imagen", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    @Operation(summary = "Actualizar imagen de inspeccion", description = "Requiere ADMIN/SUPERADMIN. Asocia, cambia o elimina la captura vinculada sin recalcular resultados visuales.")
+    public InspeccionDetalleResponse actualizarImagen(
+            @PathVariable Long id,
+            @RequestBody ActualizarImagenInspeccionRequest request
+    ) {
+        String imagenPath = request == null ? null : request.imagenPath();
+        return inspeccionService.actualizarImagen(id, imagenPath);
     }
 
     @DeleteMapping(value="/inspecciones/{id}")

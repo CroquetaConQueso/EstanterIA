@@ -63,6 +63,14 @@
         <span>Vista de estantería</span>
       </div>
 
+      <div class="image-actions" id="detalle-imagen-acciones" hidden>
+        <p class="help" id="detalle-imagen-ayuda">
+          Cambiar la imagen no recalcula los resultados de Vision.
+        </p>
+        <button class="btn primary" id="btn-cambiar-imagen" type="button">Asociar imagen</button>
+        <button class="btn danger" id="btn-quitar-imagen" type="button" hidden>Quitar imagen</button>
+      </div>
+
       <div class="detail-grid">
         <div class="detail-block">
           <h3>Resumen</h3>
@@ -84,6 +92,32 @@
 <footer class="foot">
   <small>Suite Tienda · Detalle de inspección · Resultado visual</small>
 </footer>
+
+<dialog class="confirm-dialog image-dialog" id="imagen-dialog">
+  <form method="dialog" class="confirm-dialog__panel">
+    <h2>Imagen de inspección</h2>
+    <p class="help">
+      Selecciona una captura existente. Cambiar la imagen no recalcula los resultados de Vision.
+    </p>
+
+    <label>
+      Captura asociada
+      <select id="imagen-captura-select">
+        <option value="">Sin imagen</option>
+      </select>
+    </label>
+
+    <p class="help" id="imagen-dialog-help">Cargando capturas disponibles...</p>
+    <div class="photo-placeholder image-dialog-preview" id="imagen-captura-preview">
+      <span>Selecciona una captura</span>
+    </div>
+
+    <menu>
+      <button class="btn ghost" id="btn-cancelar-imagen" value="cancel" type="button">Cancelar</button>
+      <button class="btn primary" id="btn-guardar-imagen" type="button">Guardar imagen</button>
+    </menu>
+  </form>
+</dialog>
 <script type="module" src="/src/pages/inspeccion_detalle.ts"></script>
 </body>
 </html>

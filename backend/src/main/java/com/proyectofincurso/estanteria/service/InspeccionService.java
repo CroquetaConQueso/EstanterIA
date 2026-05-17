@@ -262,6 +262,32 @@ public class InspeccionService {
         return rutaPublica;
     }
 
+    public String verificarCapturaInspeccionPath(String imagenPath) {
+        if (imagenPath == null || imagenPath.trim().isEmpty()) {
+            return null;
+        }
+
+        String capturaPublica = verificarCapturaPublica(imagenPath);
+        if (capturaPublica == null) {
+            throw ApiException.badRequest(
+                    "INVALID_IMAGE_PATH",
+                    "Solo se pueden asociar capturas servidas desde /captures/"
+            );
+        }
+
+        return capturaPublica;
+    }
+
+    private String extraerNombreArchivo(String imagenPath) {
+        if (imagenPath == null || imagenPath.isBlank()) {
+            return null;
+        }
+
+        String normalizado = imagenPath.replace("\\", "/");
+        int lastSlash = normalizado.lastIndexOf('/');
+        return lastSlash >= 0 ? normalizado.substring(lastSlash + 1) : normalizado;
+    }
+
     public String verificarDatos(String estanteriaCodigo, String imagenPath) {
         if (estanteriaCodigo == null || estanteriaCodigo.trim().isEmpty()) {
             throw ApiException.badRequest(
@@ -297,6 +323,21 @@ public class InspeccionService {
                 ins.getEstado(),
                 ins.getCreatedAt()
         );
+    }
+
+    @Transactional
+    public InspeccionDetalleResponse actualizarImagen(Long id, String imagenPath) {
+        Inspeccion ins = insRepo.findById(id)
+                .orElseThrow(() -> ApiException.notFound(
+                        "INSPECCION_NOT_FOUND",
+                        "No existe la inspeccion solicitada"
+                ));
+
+        String imagenPathValidado = verificarCapturaInspeccionPath(imagenPath);
+        ins.setImagenPath(imagenPathValidado);
+        ins.setImagenNombreArchivo(extraerNombreArchivo(imagenPathValidado));
+
+        return toDetalleResponse(ins);
     }
 
     @Transactional

@@ -409,10 +409,32 @@ function workerPayload(): Record<string, string | null> {
   };
 }
 
+function validarWorkerPayload(payload: Record<string, string | null>): string | null {
+  if (!payload.nombre) return "El nombre es obligatorio.";
+  if (!payload.apellidos) return "Los apellidos son obligatorios.";
+  if (!payload.tipoTrabajador) return "El tipo de trabajador es obligatorio.";
+  if (!payload.estadoDisponibilidad) return "La disponibilidad es obligatoria.";
+
+  if (payload.emailContacto && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.emailContacto)) {
+    return "El email de contacto no tiene un formato valido.";
+  }
+
+  if (payload.telefonoContacto && payload.telefonoContacto.length === 0) {
+    return "El telefono de contacto no puede estar vacio.";
+  }
+
+  return null;
+}
+
 async function saveWorker(): Promise<void> {
   try {
     setText(workerFormStatus, "Guardando trabajador...");
     const payload = workerPayload();
+    const validationError = validarWorkerPayload(payload);
+    if (validationError) {
+      setText(workerFormStatus, validationError);
+      return;
+    }
     const url = dialogMode === "edit" && selectedWorkerId != null
       ? `/api/trabajadores/${selectedWorkerId}`
       : "/api/trabajadores";

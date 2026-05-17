@@ -134,6 +134,31 @@ class ModeloOperativoServiceTrabajadorEstanteriaTest {
                     assertThat(apiException.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(apiException.getCode()).isEqualTo("ASIGNACION_PRODUCTO_CADUCADO");
                     assertThat(apiException.getMessage()).isEqualTo("No se puede asignar un producto ya caducado a una estanteria.");
+        });
+        verify(asignacionProductoSlotRepository, never()).save(any(AsignacionProductoSlot.class));
+    }
+
+    @Test
+    void noPermiteGuardarAsignacionConRetiradaAnteriorAColocacion() {
+        EstanteriaSlotConfiguracion slot = slotConfiguracion();
+        ProductoProveedor productoProveedor = productoProveedor();
+        GuardarAsignacionActivaSlotRequest request = new GuardarAsignacionActivaSlotRequest(
+                50L,
+                LocalDate.now().plusDays(3),
+                LocalDate.now().plusDays(8),
+                LocalDate.now().plusDays(2)
+        );
+        when(slotConfiguracionRepository.findById(60L)).thenReturn(Optional.of(slot));
+        when(productoProveedorRepository.findById(50L)).thenReturn(Optional.of(productoProveedor));
+
+        assertThatThrownBy(() -> service.guardarAsignacionActivaSlot(60L, request))
+                .isInstanceOf(ApiException.class)
+                .satisfies(error -> {
+                    ApiException apiException = (ApiException) error;
+                    assertThat(apiException.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(apiException.getCode()).isEqualTo("ASIGNACION_FECHAS_INVALIDAS");
+                    assertThat(apiException.getMessage())
+                            .isEqualTo("La fecha de retirada programada no puede ser anterior a la fecha de colocacion");
                 });
         verify(asignacionProductoSlotRepository, never()).save(any(AsignacionProductoSlot.class));
     }

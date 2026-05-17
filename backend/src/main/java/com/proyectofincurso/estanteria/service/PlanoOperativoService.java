@@ -97,6 +97,7 @@ public class PlanoOperativoService {
                 plano.getDescripcion(),
                 plano.getAncho(),
                 plano.getAlto(),
+                plano.getActivo(),
                 toEmpresaResponse(plano.getEmpresa()),
                 zonas.stream()
                         .map(zona -> toZonaOperativaResponse(

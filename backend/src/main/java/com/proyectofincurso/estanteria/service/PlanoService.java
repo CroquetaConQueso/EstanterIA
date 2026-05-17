@@ -15,6 +15,7 @@ import com.proyectofincurso.estanteria.persistence.repository.SeccionRepository;
 import com.proyectofincurso.estanteria.web.dto.ActualizarPlanoRequest;
 import com.proyectofincurso.estanteria.web.dto.CrearPlanoRequest;
 import com.proyectofincurso.estanteria.web.dto.EmpresaResponse;
+import com.proyectofincurso.estanteria.web.dto.EstadoListadoPlanos;
 import com.proyectofincurso.estanteria.web.dto.EstanteriaResumenResponse;
 import com.proyectofincurso.estanteria.web.dto.PlanoEstanteriaLayoutRequest;
 import com.proyectofincurso.estanteria.web.dto.PlanoEstanteriaLayoutResponse;
@@ -51,10 +52,17 @@ public class PlanoService {
     private final EstanteriaRepository estanteriaRepository;
 
     @Transactional(readOnly = true)
-    public List<PlanoResumenResponse> listarPlanosDeEmpresa(String codigoEmpresa) {
+    public List<PlanoResumenResponse> listarPlanosDeEmpresa(String codigoEmpresa, EstadoListadoPlanos estado) {
         Empresa empresa = obtenerEmpresaActiva(codigoEmpresa);
+        EstadoListadoPlanos estadoFiltro = estado == null ? EstadoListadoPlanos.ACTIVOS : estado;
 
-        return planoRepository.findByEmpresaCodigoAndActivoTrueOrderByNombreAsc(empresa.getCodigo()).stream()
+        List<Plano> planos = switch (estadoFiltro) {
+            case ACTIVOS -> planoRepository.findByEmpresaCodigoAndActivoTrueOrderByNombreAsc(empresa.getCodigo());
+            case INACTIVOS -> planoRepository.findByEmpresaCodigoAndActivoFalseOrderByNombreAsc(empresa.getCodigo());
+            case TODOS -> planoRepository.findByEmpresaCodigoOrderByNombreAsc(empresa.getCodigo());
+        };
+
+        return planos.stream()
                 .map(this::toPlanoResumenResponse)
                 .toList();
     }
@@ -144,6 +152,28 @@ public class PlanoService {
         planoZonaRepository.flush();
         recrearContenido(plano, zonas(request.zonas()), estanterias(request.estanterias()), ahora, estanteriasYaColocadas);
 
+        return toPlanoResponse(plano);
+    }
+
+    @Transactional
+    public PlanoResponse desactivarPlano(String codigo) {
+        Plano plano = obtenerPlanoPorCodigo(codigo);
+        if (!Boolean.FALSE.equals(plano.getActivo())) {
+            plano.setActivo(false);
+            plano.setUpdatedAt(Instant.now());
+            plano = planoRepository.save(plano);
+        }
+        return toPlanoResponse(plano);
+    }
+
+    @Transactional
+    public PlanoResponse reactivarPlano(String codigo) {
+        Plano plano = obtenerPlanoPorCodigo(codigo);
+        if (!Boolean.TRUE.equals(plano.getActivo())) {
+            plano.setActivo(true);
+            plano.setUpdatedAt(Instant.now());
+            plano = planoRepository.save(plano);
+        }
         return toPlanoResponse(plano);
     }
 

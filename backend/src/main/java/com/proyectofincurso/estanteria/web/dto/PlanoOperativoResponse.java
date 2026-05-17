@@ -9,6 +9,7 @@ public record PlanoOperativoResponse(
         String descripcion,
         Double ancho,
         Double alto,
+        Boolean activo,
         EmpresaResponse empresa,
         List<PlanoZonaOperativaResponse> zonas,
         List<PlanoEstanteriaOperativaResponse> estanterias

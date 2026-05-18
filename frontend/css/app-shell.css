@@ -34,6 +34,10 @@
   align-items: stretch !important;
 }
 
+.topbar .right {
+  gap: 12px !important;
+}
+
 .topbar .left {
   min-width: 0;
   gap: 20px !important;
@@ -135,6 +139,23 @@
 .topbar .user-tag:hover {
   background: var(--shell-white) !important;
   color: var(--shell-black) !important;
+}
+
+.topbar .logout-action {
+  cursor: pointer !important;
+  background: var(--shell-black) !important;
+  color: var(--shell-white) !important;
+}
+
+.topbar .logout-action:hover,
+.topbar .logout-action:focus-visible {
+  background: var(--shell-red) !important;
+  color: var(--shell-white) !important;
+}
+
+.topbar .logout-action:disabled {
+  cursor: wait !important;
+  opacity: 0.7 !important;
 }
 
 .page-head .eyebrow,

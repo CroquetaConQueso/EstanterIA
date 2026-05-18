@@ -1,4 +1,4 @@
-import { authFetch, clearAuthSession } from "../lib/api";
+import { authFetch, clearAuthSession, logoutSession } from "../lib/api";
 import { requireAdminPanelAccess } from "../lib/auth-guard";
 
 requireAdminPanelAccess();
@@ -233,14 +233,7 @@ function validarFormulario(): { username: string; email: string } | null {
 }
 
 async function cerrarSesionLocal(): Promise<void> {
-  try {
-    await authFetch("/api/logout", { method: "POST" });
-  } catch {
-    // Si el backend ya revoco la sesion, igualmente limpiamos el navegador.
-  } finally {
-    clearAuthSession();
-    window.location.href = "/html/login.html";
-  }
+  await logoutSession();
 }
 
 form?.addEventListener("submit", async (event) => {

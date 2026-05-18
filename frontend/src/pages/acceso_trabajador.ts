@@ -1,4 +1,4 @@
-import { clearAuthSession, getAuthRole, getAuthToken, isStructuralAdmin, isTokenExpired } from "../lib/api";
+import { clearAuthSession, getAuthRole, getAuthToken, isStructuralAdmin, isTokenExpired, logoutSession } from "../lib/api";
 
 const btnLogout = document.querySelector<HTMLButtonElement>("#btn-worker-logout");
 const loginLink = document.querySelector<HTMLAnchorElement>("#worker-login-link");
@@ -17,8 +17,8 @@ if (!token || isTokenExpired(token)) {
 }
 
 btnLogout?.addEventListener("click", () => {
-  clearAuthSession();
-  window.location.href = "/html/login.html";
+  btnLogout.disabled = true;
+  void logoutSession();
 });
 
 loginLink?.addEventListener("click", () => {

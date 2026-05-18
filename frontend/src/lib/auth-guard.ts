@@ -59,9 +59,11 @@ function setupPrivateNavigation(): void {
   const navActions = document.querySelector<HTMLElement>(".topbar .right");
   if (!navActions || navActions.querySelector("[data-logout-action='true']")) return;
 
+  navActions.classList.add("nav-user-actions");
+
   const logoutButton = document.createElement("button");
   logoutButton.type = "button";
-  logoutButton.className = "user logout-action";
+  logoutButton.className = "nav-logout-button logout-action";
   logoutButton.dataset.logoutAction = "true";
   logoutButton.textContent = "Cerrar sesi\u00f3n";
   logoutButton.addEventListener("click", () => {

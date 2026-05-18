@@ -20,14 +20,12 @@
 .topbar .inner {
   max-width: 1440px !important;
   margin: 0 auto !important;
-  padding: 0 20px !important;
+  padding: 0 14px !important;
   min-height: 64px !important;
-  display: flex !important;
-  flex-wrap: wrap !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
   align-items: stretch !important;
-  justify-content: flex-start !important;
-  column-gap: clamp(32px, 5vw, 80px) !important;
-  row-gap: 8px !important;
+  column-gap: 12px !important;
 }
 
 .topbar .left,
@@ -37,20 +35,19 @@
 }
 
 .topbar .right {
-  flex: 0 0 auto !important;
-  gap: 12px !important;
-  margin-left: auto !important;
-  padding-left: 0 !important;
+  grid-column: 3 !important;
+  justify-self: end !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
 .topbar .left {
-  flex: 1 1 860px !important;
+  display: contents !important;
   min-width: 0;
-  flex-wrap: nowrap !important;
-  gap: 20px !important;
 }
 
 .topbar .brand {
+  grid-column: 1 !important;
   display: inline-flex !important;
   align-items: center !important;
   gap: 10px !important;
@@ -81,14 +78,21 @@
 }
 
 .topbar .nav {
+  grid-column: 2 !important;
+  justify-self: start !important;
   display: flex !important;
   flex-wrap: nowrap !important;
   align-items: stretch !important;
-  flex: 0 1 auto !important;
+  max-width: 100% !important;
+  width: 100% !important;
   min-width: 0;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
   border-left: var(--shell-border-heavy) !important;
   border-right: var(--shell-border-heavy) !important;
   gap: 0 !important;
+  background: transparent !important;
+  scrollbar-width: thin;
 }
 
 .topbar .nav-link {
@@ -96,13 +100,13 @@
   align-items: center !important;
   justify-content: center !important;
   min-height: 64px !important;
-  padding: 0 12px !important;
+  padding: 0 8px !important;
   color: var(--shell-white) !important;
   font-family: 'Arial Black', Impact, 'Franklin Gothic Heavy', sans-serif !important;
   font-weight: 900 !important;
-  font-size: 0.72rem !important;
+  font-size: 0.68rem !important;
   line-height: 1 !important;
-  letter-spacing: 1.4px !important;
+  letter-spacing: 0.9px !important;
   text-transform: uppercase !important;
   text-decoration: none !important;
   border-right: var(--shell-border-light) !important;
@@ -122,46 +126,48 @@
   color: var(--shell-black) !important;
 }
 
-.topbar .user,
-.topbar .user-tag {
+.topbar .right .user,
+.topbar .right .user-tag,
+.topbar .nav-logout-button {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   align-self: center !important;
-  min-height: 38px !important;
-  padding: 0 16px !important;
+  min-height: 34px !important;
+  padding: 0 11px !important;
   background: var(--shell-gold) !important;
   color: var(--shell-black) !important;
   border: var(--shell-border-light) !important;
-  box-shadow: 3px 3px 0 var(--shell-black) !important;
+  box-shadow: 2px 2px 0 var(--shell-black) !important;
   font-family: 'Arial Black', Impact, 'Franklin Gothic Heavy', sans-serif !important;
   font-weight: 900 !important;
-  font-size: 0.82rem !important;
-  letter-spacing: 1px !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.8px !important;
   text-transform: uppercase !important;
   text-decoration: none !important;
   white-space: nowrap !important;
 }
 
-.topbar .user:hover,
-.topbar .user-tag:hover {
+.topbar .right .user:hover,
+.topbar .right .user-tag:hover,
+.topbar .nav-logout-button:hover {
   background: var(--shell-white) !important;
   color: var(--shell-black) !important;
 }
 
-.topbar .logout-action {
+.topbar .nav-logout-button {
   cursor: pointer !important;
   background: var(--shell-black) !important;
   color: var(--shell-white) !important;
 }
 
-.topbar .logout-action:hover,
-.topbar .logout-action:focus-visible {
+.topbar .nav-logout-button:hover,
+.topbar .nav-logout-button:focus-visible {
   background: var(--shell-red) !important;
   color: var(--shell-white) !important;
 }
 
-.topbar .logout-action:disabled {
+.topbar .nav-logout-button:disabled {
   cursor: wait !important;
   opacity: 0.7 !important;
 }
@@ -187,18 +193,19 @@
   }
 
   .topbar .inner {
-    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
     padding: 10px 18px !important;
+    row-gap: 10px !important;
   }
 
-  .topbar .left {
-    flex-direction: column !important;
-    width: 100%;
+  .topbar .brand,
+  .topbar .nav,
+  .topbar .right {
+    grid-column: 1 !important;
   }
 
   .topbar .right {
-    margin-left: 0 !important;
-    padding-left: 0 !important;
+    justify-self: start !important;
   }
 
   .topbar .brand,

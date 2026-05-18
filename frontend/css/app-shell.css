@@ -23,9 +23,11 @@
   padding: 0 20px !important;
   min-height: 64px !important;
   display: flex !important;
+  flex-wrap: wrap !important;
   align-items: stretch !important;
-  justify-content: space-between !important;
-  gap: 18px !important;
+  justify-content: flex-start !important;
+  column-gap: clamp(32px, 5vw, 80px) !important;
+  row-gap: 8px !important;
 }
 
 .topbar .left,
@@ -35,11 +37,16 @@
 }
 
 .topbar .right {
+  flex: 0 0 auto !important;
   gap: 12px !important;
+  margin-left: auto !important;
+  padding-left: 0 !important;
 }
 
 .topbar .left {
+  flex: 1 1 860px !important;
   min-width: 0;
+  flex-wrap: nowrap !important;
   gap: 20px !important;
 }
 
@@ -77,6 +84,7 @@
   display: flex !important;
   flex-wrap: nowrap !important;
   align-items: stretch !important;
+  flex: 0 1 auto !important;
   min-width: 0;
   border-left: var(--shell-border-heavy) !important;
   border-right: var(--shell-border-heavy) !important;
@@ -186,6 +194,11 @@
   .topbar .left {
     flex-direction: column !important;
     width: 100%;
+  }
+
+  .topbar .right {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
   }
 
   .topbar .brand,

@@ -83,6 +83,24 @@ export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}
   return response;
 }
 
+export async function logoutSession(redirectUrl = "/html/login.html"): Promise<void> {
+  const token = getAuthToken();
+
+  try {
+    if (token && !isTokenExpired(token)) {
+      await fetch("/api/logout", {
+        method: "POST",
+        headers: buildAuthHeaders()
+      });
+    }
+  } catch {
+    // El cierre local debe completarse aunque la sesion ya estuviera revocada o la red falle.
+  } finally {
+    clearAuthSession();
+    window.location.href = redirectUrl;
+  }
+}
+
 export function clearAuthSession(): void {
   localStorage.removeItem("auth_token");
   localStorage.removeItem("auth_user");

@@ -28,6 +28,7 @@ public record AlertaResponse(
         Long proveedorId,
         String proveedorNombre,
         Boolean stockDisponible,
-        String stockMensaje
+        String stockMensaje,
+        Boolean conTareaAsignada
 ) {
 }

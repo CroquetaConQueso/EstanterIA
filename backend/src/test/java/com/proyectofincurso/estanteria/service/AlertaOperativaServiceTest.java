@@ -105,6 +105,48 @@ class AlertaOperativaServiceTest {
     }
 
     @Test
+    void alertaAbiertaConTareaActivaAsignadaSeMarcaComoConTareaAsignada() {
+        Alerta alerta = alertaBase(1L, EstadoAlerta.ABIERTA);
+        when(alertaRepository.findAlertasConContextoByEstado(EstadoAlerta.ABIERTA))
+                .thenReturn(List.of(alerta));
+        when(tareaOperativaRepository.findAlertaIdsConTareasActivasAsignadas(any(), any()))
+                .thenReturn(List.of(1L));
+
+        var response = service.obtenerAlertasAbiertas();
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).conTareaAsignada()).isTrue();
+    }
+
+    @Test
+    void alertaAbiertaConTareaActivaSinTrabajadorNoSeMarcaComoAsignada() {
+        Alerta alerta = alertaBase(1L, EstadoAlerta.ABIERTA);
+        when(alertaRepository.findAlertasConContextoByEstado(EstadoAlerta.ABIERTA))
+                .thenReturn(List.of(alerta));
+        when(tareaOperativaRepository.findAlertaIdsConTareasActivasAsignadas(any(), any()))
+                .thenReturn(List.of());
+
+        var response = service.obtenerAlertasAbiertas();
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).conTareaAsignada()).isFalse();
+    }
+
+    @Test
+    void variasTareasAsignadasDeLaMismaAlertaCuentanUnaSolaAlerta() {
+        Alerta alerta = alertaBase(1L, EstadoAlerta.ABIERTA);
+        when(alertaRepository.findAlertasConContextoByEstado(EstadoAlerta.ABIERTA))
+                .thenReturn(List.of(alerta));
+        when(tareaOperativaRepository.findAlertaIdsConTareasActivasAsignadas(any(), any()))
+                .thenReturn(List.of(1L, 1L));
+
+        var response = service.obtenerAlertasAbiertas();
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).conTareaAsignada()).isTrue();
+    }
+
+    @Test
     void caducidadHoyGeneraAlertaAltaDeProximaCaducidad() {
         AsignacionProductoSlot asignacion = asignacionBase();
         asignacion.setFechaCaducidad(LocalDate.now());
@@ -460,6 +502,30 @@ class AlertaOperativaServiceTest {
         asignacion.setProductoProveedor(productoProveedor);
         asignacion.setEstadoAsignacion(EstadoAsignacionProductoSlot.ACTIVA);
         return asignacion;
+    }
+
+    private Alerta alertaBase(Long id, EstadoAlerta estado) {
+        Seccion seccion = new Seccion();
+        seccion.setId(10L);
+        seccion.setCodigo("SEC-DEMO");
+        seccion.setNombre("Seccion demo");
+
+        Estanteria estanteria = new Estanteria();
+        estanteria.setId(20L);
+        estanteria.setCodigo("EST-001");
+        estanteria.setNombre("Estanteria demo");
+        estanteria.setSeccion(seccion);
+
+        Alerta alerta = new Alerta();
+        alerta.setId(id);
+        alerta.setEstadoAlerta(estado);
+        alerta.setTipoAlerta(TipoAlerta.HUECO_VACIO);
+        alerta.setPrioridad(PrioridadAlerta.ALTA);
+        alerta.setMensaje("Alerta demo");
+        alerta.setCreatedAt(java.time.Instant.now());
+        alerta.setSeccion(seccion);
+        alerta.setEstanteria(estanteria);
+        return alerta;
     }
 
     private TrabajadorEstanteria asignacionTrabajadorEstanteria(EstadoDisponibilidadTrabajador disponibilidad) {

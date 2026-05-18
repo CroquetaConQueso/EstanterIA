@@ -105,4 +105,15 @@ public interface TareaOperativaRepository extends JpaRepository<TareaOperativa, 
             """)
     List<TareaOperativa> findAsignadasByTrabajadorAndEstadoIn(@Param("trabajadorId") Long trabajadorId,
                                                               @Param("estados") Collection<EstadoTareaOperativa> estados);
+
+    @Query("""
+            select distinct alerta.id
+            from TareaOperativa tarea
+            join tarea.alerta alerta
+            where alerta.id in :alertaIds
+              and tarea.estadoTarea in :estados
+              and tarea.trabajadorAsignado is not null
+            """)
+    List<Long> findAlertaIdsConTareasActivasAsignadas(@Param("alertaIds") Collection<Long> alertaIds,
+                                                      @Param("estados") Collection<EstadoTareaOperativa> estados);
 }

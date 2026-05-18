@@ -90,6 +90,7 @@ type AlertaResponse = {
   proveedorNombre?: string | null;
   stockDisponible?: boolean | null;
   stockMensaje?: string | null;
+  conTareaAsignada?: boolean | null;
 };
 
 type ApiErrorResponse = {
@@ -348,7 +349,9 @@ function updateMetrics(): void {
   }
 
   if (metricAssigned) {
-    metricAssigned.textContent = "0";
+    metricAssigned.textContent = String(
+      alertas.filter((alerta) => alerta.estado === "ABIERTA" && alerta.conTareaAsignada === true).length
+    );
   }
 }
 

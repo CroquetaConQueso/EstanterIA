@@ -381,16 +381,16 @@ public class AlertaOperativaService {
 
     @Transactional(readOnly = true)
     public List<AlertaResponse> obtenerAlertasAbiertas() {
-        return alertaRepository.findAlertasConContextoByEstado(EstadoAlerta.ABIERTA).stream()
-                .map(this::toAlertaResponse)
-                .toList();
+        return toAlertaResponsesConTareasAsignadas(
+                alertaRepository.findAlertasConContextoByEstado(EstadoAlerta.ABIERTA)
+        );
     }
 
     @Transactional(readOnly = true)
     public List<AlertaResponse> obtenerAlertasAbiertasDeSeccion(Long seccionId) {
-        return alertaRepository.findAlertasConContextoBySeccionAndEstado(seccionId, EstadoAlerta.ABIERTA).stream()
-                .map(this::toAlertaResponse)
-                .toList();
+        return toAlertaResponsesConTareasAsignadas(
+                alertaRepository.findAlertasConContextoBySeccionAndEstado(seccionId, EstadoAlerta.ABIERTA)
+        );
     }
 
     @Transactional(readOnly = true)
@@ -797,7 +797,28 @@ public class AlertaOperativaService {
         );
     }
 
+    private List<AlertaResponse> toAlertaResponsesConTareasAsignadas(List<Alerta> alertas) {
+        if (alertas.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> alertaIdsConTareaAsignada = new HashSet<>(
+                tareaOperativaRepository.findAlertaIdsConTareasActivasAsignadas(
+                        alertas.stream().map(Alerta::getId).toList(),
+                        ESTADOS_TAREAS_ACTIVAS
+                )
+        );
+
+        return alertas.stream()
+                .map(alerta -> toAlertaResponse(alerta, alertaIdsConTareaAsignada.contains(alerta.getId())))
+                .toList();
+    }
+
     private AlertaResponse toAlertaResponse(Alerta alerta) {
+        return toAlertaResponse(alerta, false);
+    }
+
+    private AlertaResponse toAlertaResponse(Alerta alerta, boolean conTareaAsignada) {
         StockResumen stock = toStockResumen(alerta.getAsignacionProductoSlot());
         return new AlertaResponse(
                 alerta.getId(),
@@ -819,7 +840,8 @@ public class AlertaOperativaService {
                 stock.proveedorId(),
                 stock.proveedorNombre(),
                 stock.stockDisponible(),
-                stock.stockMensaje()
+                stock.stockMensaje(),
+                conTareaAsignada
         );
     }
 

@@ -30,10 +30,11 @@
 <main class="page">
   <header class="page-head">
     <p class="eyebrow">Acerca del proyecto</p>
-    <h1>Acerca de Suite Tienda</h1>
+    <h1>Acerca de EstanterIA</h1>
     <p>
-      Suite Tienda es la interfaz operativa de EstanterIA: gestión de estanterías,
-      planos, inspecciones, alertas, tareas e inventario en una misma demo funcional.
+      EstanterIA es un sistema web para la gestión operativa de estanterías:
+      planos 2D, inspecciones, inventario, alertas, tareas, equipo e informes
+      en una misma demo funcional.
     </p>
   </header>
 
@@ -41,12 +42,12 @@
     <article class="card">
       <h2>Objetivo del proyecto</h2>
       <p>
-        El objetivo principal es <strong>estructurar la operación de una estantería</strong>
-        a partir de su configuración real y del resultado visual por slots:
+        El objetivo principal es <strong>estructurar la operación de estanterías</strong>
+        a partir de planos 2D, secciones, slots, productos esperados y resultados visuales:
       </p>
       <ul>
-        <li>Detectar slots ocupados, vacíos y anómalos.</li>
-        <li>Cruzar inspecciones con productos esperados y asignaciones activas.</li>
+        <li>Asociar secciones, estanterías, slots y productos.</li>
+        <li>Registrar inspecciones visuales y manuales con trazabilidad.</li>
         <li>Generar alertas y tareas para responsables operativos.</li>
       </ul>
       <p class="note">
@@ -57,16 +58,16 @@
     <article class="card">
       <h2>Flujo operativo</h2>
       <p>
-        La demo cubre el ciclo típico de trabajo de un encargado:
+        La demo cubre el ciclo principal de trabajo de un administrador o gerente:
       </p>
       <ul>
-        <li>Visualizar el estado de la estantería en el plano.</li>
-        <li>Revisar inspecciones IA con imagen, slots y confianza.</li>
-        <li>Atender alertas y tareas derivadas de incidencias.</li>
+        <li>Configurar planos, zonas y estanterías colocadas.</li>
+        <li>Lanzar inspecciones con apoyo de Vision/FastAPI.</li>
+        <li>Atender alertas, tareas y revisiones de inventario operativo.</li>
       </ul>
       <p>
-        El flujo permite pasar del plano y la inspección al inventario, la alerta
-        y la tarea operativa sin perder el contexto.
+        El flujo permite pasar del plano y la inspección al inventario, la alerta,
+        la tarea y el informe sin perder el contexto operativo.
       </p>
     </article>
 
@@ -76,12 +77,13 @@
         El sistema separa la gestión operativa de las evidencias visuales:
       </p>
       <ul>
-        <li>Los planos muestran secciones, estanterías y slots.</li>
-        <li>Vision aporta resultados visuales para cada inspección.</li>
-        <li>Inventario, alertas y tareas mantienen la trazabilidad operativa.</li>
+        <li>Los planos muestran secciones, estanterías, slots y estados.</li>
+        <li>Vision aporta resultados visuales por slot para cada inspección.</li>
+        <li>Inventario, alertas, tareas y trabajadores mantienen la trazabilidad.</li>
       </ul>
       <p>
-        El foco visual es operativo: lectura rápida, contraste fuerte y navegación directa.
+        Los informes resumen rotación visual y vaciados detectados; no calculan
+        ventas reales, ingresos ni rentabilidad.
       </p>
     </article>
 
@@ -93,10 +95,11 @@
       <ul>
         <li>No pretende cubrir un ERP completo.</li>
         <li>No incluye funciones de nóminas, pedidos ni stock numérico.</li>
-        <li>Prioriza el flujo de inspección, alerta y tarea operativa.</li>
+        <li>Conserva histórico mediante baja lógica en entidades operativas.</li>
       </ul>
       <p class="note">
-        El objetivo es demostrar un flujo coherente de visión, inventario y operación.
+        El objetivo es demostrar un flujo coherente de planos, visión, inventario,
+        equipo, alertas, tareas e informes.
       </p>
     </article>
   </section>

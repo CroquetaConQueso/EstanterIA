@@ -134,8 +134,10 @@ a {
   display: inline-block;
   margin: 0 0 14px;
   padding: 4px 8px;
-  background: var(--black);
-  color: var(--white);
+  background: var(--gold);
+  color: var(--black);
+  border: var(--border-light);
+  box-shadow: 3px 3px 0 var(--black);
   font-size: 0.8rem;
   letter-spacing: 2px;
 }
